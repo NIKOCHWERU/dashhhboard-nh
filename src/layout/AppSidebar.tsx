@@ -25,7 +25,8 @@ import {
 type NavItem = {
   name: string;
   icon: React.ReactNode;
-  path: string;
+  path?: string;
+  subItems?: { name: string; path: string }[];
 };
 
 type MenuGroups = {
@@ -87,6 +88,15 @@ const AppSidebar: React.FC = () => {
   const isAdmin = (session?.user as any)?.role === "admin";
 
   const [menuGroups, setMenuGroups] = useState<MenuGroups[]>([]);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+
+  const toggleSubmenu = (menuName: string) => {
+    setExpandedMenus((prev) =>
+      prev.includes(menuName)
+        ? prev.filter((name) => name !== menuName)
+        : [...prev, menuName]
+    );
+  };
 
   useEffect(() => {
     if (!session?.user) return;
@@ -145,7 +155,40 @@ const AppSidebar: React.FC = () => {
       });
     }
 
-    // 6. Admin Control Group
+    // 6. Dashboard Legal Group
+    if (isAdminUser || userObj.canManageLegal) {
+      groups.push({
+        title: "Dashboard Legal",
+        items: [
+          { name: "Overview", icon: <GridIcon />, path: "/legal/overview" },
+          {
+            name: "Document Automation",
+            icon: <DokumenIcon />,
+            subItems: [
+              { name: "Generate Surat", path: "/legal/generate-surat" },
+              { name: "Template Management", path: "/legal/template-management" }
+            ]
+          },
+          {
+            name: "Contract Management",
+            icon: <CatatanIcon />,
+            subItems: [
+              { name: "All Contracts", path: "/legal/contracts" },
+              { name: "Expiry Monitoring", path: "/legal/expiry-monitoring" }
+            ]
+          },
+          { name: "Employee Legal", icon: <KaryawanIcon />, path: "/legal/employee-legal" },
+          { name: "Approval Workflow", icon: <SkalaPrioritasIcon />, path: "/legal/approvals" },
+          { name: "Legal Archive", icon: <DokumentasiIcon />, path: "/legal/archive" },
+          { name: "Compliance", icon: <GridIcon />, path: "/legal/compliance" },
+          { name: "Legal Request", icon: <PengumumanIcon />, path: "/legal/requests" },
+          { name: "Reports", icon: <DokumenIcon />, path: "/legal/reports" },
+          { name: "Settings", icon: <HorizontaLDots />, path: "/legal/settings" }
+        ]
+      });
+    }
+
+    // 7. Admin Control Group
     if (isAdminUser) {
       groups.push({
         title: "Admin",
@@ -160,25 +203,75 @@ const AppSidebar: React.FC = () => {
 
   const renderMenuItems = (items: NavItem[]) => (
     <ul className="flex flex-col gap-2">
-      {items.map((nav) => (
-        <li key={nav.name}>
-          <Link
-            href={nav.path}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 ${
-              isActive(nav.path)
-                ? "bg-brand-500 text-white shadow-lg shadow-brand-500/20"
-                : "text-gray-500 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-brand-500/10 dark:text-gray-400"
-            } ${!isExpanded && !isHovered ? "lg:justify-center" : "lg:justify-start"}`}
-          >
-            <span className={`${isActive(nav.path) ? "text-white" : "text-gray-400 group-hover:text-brand-500"}`}>
-              {nav.icon}
-            </span>
-            {(isExpanded || isHovered || isMobileOpen) && (
-              <span className="text-sm truncate">{nav.name}</span>
+      {items.map((nav) => {
+        const isSubmenuExpanded = expandedMenus.includes(nav.name);
+        const hasActiveSubItem = nav.subItems?.some(sub => isActive(sub.path));
+        const active = nav.path ? isActive(nav.path) : hasActiveSubItem;
+        
+        return (
+          <li key={nav.name}>
+            {nav.subItems ? (
+              <div
+                className={`flex items-center justify-between px-4 py-3 rounded-xl font-bold transition-all duration-200 cursor-pointer ${
+                  active
+                    ? "bg-brand-500 text-white shadow-lg shadow-brand-500/20"
+                    : "text-gray-500 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-brand-500/10 dark:text-gray-400"
+                } ${!isExpanded && !isHovered ? "lg:justify-center" : "lg:justify-start"}`}
+                onClick={() => toggleSubmenu(nav.name)}
+              >
+                <div className="flex items-center gap-3">
+                  <span className={`${active ? "text-white" : "text-gray-400 group-hover:text-brand-500"}`}>
+                    {nav.icon}
+                  </span>
+                  {(isExpanded || isHovered || isMobileOpen) && (
+                    <span className="text-sm truncate">{nav.name}</span>
+                  )}
+                </div>
+                {(isExpanded || isHovered || isMobileOpen) && (
+                  <span className={`transition-transform duration-200 ${isSubmenuExpanded ? "rotate-180" : ""}`}>
+                    <ChevronDownIcon />
+                  </span>
+                )}
+              </div>
+            ) : (
+              <Link
+                href={nav.path!}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 ${
+                  active
+                    ? "bg-brand-500 text-white shadow-lg shadow-brand-500/20"
+                    : "text-gray-500 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-brand-500/10 dark:text-gray-400"
+                } ${!isExpanded && !isHovered ? "lg:justify-center" : "lg:justify-start"}`}
+              >
+                <span className={`${active ? "text-white" : "text-gray-400 group-hover:text-brand-500"}`}>
+                  {nav.icon}
+                </span>
+                {(isExpanded || isHovered || isMobileOpen) && (
+                  <span className="text-sm truncate">{nav.name}</span>
+                )}
+              </Link>
             )}
-          </Link>
-        </li>
-      ))}
+
+            {nav.subItems && isSubmenuExpanded && (isExpanded || isHovered || isMobileOpen) && (
+              <ul className="mt-2 space-y-1 pl-11">
+                {nav.subItems.map((sub) => (
+                  <li key={sub.name}>
+                    <Link
+                      href={sub.path}
+                      className={`block px-3 py-2 text-sm rounded-lg transition-colors ${
+                        isActive(sub.path)
+                          ? "bg-brand-50 text-brand-600 font-semibold dark:bg-brand-500/10 dark:text-brand-400"
+                          : "text-gray-500 hover:text-brand-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
+                      }`}
+                    >
+                      {sub.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 
