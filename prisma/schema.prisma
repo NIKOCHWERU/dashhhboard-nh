@@ -1,0 +1,360 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  refresh_token_expires_in Int?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("account")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model User {
+  id              String    @id @default(cuid())
+  name            String?
+  email           String?   @unique
+  emailVerified   DateTime?
+  image           String?
+  role            String    @default("user") // admin, user
+  canCreateAgenda Boolean   @default(false)
+  canManageHRM    Boolean   @default(false)
+  canManageRetainer Boolean @default(false)
+  canManagePerorangan Boolean @default(false)
+  accounts        Account[]
+  sessions        Session[]
+  agendas         Agenda[]
+  personalTasks   PersonalTask[]
+
+  @@map("user")
+}
+
+model PersonalTask {
+  id          String   @id @default(cuid())
+  title       String
+  type        String   @default("CATATAN") // AGENDA, CATATAN
+  startDate   DateTime
+  endDate     DateTime
+  status      String   @default("PENDING") // PENDING, ONGOING, COMPLETED
+  priority    String   @default("Q2")      // Q1 (Tinggi), Q2 (Sedang), Q3 (Rendah)
+  description String?  @db.Text
+  notes       String?  @db.Text            // Personal notes
+  googleEventId String?
+  imageUrl      String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("personal_task")
+}
+
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtoken")
+}
+
+model Agenda {
+  id          String   @id @default(cuid())
+  title       String
+  startDate   DateTime
+  endDate     DateTime
+  pic         String
+  scale       String   // Q1, Q2, Q3
+  description String?  @db.Text
+  notes       String?  @db.Text
+  googleEventId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("agenda")
+}
+
+model Pengumuman {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  image     String?  // New field for local storage image path
+  priority  String   @default("Normal") // High, Normal, Low
+  expiresAt DateTime? // New field for "how many days" feature
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("pengumuman")
+}
+
+model Retainer {
+  id             String   @id @default(cuid())
+  clientName     String
+  projectName    String
+  categories     String   @default("")
+  startDate      DateTime
+  endDate        DateTime?
+  status         String   @default("Active") // Active, Finished, On Hold
+  contractValue  Float?
+  googleFolderId String?
+  picEmail       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("retainer")
+}
+
+model Perorangan {
+  id             String   @id @default(cuid())
+  clientName     String
+  caseType       String
+  startDate      DateTime
+  status         String   @default("In Progress")
+  googleFolderId String?
+  picEmail       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("perorangan")
+}
+
+model Karyawan {
+  id        String   @id @default(cuid())
+  name      String
+  position  String
+  email     String?
+  phone     String?
+  status    String   @default("Active")
+  
+  // HRM Fields
+  nik                 String?
+  divisi              String?
+  jabatan             String?
+  atasanLangsung      String?
+  statusKerja         String?  // Probation/PKWT/PKWTT
+  tanggalMasuk        DateTime?
+  tanggalKeluar       DateTime?
+  masaKontrak         String?
+  lokasiKerja         String?
+  bpjsKesehatan       String?
+  bpjsKetenagakerjaan String?
+  pt                  String?  // e.g. PT BRAGA JAYA KONSTRUKSINDO
+  sim                 String?  // Optional driver license (SIM A, C, etc)
+  documents           String   @default("")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("karyawan")
+}
+
+model SkalaPrioritas {
+  id        String   @id @default(cuid())
+  taskName  String
+  level     Int      @default(1) // 1 (High) - 5 (Low)
+  deadline  DateTime?
+  status    String   @default("Pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("skala_prioritas")
+}
+
+model HRMAbsensi {
+  id         String   @id @default(cuid())
+  karyawanId String?
+  nama       String
+  jabatan    String?
+  periode    String 
+  hariKerja  Int      @default(0)
+  hadir      Int      @default(0)
+  izin       Int      @default(0)
+  cuti       Int      @default(0)
+  sakit      Int      @default(0)
+  alpha      Int      @default(0)
+  keterangan String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("hrm_absensi")
+}
+
+model HRMTalent {
+  id            String   @id @default(cuid())
+  namaKandidat  String
+  posisi        String
+  noHp          String?
+  sumber        String?
+  tanggalApply  DateTime?
+  sesi          String?
+  status        String   @default("Applied")
+  picHr         String?
+  pt            String?
+  keterangan    String?  @db.Text
+  catatan       String?  @db.Text
+  documents     String   @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("hrm_talent")
+}
+
+model HRMKPI {
+  id         String   @id @default(cuid())
+  karyawanId String?  
+  nama       String
+  jabatan    String?
+  atasan     String?
+  periode    String
+  skor       Float    @default(0)
+  keterangan String?  @db.Text
+  catatan    String?  @db.Text
+  pt         String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("hrm_kpi")
+}
+
+model HRMPayroll {
+  id         String   @id @default(cuid())
+  nama       String
+  lamaKerja  String?
+  jabatan    String?
+  gajiPokok  Float    @default(0)
+  noRekening String?
+  namaBank   String?
+  tunjangan  Float    @default(0)
+  lembur     Float    @default(0)
+  potongan   Float    @default(0)
+  bpjs       Float    @default(0)
+  totalGaji  Float    @default(0)
+  periode    String?
+  pt         String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("hrm_payroll")
+}
+
+model HRMKedisiplinan {
+  id                 String   @id @default(cuid())
+  nama               String
+  jabatan            String?
+  tanggalPelanggaran DateTime?
+  jenisPelanggaran   String?
+  tingkatPelanggaran String?
+  sanksi             String?
+  masaBerlaku        String?
+  pic                String?
+  keterangan         String?  @db.Text
+  catatan            String?  @db.Text
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("hrm_kedisiplinan")
+}
+
+model HRMOffboarding {
+  id               String   @id @default(cuid())
+  tanggal          DateTime?
+  nama             String
+  jabatan          String?
+  atasan           String?
+  exitInterview    String?  @db.Text
+  pengembalianAset String?  @db.Text
+  statusFinal      String?
+  pt               String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("hrm_offboarding")
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  userName  String?
+  action    String
+  target    String
+  details   String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@map("activity_log")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  link      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("notification")
+}
+
+model InternalDocument {
+  id             String   @id @default(cuid())
+  documentType   String
+  documentNumber String
+  recipientName  String
+  issueDate      DateTime
+  expiryDate     DateTime?
+  description    String?  @db.Text
+  googleFolderId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("internal_document")
+}
+
+model NarasumberHukum {
+  id             String   @id @default(cuid())
+  fileName       String
+  description    String?  @db.Text
+  pic            String?  // Comma-separated list of emails allowed to see this file
+  googleFileId   String
+  googleFolderId String   // Parent folder in G-Drive
+  pt             String?  // PT association
+  mimeType       String
+  size           Float?
+  webViewLink    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("narasumber_hukum")
+}
+

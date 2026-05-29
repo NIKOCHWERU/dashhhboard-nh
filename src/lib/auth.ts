@@ -1,0 +1,143 @@
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { NextAuthOptions } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import { prisma } from "./prisma";
+import fs from "fs";
+import path from "path";
+
+export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          scope: "openid email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive",
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code",
+        },
+      },
+    }),
+  ],
+  session: {
+    strategy: "jwt",
+  },
+  pages: {
+    signIn: "/signin",
+  },
+  callbacks: {
+    async jwt({ token, account }) {
+      // 1. Initial sign in
+      if (account) {
+        token.accessToken = account.access_token;
+        token.refreshToken = account.refresh_token;
+        token.expiresAt = account.expires_at; // Expires at in seconds
+        return token;
+      }
+
+      // 2. Return previous token if the access token has not expired yet
+      // Refresh 1 minute before expiry
+      if (Date.now() < (token.expiresAt as number) * 1000 - 60000) {
+        return token;
+      }
+
+      // 3. Access token has expired, try to update it
+      try {
+        const response = await fetch("https://oauth2.googleapis.com/token", {
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            client_id: process.env.GOOGLE_CLIENT_ID!,
+            client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+            grant_type: "refresh_token",
+            refresh_token: token.refreshToken as string,
+          }),
+          method: "POST",
+        });
+
+        const tokens = await response.json();
+
+        if (!response.ok) throw tokens;
+
+        return {
+          ...token,
+          accessToken: tokens.access_token,
+          expiresAt: Math.floor(Date.now() / 1000 + tokens.expires_in),
+          // Fall back to old refresh token if Google doesn't return a new one
+          refreshToken: tokens.refresh_token ?? token.refreshToken,
+        };
+      } catch (error) {
+        console.error("Error refreshing access token", error);
+        return { ...token, error: "RefreshAccessTokenError" };
+      }
+    },
+    async session({ session, token }) {
+      if (token && session.user) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.sub },
+          });
+
+          if (dbUser) {
+            session.user.name = dbUser.name;
+            session.user.email = dbUser.email;
+            session.user.image = dbUser.image;
+
+            (session.user as any).id = dbUser.id;
+            (session.user as any).role = dbUser.role;
+            (session.user as any).canCreateAgenda = dbUser.canCreateAgenda;
+            (session.user as any).canManageHRM = dbUser.canManageHRM;
+            (session.user as any).canManageRetainer = dbUser.canManageRetainer;
+            (session.user as any).canManagePerorangan = dbUser.canManagePerorangan;
+          }
+        } catch (error) {
+          console.error("Error in session callback:", error);
+        }
+
+        (session as any).accessToken = token.accessToken;
+        (session as any).error = token.error;
+      }
+      return session;
+    },
+  },
+  events: {
+    async createUser({ user }) {
+      if (user.image && user.image.startsWith("http")) {
+        try {
+          // 1. Pastikan direktori ada
+          const avatarsDir = path.join(process.cwd(), "public", "avatars");
+          if (!fs.existsSync(avatarsDir)) {
+            fs.mkdirSync(avatarsDir, { recursive: true });
+          }
+
+          // 2. Request HD version (replace s96-c with s400-c)
+          const hdImageUrl = user.image.replace(/s\d+-c/, "s400-c");
+          const res = await fetch(hdImageUrl);
+          
+          if (!res.ok) throw new Error(`Failed to fetch image: ${res.statusText}`);
+
+          const arrayBuffer = await res.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+
+          const fileName = `${user.id}.jpg`;
+          const filePath = path.join(avatarsDir, fileName);
+
+          // 3. Simpan file
+          fs.writeFileSync(filePath, buffer);
+
+          // 4. Update database dengan path lokal
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { image: `/avatars/${fileName}` },
+          });
+          
+          console.log(`Successfully downloaded avatar for user ${user.id}`);
+        } catch (error) {
+          console.error("Failed to download avatar:", error);
+          // Jika gagal, biarkan user.image tetap menggunakan URL Google (default dari adapter)
+        }
+      }
+    },
+  },
+};

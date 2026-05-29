@@ -1,0 +1,597 @@
+"use client";
+import React, { useState, useEffect } from "react";
+import { FeatureModal } from "@/components/common/FeatureModal";
+import { PlusIcon, BoxIconLine } from "@/icons";
+
+interface Retainer {
+  id: string;
+  clientName: string;
+  projectName: string;
+  categories: string;
+  startDate: string;
+  endDate: string | null;
+  status: string;
+  contractValue: number | null;
+  picEmail: string | null;
+  googleFolderId: string | null;
+  createdAt: string;
+}
+
+interface User {
+  id: string;
+  name: string | null;
+  email: string | null;
+}
+
+export default function RetainerPage() {
+  const [data, setData] = useState<Retainer[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // View detail modal state
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [viewItem, setViewItem] = useState<Retainer | null>(null);
+
+  // Sorting state
+  const [sortBy, setSortBy] = useState<"name-asc" | "name-desc" | "date-newest" | "date-oldest">("name-asc");
+
+  // Form state
+  const [formData, setFormData] = useState({
+    clientName: "",
+    projectName: "",
+    categories: [] as string[],
+    startDate: "",
+    endDate: "",
+    status: "Active",
+    contractValue: "",
+    picEmail: "",
+  });
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [resRet, resUsers] = await Promise.all([
+        fetch("/api/retainer"),
+        fetch("/api/users"),
+      ]);
+
+      if (resRet.ok) {
+        const retData = await resRet.json();
+        setData(Array.isArray(retData) ? retData : []);
+      }
+      if (resUsers.ok) {
+        const userData = await resUsers.json();
+        setUsers(Array.isArray(userData) ? userData : []);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleOpenCreate = () => {
+    setIsEditMode(false);
+    setSelectedId(null);
+    setFormData({
+      clientName: "",
+      projectName: "",
+      categories: [],
+      startDate: "",
+      endDate: "",
+      status: "Active",
+      contractValue: "",
+      picEmail: "",
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (item: Retainer) => {
+    setIsEditMode(true);
+    setSelectedId(item.id);
+    setFormData({
+      clientName: item.clientName,
+      projectName: item.projectName,
+      categories: item.categories ? item.categories.split(",") : [],
+      startDate: item.startDate ? item.startDate.split("T")[0] : "",
+      endDate: item.endDate ? item.endDate.split("T")[0] : "",
+      status: item.status,
+      contractValue: item.contractValue ? item.contractValue.toString() : "",
+      picEmail: item.picEmail || "",
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleOpenView = (item: Retainer) => {
+    setViewItem(item);
+    setIsViewOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload = {
+      ...formData,
+      categories: formData.categories.join(","),
+    };
+
+    const method = isEditMode ? "PUT" : "POST";
+    const url = isEditMode ? `/api/retainer?id=${selectedId}` : "/api/retainer";
+
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (res.ok) {
+      setIsModalOpen(false);
+      fetchData();
+    } else {
+      alert("Gagal menyimpan data retainer.");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Apakah Anda yakin ingin menghapus data retainer ini? Folder Google Drive klien ini juga akan ikut dihapus secara otomatis.")) return;
+
+    const res = await fetch(`/api/retainer?id=${id}`, { method: "DELETE" });
+    if (res.ok) {
+      fetchData();
+    } else {
+      alert("Gagal menghapus data.");
+    }
+  };
+
+  const handleCategoryCheckboxChange = (cat: string) => {
+    setFormData((prev) => {
+      const exists = prev.categories.includes(cat);
+      const newCats = exists
+        ? prev.categories.filter((c) => c !== cat)
+        : [...prev.categories, cat];
+      return { ...prev, categories: newCats };
+    });
+  };
+
+  // Helper for checking expiration warning
+  const getExpirationWarning = (endDateStr: string | null) => {
+    if (!endDateStr) return null;
+    const endDate = new Date(endDateStr);
+    const today = new Date();
+    const diffMs = endDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      return { message: "KONTRAK KEDALUWARSA", type: "expired" };
+    }
+    if (diffDays <= 90) { // 3 months
+      return { message: `⚠️ HABIS DALAM ${diffDays} HARI (KONTRAK MAU HABIS)`, type: "warning" };
+    }
+    return null;
+  };
+
+  // Sort and filter data
+  const sortedData = [...data].sort((a, b) => {
+    if (sortBy === "name-asc") {
+      return a.clientName.localeCompare(b.clientName);
+    }
+    if (sortBy === "name-desc") {
+      return b.clientName.localeCompare(a.clientName);
+    }
+    if (sortBy === "date-newest") {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+    if (sortBy === "date-oldest") {
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    }
+    return 0;
+  });
+
+  return (
+    <div className="p-4 md:p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">Project Retainer (PT)</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Kelola dan pantau kontrak kerja sama jangka panjang secara detail dan teratur.
+          </p>
+        </div>
+        <button
+          onClick={handleOpenCreate}
+          className="bg-brand-500 text-white px-5 py-2.5 rounded-none font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-brand-600 shadow-sm transition-all"
+        >
+          <PlusIcon /> Tambah Retainer Baru
+        </button>
+      </div>
+
+      {/* Expiration warning alerts panel if any contract is ending */}
+      {data.some((r) => getExpirationWarning(r.endDate)?.type === "warning") && (
+        <div className="bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-500 p-4 rounded-none">
+          <div className="flex gap-2">
+            <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <h4 className="text-xs font-black text-amber-800 dark:text-amber-400 uppercase">Peringatan Kontrak Mendekati Expired!</h4>
+              <p className="text-[10px] text-amber-700 dark:text-amber-500 mt-0.5">
+                Ada kontrak klien retainer yang akan habis dalam waktu kurang dari 3 bulan (90 hari). Harap periksa dan hubungi klien untuk perpanjangan.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sorting bar */}
+      <div className="flex justify-between items-center gap-4 bg-gray-50 dark:bg-gray-900/50 p-3 border border-stroke dark:border-strokedark rounded-none">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Urutkan:</span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="px-2 py-1 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 text-[10px] font-bold uppercase rounded-none focus:outline-none focus:border-brand-500"
+          >
+            <option value="name-asc">Nama Klien (A-Z)</option>
+            <option value="name-desc">Nama Klien (Z-A)</option>
+            <option value="date-newest">Baru Ditambahkan</option>
+            <option value="date-oldest">Lama Ditambahkan</option>
+          </select>
+        </div>
+        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+          Total: {data.length} Klien
+        </span>
+      </div>
+
+      {/* RETAINER GRID */}
+      {loading ? (
+        <div className="flex justify-center items-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+        </div>
+      ) : sortedData.length === 0 ? (
+        <div className="border border-stroke dark:border-strokedark p-16 text-center text-xs text-gray-400 italic bg-white dark:bg-gray-900 rounded-none">
+          Belum ada data retainer terdaftar. Silakan tambah data baru.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {sortedData.map((item) => {
+            const expWarn = getExpirationWarning(item.endDate);
+            return (
+              <div
+                key={item.id}
+                className="bg-white dark:bg-gray-900 border border-stroke dark:border-strokedark p-5 rounded-none hover:border-brand-500 hover:shadow-lg transition-all flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex justify-between items-start mb-3">
+                    <span className="px-2 py-0.5 bg-brand-50 text-brand-700 text-[8px] font-black uppercase dark:bg-brand-500/10 dark:text-brand-400 tracking-widest rounded-none">
+                      Retainer
+                    </span>
+                    <span
+                      className={`text-[9px] font-black uppercase px-2.5 py-0.5 rounded-none tracking-widest ${
+                        item.status === "Active"
+                          ? "bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400"
+                          : "bg-gray-50 text-gray-700 dark:bg-gray-500/10 dark:text-gray-400"
+                      }`}
+                    >
+                      {item.status}
+                    </span>
+                  </div>
+
+                  <h3 className="text-sm font-black text-black dark:text-white uppercase tracking-wide line-clamp-1">
+                    {item.clientName}
+                  </h3>
+                  <p className="text-[11px] text-gray-400 font-semibold line-clamp-1 mt-0.5">
+                    Proyek: {item.projectName}
+                  </p>
+
+                  {/* Expiration warning badge inside card */}
+                  {expWarn && (
+                    <div
+                      className={`text-[9px] font-black tracking-wider uppercase px-2.5 py-1 mt-3 text-center rounded-none ${
+                        expWarn.type === "expired"
+                          ? "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400 border border-red-200 dark:border-red-500/20"
+                          : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20"
+                      }`}
+                    >
+                      {expWarn.message}
+                    </div>
+                  )}
+
+                  {/* Display categories tags */}
+                  {item.categories && (
+                    <div className="flex flex-wrap gap-1.5 mt-3.5">
+                      {item.categories.split(",").map((cat) => (
+                        <span
+                          key={cat}
+                          className="px-2 py-0.5 border border-stroke dark:border-strokedark text-gray-400 dark:text-gray-500 text-[8px] font-black uppercase rounded-none tracking-wider"
+                        >
+                          {cat}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-stroke dark:border-strokedark flex flex-wrap justify-between items-center gap-4">
+                  <div className="text-[10px] text-gray-400 font-semibold space-y-1">
+                    <p>
+                      Mulai:{" "}
+                      <span className="text-black dark:text-white font-bold">
+                        {new Date(item.startDate).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </span>
+                    </p>
+                    {item.endDate && (
+                      <p>
+                        Selesai:{" "}
+                        <span className="text-black dark:text-white font-bold">
+                          {new Date(item.endDate).toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => handleOpenView(item)}
+                      className="px-3 py-1.5 bg-brand-50 text-brand-700 hover:bg-brand-100 dark:bg-brand-500/10 dark:text-brand-400 text-[10px] font-black uppercase tracking-wider rounded-none transition-colors border border-brand-200 dark:border-brand-500/20"
+                    >
+                      Detail
+                    </button>
+                    <button
+                      onClick={() => handleOpenEdit(item)}
+                      className="px-3 py-1.5 border border-stroke dark:border-strokedark text-[10px] font-black uppercase tracking-wider hover:bg-gray-50 dark:hover:bg-gray-800 rounded-none transition-colors"
+                    >
+                      Ubah
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 text-[10px] font-black uppercase tracking-wider rounded-none transition-colors"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* FEATURE MODAL FOR CREATE/EDIT */}
+      <FeatureModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={isEditMode ? "Ubah Data Retainer" : "Tambah Data Retainer"}
+        subtitle="Rincian kontrak kerja jangka panjang perusahaan klien"
+        icon={<BoxIconLine />}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Nama Klien / PT</label>
+            <input
+              required
+              placeholder="Contoh: PT Braga Jaya"
+              className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark rounded-none px-4 py-3 text-sm focus:border-brand-500 outline-none"
+              value={formData.clientName}
+              onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Nama Proyek / Kontrak</label>
+            <input
+              required
+              placeholder="Contoh: Corporate Restructuring"
+              className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark rounded-none px-4 py-3 text-sm focus:border-brand-500 outline-none"
+              value={formData.projectName}
+              onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
+            />
+          </div>
+
+          {/* MULTI-SELECT CATEGORIES */}
+          <div>
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Kategori Kontrak Retainer</label>
+            <div className="flex flex-wrap gap-4 p-3 border border-stroke dark:border-strokedark bg-gray-50 dark:bg-gray-800/50 rounded-none">
+              {["HRM", "CORPORATE LEGAL", "PAJAK"].map((cat) => (
+                <label key={cat} className="flex items-center gap-2 text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.categories.includes(cat)}
+                    onChange={() => handleCategoryCheckboxChange(cat)}
+                    className="w-4 h-4 text-brand-500 border-stroke rounded-none cursor-pointer focus:ring-0 focus:ring-offset-0"
+                  />
+                  {cat}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Mulai Kontrak</label>
+              <input
+                type="date"
+                required
+                className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark rounded-none px-4 py-3 text-sm focus:border-brand-500 outline-none"
+                value={formData.startDate}
+                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Selesai Kontrak</label>
+              <input
+                type="date"
+                className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark rounded-none px-4 py-3 text-sm focus:border-brand-500 outline-none"
+                value={formData.endDate}
+                onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Nilai Kontrak (Rupiah)</label>
+              <input
+                type="number"
+                placeholder="Contoh: 150000000"
+                className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark rounded-none px-4 py-3 text-sm focus:border-brand-500 outline-none"
+                value={formData.contractValue}
+                onChange={(e) => setFormData({ ...formData, contractValue: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Status Kontrak</label>
+              <select
+                className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark rounded-none px-4 py-3 text-sm focus:border-brand-500 outline-none font-bold uppercase"
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              >
+                <option value="Active">ACTIVE</option>
+                <option value="Finished">FINISHED</option>
+                <option value="On Hold">ON HOLD</option>
+              </select>
+            </div>
+          </div>
+
+          {/* PIC SELECT DROPDOWN */}
+          <div>
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Person in Charge (PIC)</label>
+            <select
+              className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark rounded-none px-4 py-3 text-sm focus:border-brand-500 outline-none font-bold text-gray-700 dark:text-gray-300"
+              value={formData.picEmail}
+              onChange={(e) => setFormData({ ...formData, picEmail: e.target.value })}
+            >
+              <option value="">-- PILIH PIC KARYAWAN --</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.email || ""}>
+                  {u.name || "Karyawan"} ({u.email})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button className="w-full bg-brand-500 text-white py-3.5 rounded-none font-black uppercase tracking-widest text-xs hover:bg-brand-600 transition-all shadow-sm">
+            {isEditMode ? "Perbarui Retainer" : "Simpan Retainer"}
+          </button>
+        </form>
+      </FeatureModal>
+
+      {/* DETAILED VIEW MODAL (GLOBAL REQUEST ACTION VIEW) */}
+      <FeatureModal
+        isOpen={isViewOpen}
+        onClose={() => setIsViewOpen(false)}
+        title="Detail Proyek Retainer"
+        subtitle="Rincian kontrak kerja sama jangka panjang klien secara lengkap"
+        icon={<BoxIconLine />}
+      >
+        {viewItem && (
+          <div className="space-y-6 text-xs">
+            <div className="grid grid-cols-2 gap-4 pb-4 border-b border-stroke dark:border-strokedark">
+              <div>
+                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Status Kontrak</span>
+                <span className={`px-3 py-1 text-xs font-black uppercase tracking-wider border ${
+                  viewItem.status === "Active"
+                    ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400"
+                    : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-500/10 dark:text-gray-400"
+                }`}>
+                  {viewItem.status}
+                </span>
+              </div>
+              <div>
+                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">G-Drive Folder</span>
+                {viewItem.googleFolderId ? (
+                  <a
+                    href={`/dokumen`}
+                    className="text-xs font-bold text-brand-500 hover:underline uppercase tracking-wide"
+                  >
+                    📂 Buka Google Drive
+                  </a>
+                ) : (
+                  <span className="text-gray-400 italic">No Folder ID</span>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-gray-50 dark:bg-gray-800/40 p-4 border border-stroke dark:border-strokedark rounded-none">
+                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Nama Perusahaan / Klien Retainer</span>
+                <span className="text-sm font-bold text-black dark:text-white uppercase">{viewItem.clientName}</span>
+              </div>
+
+              <div className="bg-gray-50 dark:bg-gray-800/40 p-4 border border-stroke dark:border-strokedark rounded-none">
+                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Nama Proyek / Kategori Pekerjaan</span>
+                <span className="text-sm font-bold text-black dark:text-white uppercase">{viewItem.projectName}</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 dark:bg-gray-800/40 p-3 border border-stroke dark:border-strokedark rounded-none">
+                  <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Tanggal Mulai Kontrak</span>
+                  <span className="font-bold text-black dark:text-white">
+                    {new Date(viewItem.startDate).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+                  </span>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800/40 p-3 border border-stroke dark:border-strokedark rounded-none">
+                  <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Tanggal Selesai Kontrak</span>
+                  <span className="font-bold text-black dark:text-white">
+                    {viewItem.endDate ? new Date(viewItem.endDate).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "Jangka Panjang"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 dark:bg-gray-800/40 p-3 border border-stroke dark:border-strokedark rounded-none">
+                  <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Nilai Kontrak</span>
+                  <span className="font-black text-green-600 dark:text-green-400 text-sm">
+                    Rp {viewItem.contractValue ? viewItem.contractValue.toLocaleString("id-ID") : "0"}
+                  </span>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800/40 p-3 border border-stroke dark:border-strokedark rounded-none">
+                  <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">PIC Karyawan</span>
+                  <span className="font-bold text-black dark:text-white">
+                    👤 {viewItem.picEmail || "-"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Category tags */}
+              {viewItem.categories && (
+                <div>
+                  <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Kategori Pekerjaan</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {viewItem.categories.split(",").map((cat) => (
+                      <span
+                        key={cat}
+                        className="px-2.5 py-1 border border-stroke dark:border-strokedark text-gray-700 dark:text-gray-300 text-[10px] font-black uppercase rounded-none tracking-wider bg-gray-50 dark:bg-gray-800"
+                      >
+                        {cat}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => setIsViewOpen(false)}
+              className="w-full bg-brand-500 text-white py-3 rounded-none font-black uppercase tracking-wider text-xs hover:bg-brand-600 transition-all shadow-sm"
+            >
+              Tutup Rincian
+            </button>
+          </div>
+        )}
+      </FeatureModal>
+    </div>
+  );
+}
