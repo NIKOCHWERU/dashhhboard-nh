@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { useSession } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -17,22 +18,166 @@ interface LegalTicket {
   id: string;
   title: string;
   status: "Open" | "In Progress" | "Pending" | "Completed";
-  priority: "High" | "Medium" | "Low";
+  priority: string;
   requester: string;
   date: string;
   desc: string;
   chat: TicketMessage[];
 }
 
+// DYNAMIC COMBOBOX COMPONENT
+interface DynamicComboboxProps {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  options: string[];
+  onAddOption?: (newVal: string) => void;
+  placeholder?: string;
+}
+
+function DynamicCombobox({
+  label,
+  value,
+  onChange,
+  options,
+  onAddOption,
+  placeholder = "Pilih atau ketik baru..."
+}: DynamicComboboxProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  // Synchronize search text with current selected value when dropdown is closed
+  React.useEffect(() => {
+    if (!isOpen) {
+      setSearch(value);
+    }
+  }, [value, isOpen]);
+
+  // Handle click outside to close dropdown
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredOptions = options.filter(opt =>
+    opt.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const isExactMatch = options.some(opt => opt.toLowerCase() === search.trim().toLowerCase());
+
+  const handleSelect = (val: string) => {
+    onChange(val);
+    setIsOpen(false);
+  };
+
+  const handleAddNew = () => {
+    const trimmed = search.trim();
+    if (!trimmed) return;
+    if (onAddOption) {
+      onAddOption(trimmed);
+    }
+    onChange(trimmed);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="space-y-1 relative" ref={containerRef}>
+      <label className="font-semibold text-gray-700 dark:text-gray-300">{label}</label>
+      <div className="relative">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            onChange(e.target.value); // allow direct typing
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          placeholder={placeholder}
+          className="w-full px-3 py-2 border border-gray-250 rounded-lg outline-none bg-white dark:bg-gray-800 text-xs font-semibold text-gray-900 dark:text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+        />
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+        >
+          <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-48 overflow-y-auto text-xs">
+          {filteredOptions.map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => handleSelect(opt)}
+              className={`w-full text-left px-3 py-2 hover:bg-brand-50 dark:hover:bg-brand-950/20 text-gray-700 dark:text-gray-200 font-medium ${
+                value === opt ? 'bg-brand-50/50 dark:bg-brand-950/10 text-brand-600 font-bold' : ''
+              }`}
+            >
+              {opt}
+            </button>
+          ))}
+
+          {search.trim() !== "" && !isExactMatch && (
+            <button
+              type="button"
+              onClick={handleAddNew}
+              className="w-full text-left px-3 py-2 bg-brand-50/30 dark:bg-brand-950/5 border-t border-gray-100 dark:border-gray-700 text-brand-600 dark:text-brand-400 font-bold flex items-center gap-1.5 hover:bg-brand-50 dark:hover:bg-brand-950/20"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+              </svg>
+              Tambah &ldquo;{search}&rdquo; baru
+            </button>
+          )}
+
+          {filteredOptions.length === 0 && search.trim() === "" && (
+            <div className="px-3 py-3 text-center text-gray-400 italic">
+              Tidak ada pilihan. Ketik untuk membuat baru.
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function LegalRequestPage() {
+  const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState("Open");
+
+  // Dynamic Options state
+  const [priorities, setPriorities] = useState<string[]>([
+    "Tinggi (High)",
+    "Sedang (Medium)",
+    "Rendah (Low)"
+  ]);
+
+  const [availablePics, setAvailablePics] = useState<string[]>([
+    "Andi (Legal)",
+    "Budi (IT)",
+    "Sarah (HR)",
+    "Rian (Finance)",
+    "Herman (GA)"
+  ]);
+
   const [tickets, setTickets] = useState<LegalTicket[]>([
     { 
       id: "REQ-01", 
       title: "Review Kontrak Vendor IT", 
       status: "In Progress", 
-      priority: "High", 
-      requester: "Dept IT", 
+      priority: "Tinggi (High)", 
+      requester: "Budi (IT)", 
       date: "Hari ini",
       desc: "Mohon review untuk draf PKS penyediaan server cloud PT. Data Nusantara. Perhatikan klausul garansi SLA minimal 99.9%.",
       chat: [
@@ -44,8 +189,8 @@ export default function LegalRequestPage() {
       id: "REQ-02", 
       title: "Penyusunan NDA Freelancer", 
       status: "Open", 
-      priority: "Medium", 
-      requester: "Dept HR", 
+      priority: "Sedang (Medium)", 
+      requester: "Sarah (HR)", 
       date: "Kemarin",
       desc: "Draf NDA untuk desainer lepasan (freelancer) proyek mobile app baru. Data aset grafis harus terlindungi sepenuhnya.",
       chat: [
@@ -56,8 +201,8 @@ export default function LegalRequestPage() {
       id: "REQ-03", 
       title: "Konsultasi Hukum Ketenagakerjaan", 
       status: "Pending", 
-      priority: "Low", 
-      requester: "Finance", 
+      priority: "Rendah (Low)", 
+      requester: "Rian (Finance)", 
       date: "2 Hari Lalu",
       desc: "Tanya jawab terkait ketentuan hak pesangon karyawan PKWTT yang mengundurkan diri sukarela (resign) secara tertulis.",
       chat: [
@@ -68,8 +213,8 @@ export default function LegalRequestPage() {
       id: "REQ-04", 
       title: "Perpanjangan Sewa Gedung", 
       status: "Completed", 
-      priority: "High", 
-      requester: "Dept GA", 
+      priority: "Tinggi (High)", 
+      requester: "Herman (GA)", 
       date: "Minggu Lalu",
       desc: "Perpanjangan berkas kontrak sewa ruko kantor cabang di Kembangan, Jakarta Barat.",
       chat: [
@@ -81,9 +226,20 @@ export default function LegalRequestPage() {
   // Modal Create Ticket states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
-  const [newPriority, setNewPriority] = useState<"High" | "Medium" | "Low">("Medium");
-  const [newRequester, setNewRequester] = useState("Dept IT");
+  const [newPriority, setNewPriority] = useState<string>("Sedang (Medium)");
+  const [newRequester, setNewRequester] = useState<string>("Budi (IT)");
   const [newDesc, setNewDesc] = useState("");
+
+  // Sync user session name to PIC list and default input requester
+  React.useEffect(() => {
+    if (session?.user?.name) {
+      const userName = session.user.name;
+      if (!availablePics.includes(userName)) {
+        setAvailablePics(prev => [userName, ...prev]);
+      }
+      setNewRequester(userName);
+    }
+  }, [session]);
 
   // Modal Discussion Chat states
   const [selectedTicket, setSelectedTicket] = useState<LegalTicket | null>(null);
@@ -104,7 +260,7 @@ export default function LegalRequestPage() {
       date: "Baru saja",
       desc: newDesc,
       chat: [
-        { sender: `User (${newRequester})`, role: "Pengusul", time: "Baru saja", content: newDesc }
+        { sender: `${newRequester}`, role: "Pengusul", time: "Baru saja", content: newDesc }
       ]
     };
 
@@ -113,9 +269,13 @@ export default function LegalRequestPage() {
     
     // Reset form
     setNewTitle("");
-    setNewPriority("Medium");
-    setNewRequester("Dept IT");
+    setNewPriority("Sedang (Medium)");
     setNewDesc("");
+    if (session?.user?.name) {
+      setNewRequester(session.user.name);
+    } else {
+      setNewRequester("Budi (IT)");
+    }
   };
 
   const handleSendReply = () => {
@@ -159,13 +319,15 @@ export default function LegalRequestPage() {
     }
   };
 
-  const getPriorityLabel = (priority: string) => {
-    switch (priority) {
-      case "High": return "Tinggi";
-      case "Medium": return "Sedang";
-      case "Low":
-      default: return "Rendah";
+  const getPriorityBadgeVariant = (priority: string) => {
+    const p = priority.toLowerCase();
+    if (p.includes("tinggi") || p.includes("high") || p.includes("kritis") || p.includes("critical")) {
+      return "destructive";
     }
+    if (p.includes("sedang") || p.includes("medium") || p.includes("normal")) {
+      return "warning";
+    }
+    return "secondary";
   };
 
   return (
@@ -204,21 +366,21 @@ export default function LegalRequestPage() {
             {filtered.map(req => (
               <div 
                 key={req.id} 
-                className="p-4 border rounded-xl hover:shadow-md transition bg-white flex justify-between items-start gap-4"
+                className="p-4 border rounded-xl hover:shadow-md transition bg-white dark:bg-gray-900 flex justify-between items-start gap-4"
               >
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[10px] font-black text-gray-400">{req.id}</span>
-                    <Badge variant={req.priority === 'High' ? 'destructive' : req.priority === 'Medium' ? 'warning' : 'secondary'} className="text-[9px] px-1.5 py-0">
-                      Prioritas {getPriorityLabel(req.priority)}
+                    <Badge variant={getPriorityBadgeVariant(req.priority)} className="text-[9px] px-1.5 py-0">
+                      Prioritas {req.priority}
                     </Badge>
                     <Badge variant="outline" className="text-[9px] bg-brand-50/20 border-brand-100 text-brand-700">
                       {getStatusLabel(req.status)}
                     </Badge>
                   </div>
-                  <h3 className="font-bold text-sm text-gray-950 leading-snug">{req.title}</h3>
+                  <h3 className="font-bold text-sm text-gray-950 dark:text-white leading-snug">{req.title}</h3>
                   <p className="text-xs text-gray-500 font-semibold">Diminta oleh {req.requester} • {req.date}</p>
-                  <p className="text-xs text-gray-500 leading-relaxed max-w-xl">{req.desc}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed max-w-xl">{req.desc}</p>
                 </div>
                 
                 <Button variant="outline" size="sm" onClick={() => setSelectedTicket(req)} className="text-xs gap-1.5">
@@ -246,9 +408,9 @@ export default function LegalRequestPage() {
               <button onClick={() => setIsCreateModalOpen(false)} className="text-gray-400 hover:text-black text-xl font-bold">&times;</button>
             </div>
             
-            <div className="space-y-3 text-xs">
+            <div className="space-y-4 text-xs">
               <div className="space-y-1">
-                <label className="font-semibold text-gray-700">Judul Permintaan</label>
+                <label className="font-semibold text-gray-700 dark:text-gray-300">Judul Permintaan</label>
                 <Input 
                   placeholder="Masukkan pokok bahasan konsultasi/review..." 
                   value={newTitle} 
@@ -257,48 +419,38 @@ export default function LegalRequestPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="font-semibold text-gray-700">Skala Prioritas</label>
-                  <select
-                    value={newPriority}
-                    onChange={(e) => setNewPriority(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg outline-none bg-white text-xs font-semibold"
-                  >
-                    <option value="High">Tinggi (High)</option>
-                    <option value="Medium">Sedang (Medium)</option>
-                    <option value="Low">Rendah (Low)</option>
-                  </select>
-                </div>
+                <DynamicCombobox
+                  label="Skala Prioritas"
+                  value={newPriority}
+                  onChange={(val) => setNewPriority(val)}
+                  options={priorities}
+                  onAddOption={(newOpt) => setPriorities(prev => [...prev, newOpt])}
+                  placeholder="Pilih/ketik prioritas baru..."
+                />
 
-                <div className="space-y-1">
-                  <label className="font-semibold text-gray-700">Departemen Pengaju</label>
-                  <select
-                    value={newRequester}
-                    onChange={(e) => setNewRequester(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg outline-none bg-white text-xs font-semibold"
-                  >
-                    <option value="Dept IT">Dept IT</option>
-                    <option value="Dept HR">Dept HR</option>
-                    <option value="Dept GA">Dept GA</option>
-                    <option value="Finance">Finance</option>
-                    <option value="Marketing">Marketing</option>
-                  </select>
-                </div>
+                <DynamicCombobox
+                  label="Nama PIC Pengaju"
+                  value={newRequester}
+                  onChange={(val) => setNewRequester(val)}
+                  options={availablePics}
+                  onAddOption={(newOpt) => setAvailablePics(prev => [...prev, newOpt])}
+                  placeholder="Pilih/ketik nama PIC..."
+                />
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-gray-700">Keterangan / Deskripsi Permintaan</label>
+                <label className="font-semibold text-gray-700 dark:text-gray-300">Keterangan / Deskripsi Permintaan</label>
                 <textarea
                   rows={4}
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
                   placeholder="Uraikan secara detail pokok masalah hukum atau poin-poin draf perjanjian yang ingin disusun..."
-                  className="w-full rounded-lg border border-gray-250 bg-transparent px-4 py-3 text-xs outline-none focus:border-brand-500"
+                  className="w-full rounded-lg border border-gray-250 bg-transparent px-4 py-3 text-xs outline-none focus:border-brand-500 text-gray-900 dark:text-white dark:border-gray-800"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
               <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>Batal</Button>
               <Button onClick={handleCreateTicket}>Kirim Permintaan</Button>
             </div>
@@ -332,14 +484,14 @@ export default function LegalRequestPage() {
                     </div>
                     <div className={`p-3 rounded-2xl text-xs space-y-1 border ${
                       isLegal 
-                        ? 'bg-brand-50/50 border-brand-100 rounded-tr-none' 
-                        : 'bg-white border-gray-150 rounded-tl-none dark:bg-gray-800 dark:border-gray-700'
+                        ? 'bg-brand-50/50 border-brand-100 rounded-tr-none text-gray-800 dark:text-white dark:bg-brand-950/20' 
+                        : 'bg-white border-gray-150 rounded-tl-none dark:bg-gray-800 dark:border-gray-700 text-gray-750 dark:text-white'
                     }`}>
                       <div className="flex justify-between items-center gap-4 text-[10px] font-semibold text-gray-400">
                         <span>{msg.sender} ({msg.role})</span>
                         <span>{msg.time}</span>
                       </div>
-                      <p className="text-gray-700 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                      <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                     </div>
                   </div>
                 );
@@ -347,11 +499,11 @@ export default function LegalRequestPage() {
             </div>
 
             {/* Chat Reply Form */}
-            <div className="border-t border-gray-100 pt-4 flex gap-2 flex-shrink-0">
+            <div className="border-t border-gray-100 dark:border-gray-800 pt-4 flex gap-2 flex-shrink-0">
               <Input
                 placeholder="Ketik balasan Anda untuk divisi..."
                 value={replyMessage}
-                onChange={(e) => setReplyMessage(e.target.value)}
+                onChange={(e) => replyMessage !== undefined ? setReplyMessage(e.target.value) : undefined}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSendReply();
                 }}
