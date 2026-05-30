@@ -194,6 +194,24 @@ export default function PersonalNotesPage() {
     }
   };
 
+  const handleDeleteDirect = async (idToDelete: string) => {
+    if (!confirm("Apakah Anda yakin ingin menghapus catatan pribadi ini?")) return;
+
+    try {
+      const res = await fetch(`/api/personal-tasks?id=${idToDelete}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        fetchNotes();
+      } else {
+        alert("Gagal menghapus catatan.");
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+    }
+  };
+
   const toggleNoteStatus = async (note: PersonalNote, e: React.MouseEvent) => {
     e.stopPropagation();
     const newStatus = note.status === "COMPLETED" ? "PENDING" : "COMPLETED";
@@ -236,6 +254,88 @@ export default function PersonalNotesPage() {
       "Juli", "Agustus", "September", "Oktober", "November", "Desember"
     ];
     return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+  };
+
+  const renderNotesTable = (notesGroup: PersonalNote[]) => {
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="border-b border-gray-200 dark:border-gray-800 text-[10px] font-black uppercase text-gray-400 tracking-wider">
+              <th className="py-3 px-4 w-12 text-center">No</th>
+              <th className="py-3 px-4">Judul</th>
+              <th className="py-3 px-4">Keterangan</th>
+              <th className="py-3 px-4">Catatan</th>
+              <th className="py-3 px-4">Waktu Pengerjaan</th>
+              <th className="py-3 px-4 w-20 text-center">Ceklist</th>
+              <th className="py-3 px-4 w-28 text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60 text-xs">
+            {notesGroup.map((note, index) => {
+              const isCompleted = note.status === "COMPLETED";
+              return (
+                <tr 
+                  key={note.id}
+                  className="hover:bg-gray-50/50 dark:hover:bg-white/[0.01] transition-colors cursor-pointer group"
+                  onClick={() => loadNoteIntoForm(note, false)}
+                >
+                  <td className="py-4 px-4 text-center font-bold text-gray-400">{index + 1}</td>
+                  <td className="py-4 px-4 font-bold text-gray-900 dark:text-white max-w-xs truncate">
+                    <span className={isCompleted ? "line-through text-gray-400 dark:text-gray-500" : ""}>{note.title}</span>
+                  </td>
+                  <td className="py-4 px-4 text-gray-500 dark:text-gray-400 max-w-xs truncate">{note.description || "-"}</td>
+                  <td className="py-4 px-4 text-gray-500 dark:text-gray-400 max-w-xs truncate">{note.notes || "-"}</td>
+                  <td className="py-4 px-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    {new Date(note.startDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })} - {note.startDate.split("T")[1]?.slice(0,5) || "09:00"}
+                  </td>
+                  <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-center">
+                      <button
+                        onClick={(e) => toggleNoteStatus(note, e)}
+                        className={`w-5 h-5 border-2 flex items-center justify-center transition-colors rounded-none ${
+                          isCompleted 
+                            ? "bg-emerald-500 border-emerald-500 text-white" 
+                            : "border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-amber-500"
+                        }`}
+                      >
+                        {isCompleted && (
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="4" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-3">
+                      <button
+                        onClick={() => loadNoteIntoForm(note, false)}
+                        className="text-gray-500 hover:text-black dark:hover:text-white hover:underline transition"
+                      >
+                        Detail
+                      </button>
+                      <button
+                        onClick={() => loadNoteIntoForm(note, true)}
+                        className="text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 hover:underline transition"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteDirect(note.id)}
+                        className="text-red-500 hover:text-red-700 hover:underline transition"
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
   };
 
   const filteredNotes = notesList.filter((note) => {
@@ -356,9 +456,9 @@ export default function PersonalNotesPage() {
 
       {/* NOTES GRID AREA */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-6">
           {[1, 2, 3].map((n) => (
-            <div key={n} className="h-64 border border-gray-150 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.01] animate-pulse rounded-none"></div>
+            <div key={n} className="h-32 border border-gray-150 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.01] animate-pulse rounded-none"></div>
           ))}
         </div>
       ) : filteredNotes.length === 0 ? (
@@ -372,123 +472,54 @@ export default function PersonalNotesPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredNotes.map((note) => {
-            const isCompleted = note.status === "COMPLETED";
-            return (
-              <div
-                key={note.id}
-                onClick={() => loadNoteIntoForm(note, false)}
-                className={`relative group bg-white dark:bg-white/[0.02] border transition-all duration-300 flex flex-col justify-between shadow-md hover:shadow-2xl cursor-pointer ${
-                  isCompleted 
-                    ? "border-green-300 dark:border-green-950 opacity-75" 
-                    : note.priority === "Q1"
-                    ? "border-red-200 hover:border-red-400 dark:border-red-950/40"
-                    : note.priority === "Q2"
-                    ? "border-amber-250 hover:border-amber-400 dark:border-amber-950/40"
-                    : "border-gray-250 hover:border-gray-400 dark:border-gray-800"
-                }`}
-              >
-                {/* Checkbox Overlay Top-Right */}
-                <div 
-                  onClick={(e) => toggleNoteStatus(note, e)}
-                  className={`absolute top-4 right-4 w-6 h-6 border-2 flex items-center justify-center transition-colors rounded-none z-10 ${
-                    isCompleted 
-                      ? "bg-green-500 border-green-500 text-white" 
-                      : "border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 hover:border-amber-500"
-                  }`}
-                >
-                  {isCompleted && (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </div>
-
-                {/* Main Content Area */}
-                <div className="p-6 space-y-4">
-                  {/* Category & Date Info */}
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-none text-white ${
-                        note.priority === "Q1"
-                          ? "bg-red-500"
-                          : note.priority === "Q2"
-                          ? "bg-amber-500"
-                          : "bg-green-500"
-                      }`}
-                    >
-                      {note.priority === "Q1" ? "Tinggi (Q1)" : note.priority === "Q2" ? "Sedang (Q2)" : "Rendah (Q3)"}
-                    </span>
-                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                      {new Date(note.startDate).toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </span>
-                  </div>
-
-                  {/* Title */}
-                  <h3
-                    className={`text-base font-black text-gray-900 dark:text-white leading-snug line-clamp-2 ${
-                      isCompleted ? "line-through text-gray-400 dark:text-gray-500" : ""
-                    }`}
-                  >
-                    {note.title}
-                  </h3>
-
-                  {/* Description */}
-                  {note.description && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-3 leading-relaxed">
-                      {note.description}
-                    </p>
-                  )}
-
-                  {/* Image Attachment Thumbnail */}
-                  {note.imageUrl && (
-                    <div className="w-full h-32 relative border border-gray-100 dark:border-gray-800 overflow-hidden bg-gray-55">
-                      <img
-                        src={note.imageUrl}
-                        alt="Attached file thumbnail"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Footer Operations */}
-                <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800/80 bg-gray-50/50 dark:bg-white/[0.005] flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                  <span className={`px-2 py-0.5 rounded-none font-black text-white ${
-                    note.status === "COMPLETED" ? "bg-green-500" : note.status === "ONGOING" ? "bg-blue-500" : "bg-gray-400"
-                  }`}>
-                    {note.status === "COMPLETED" ? "Selesai" : note.status === "ONGOING" ? "Proses" : "Tunda"}
-                  </span>
-                  
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        loadNoteIntoForm(note, false);
-                      }}
-                      className="text-gray-500 hover:text-black dark:hover:text-white hover:underline transition-all"
-                    >
-                      Buka
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        loadNoteIntoForm(note, true);
-                      }}
-                      className="text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 hover:underline transition-all"
-                    >
-                      Edit
-                    </button>
-                  </div>
-                </div>
+        <div className="space-y-8">
+          {/* Q1 Section */}
+          <div className="bg-white dark:bg-white/[0.02] border border-red-200 dark:border-red-950/40 p-6 shadow-md space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                <h2 className="text-xs font-black uppercase tracking-wider text-red-600">Prioritas Tinggi (Q1)</h2>
               </div>
-            );
-          })}
+              <span className="text-[10px] font-black text-red-600 bg-red-50 dark:bg-red-950/20 px-2 py-0.5">{filteredNotes.filter(n => n.priority === "Q1").length} Catatan</span>
+            </div>
+            {filteredNotes.filter(n => n.priority === "Q1").length === 0 ? (
+              <p className="text-xs text-gray-400 italic py-4">Tidak ada catatan prioritas Q1.</p>
+            ) : (
+              renderNotesTable(filteredNotes.filter(n => n.priority === "Q1"))
+            )}
+          </div>
+
+          {/* Q2 Section */}
+          <div className="bg-white dark:bg-white/[0.02] border border-amber-200 dark:border-amber-950/40 p-6 shadow-md space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                <h2 className="text-xs font-black uppercase tracking-wider text-amber-600">Prioritas Sedang (Q2)</h2>
+              </div>
+              <span className="text-[10px] font-black text-amber-600 bg-amber-50 dark:bg-amber-950/20 px-2 py-0.5">{filteredNotes.filter(n => n.priority === "Q2").length} Catatan</span>
+            </div>
+            {filteredNotes.filter(n => n.priority === "Q2").length === 0 ? (
+              <p className="text-xs text-gray-400 italic py-4">Tidak ada catatan prioritas Q2.</p>
+            ) : (
+              renderNotesTable(filteredNotes.filter(n => n.priority === "Q2"))
+            )}
+          </div>
+
+          {/* Q3 Section */}
+          <div className="bg-white dark:bg-white/[0.02] border border-green-200 dark:border-green-950/40 p-6 shadow-md space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                <h2 className="text-xs font-black uppercase tracking-wider text-green-600">Prioritas Rendah (Q3)</h2>
+              </div>
+              <span className="text-[10px] font-black text-green-600 bg-green-50 dark:bg-green-950/20 px-2 py-0.5">{filteredNotes.filter(n => n.priority === "Q3").length} Catatan</span>
+            </div>
+            {filteredNotes.filter(n => n.priority === "Q3").length === 0 ? (
+              <p className="text-xs text-gray-400 italic py-4">Tidak ada catatan prioritas Q3.</p>
+            ) : (
+              renderNotesTable(filteredNotes.filter(n => n.priority === "Q3"))
+            )}
+          </div>
         </div>
       )}
 
