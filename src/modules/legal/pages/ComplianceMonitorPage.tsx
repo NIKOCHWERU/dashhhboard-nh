@@ -2,7 +2,6 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Progress } from "../components/ui/progress";
 import { ShieldCheck, AlertCircle, FileWarning, CheckCircle } from "lucide-react";
 
 // Inline simple progress component for standalone usage
