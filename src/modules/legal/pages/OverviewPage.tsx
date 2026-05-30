@@ -15,11 +15,11 @@ export default function OverviewPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Dashboard Legal</h1>
-          <p className="text-gray-500 mt-1">Overview and monitoring for legal documents and compliance.</p>
+          <p className="text-gray-500 mt-1">Ikhtisar dan pemantauan dokumen hukum serta kepatuhan.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline"><Settings className="w-4 h-4 mr-2" /> Settings</Button>
-          <Button><Plus className="w-4 h-4 mr-2" /> New Request</Button>
+          <Button variant="outline"><Settings className="w-4 h-4 mr-2" /> Pengaturan</Button>
+          <Button><Plus className="w-4 h-4 mr-2" /> Permintaan Baru</Button>
         </div>
       </div>
 
@@ -28,7 +28,7 @@ export default function OverviewPage() {
         <Card>
           <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Active Contracts</p>
+              <p className="text-sm font-medium text-gray-500">Kontrak Aktif</p>
               <h3 className="text-3xl font-bold text-gray-900 mt-2">124</h3>
             </div>
             <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
@@ -40,7 +40,7 @@ export default function OverviewPage() {
         <Card>
           <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Expiring Soon</p>
+              <p className="text-sm font-medium text-gray-500">Segera Kedaluwarsa</p>
               <h3 className="text-3xl font-bold text-amber-600 mt-2">12</h3>
             </div>
             <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
@@ -52,7 +52,7 @@ export default function OverviewPage() {
         <Card>
           <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Pending Approvals</p>
+              <p className="text-sm font-medium text-gray-500">Menunggu Persetujuan</p>
               <h3 className="text-3xl font-bold text-gray-900 mt-2">5</h3>
             </div>
             <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
@@ -64,7 +64,7 @@ export default function OverviewPage() {
         <Card>
           <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Completed This Month</p>
+              <p className="text-sm font-medium text-gray-500">Selesai Bulan Ini</p>
               <h3 className="text-3xl font-bold text-emerald-600 mt-2">48</h3>
             </div>
             <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
@@ -78,15 +78,15 @@ export default function OverviewPage() {
         {/* Expiring Contracts */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Expiring Contracts</CardTitle>
-            <CardDescription>Contracts expiring in the next 30 days.</CardDescription>
+            <CardTitle>Kontrak Segera Kedaluwarsa</CardTitle>
+            <CardDescription>Daftar kontrak yang akan habis masa berlakunya dalam 30 hari ke depan.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {[
-                { name: "Vendor Agreement - PT Maju Bersama", date: "3 Days", type: "Vendor", alert: "destructive" },
-                { name: "NDA - Freelance Developer", date: "14 Days", type: "NDA", alert: "warning" },
-                { name: "PKWT - Budi Santoso", date: "21 Days", type: "HR", alert: "warning" },
+                { name: "Vendor Agreement - PT Maju Bersama", date: "3 Hari", type: "Vendor", alert: "destructive" },
+                { name: "NDA - Freelance Developer", date: "14 Hari", type: "NDA", alert: "warning" },
+                { name: "PKWT - Budi Santoso", date: "21 Hari", type: "HR", alert: "warning" },
               ].map((item, i) => (
                 <div key={i} className="flex items-center justify-between p-4 border rounded-xl hover:bg-gray-50 transition">
                   <div className="flex items-center gap-4">
@@ -95,28 +95,28 @@ export default function OverviewPage() {
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900">{item.name}</p>
-                      <p className="text-sm text-gray-500">Type: {item.type}</p>
+                      <p className="text-sm text-gray-500">Jenis: {item.type}</p>
                     </div>
                   </div>
-                  <Badge variant={item.alert as any}>Expires in {item.date}</Badge>
+                  <Badge variant={item.alert as any}>Habis dalam {item.date}</Badge>
                 </div>
               ))}
             </div>
-            <Button variant="outline" className="w-full mt-4">View All Contracts</Button>
+            <Button variant="outline" className="w-full mt-4">Lihat Semua Kontrak</Button>
           </CardContent>
         </Card>
 
         {/* Recent Activities */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle>Aktivitas Terbaru</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="relative border-l border-gray-200 ml-3 space-y-6 pb-4">
               {[
-                { title: "Contract Signed", desc: "PKWT Sarah was signed by Director", time: "2 hours ago" },
-                { title: "New Legal Request", desc: "Drafting partnership agreement", time: "5 hours ago" },
-                { title: "Approval Pending", desc: "Vendor renewal requires your approval", time: "1 day ago" },
+                { title: "Kontrak Ditandatangani", desc: "PKWT Sarah telah ditandatangani oleh Direktur", time: "2 jam yang lalu" },
+                { title: "Permintaan Legal Baru", desc: "Penyusunan draf perjanjian kemitraan baru", time: "5 jam yang lalu" },
+                { title: "Menunggu Persetujuan", desc: "Perpanjangan vendor memerlukan persetujuan Anda", time: "1 hari yang lalu" },
               ].map((act, i) => (
                 <div key={i} className="relative pl-6">
                   <div className="absolute w-3 h-3 bg-brand-500 rounded-full -left-[6.5px] top-1.5 ring-4 ring-white" />

@@ -93,15 +93,15 @@ export default function GenerateSuratPage() {
   return (
     <div className="p-6 space-y-6 max-w-5xl">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Generate Surat</h1>
-        <p className="text-gray-500">Automate document creation from DOCX templates.</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Buat Surat</h1>
+        <p className="text-gray-500">Otomatisasi pembuatan dokumen dari templat DOCX.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-1 h-fit">
           <CardHeader>
-            <CardTitle>1. Upload Template</CardTitle>
-            <CardDescription>Upload a .docx file containing {"{{placeholders}}"}.</CardDescription>
+            <CardTitle>1. Unggah Templat</CardTitle>
+            <CardDescription>Unggah file .docx yang berisi {"{{placeholders}}"}.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:bg-gray-50 transition cursor-pointer">
@@ -114,8 +114,8 @@ export default function GenerateSuratPage() {
               />
               <label htmlFor="template-upload" className="cursor-pointer flex flex-col items-center">
                 <UploadCloud className="w-10 h-10 text-brand-500 mb-3" />
-                <span className="font-medium text-gray-900">Click to upload template</span>
-                <span className="text-xs text-gray-500 mt-1">.docx format only</span>
+                <span className="font-medium text-gray-900">Klik untuk unggah templat</span>
+                <span className="text-xs text-gray-500 mt-1">Format khusus .docx</span>
               </label>
             </div>
             
@@ -130,11 +130,11 @@ export default function GenerateSuratPage() {
 
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>2. Fill Data</CardTitle>
+            <CardTitle>2. Isi Data</CardTitle>
             <CardDescription>
               {placeholders.length > 0 
-                ? `Found ${placeholders.length} fields to fill.` 
-                : "Upload a template to scan fields automatically."}
+                ? `Menemukan ${placeholders.length} bidang untuk diisi.` 
+                : "Unggah templat terlebih dahulu untuk memindai variabel secara otomatis."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -147,7 +147,7 @@ export default function GenerateSuratPage() {
                         {key.replace(/_/g, ' ')}
                       </label>
                       <Input 
-                        placeholder={`Enter ${key.replace(/_/g, ' ')}`} 
+                        placeholder={`Masukkan ${key.replace(/_/g, ' ')}`} 
                         value={formData[key] || ""}
                         onChange={(e) => handleInputChange(key, e.target.value)}
                       />
@@ -158,7 +158,7 @@ export default function GenerateSuratPage() {
                 <div className="pt-4 border-t border-gray-100 flex justify-end gap-3 mt-6">
                   {isSuccess && (
                     <span className="flex items-center text-sm text-emerald-600 font-medium mr-auto">
-                      <Check className="w-4 h-4 mr-1" /> Generated Successfully
+                      <Check className="w-4 h-4 mr-1" /> Dokumen Berhasil Dibuat
                     </span>
                   )}
                   <Button 
@@ -167,13 +167,13 @@ export default function GenerateSuratPage() {
                     disabled={Object.keys(formData).length < placeholders.length}
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    Generate & Download DOCX
+                    Buat & Unduh DOCX
                   </Button>
                 </div>
               </div>
             ) : (
               <div className="text-center py-12 text-gray-500 border-2 border-dashed border-gray-100 rounded-xl">
-                Please upload a template first to generate the form.
+                Silakan unggah templat terlebih dahulu untuk membuat formulir pengisian data.
               </div>
             )}
           </CardContent>

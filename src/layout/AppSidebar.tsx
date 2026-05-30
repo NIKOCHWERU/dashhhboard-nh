@@ -38,7 +38,7 @@ const staticMenuGroups: MenuGroups[] = [
   {
     title: "Menu",
     items: [
-      { name: "Dashboard", icon: <GridIcon />, path: "/" },
+      { name: "Dashboard Utama", icon: <GridIcon />, path: "/" },
       { name: "Jadwal", icon: <CalenderIcon />, path: "/calendar" },
       { name: "Berkas", icon: <DokumenIcon />, path: "/dokumen" },
       { name: "Dokumentasi", icon: <DokumentasiIcon />, path: "/dokumentasi" },
@@ -107,7 +107,7 @@ const AppSidebar: React.FC = () => {
 
     // 1. Menu Group
     const menuItems = [
-      { name: "Dashboard", icon: <GridIcon />, path: "/" },
+      { name: "Dashboard Utama", icon: <GridIcon />, path: "/" },
       { name: "Kalender Tim", icon: <CalenderIcon />, path: "/calendar" },
       { name: "Catatan Pribadi", icon: <CatatanIcon />, path: "/catatan-pribadi" },
       { name: "Berkas", icon: <DokumenIcon />, path: "/dokumen" },
@@ -160,30 +160,30 @@ const AppSidebar: React.FC = () => {
       groups.push({
         title: "Dashboard Legal",
         items: [
-          { name: "Overview", icon: <GridIcon />, path: "/legal/overview" },
+          { name: "Dashboard Legal", icon: <GridIcon />, path: "/legal/overview" },
           {
-            name: "Document Automation",
+            name: "Otomatisasi Dokumen",
             icon: <DokumenIcon />,
             subItems: [
-              { name: "Generate Surat", path: "/legal/generate-surat" },
-              { name: "Template Management", path: "/legal/template-management" }
+              { name: "Buat Surat", path: "/legal/generate-surat" },
+              { name: "Manajemen Templat", path: "/legal/template-management" }
             ]
           },
           {
-            name: "Contract Management",
+            name: "Manajemen Kontrak",
             icon: <CatatanIcon />,
             subItems: [
-              { name: "All Contracts", path: "/legal/contracts" },
-              { name: "Expiry Monitoring", path: "/legal/expiry-monitoring" }
+              { name: "Semua Kontrak", path: "/legal/contracts" },
+              { name: "Pemantauan Kedaluwarsa", path: "/legal/expiry-monitoring" }
             ]
           },
-          { name: "Employee Legal", icon: <KaryawanIcon />, path: "/legal/employee-legal" },
-          { name: "Approval Workflow", icon: <SkalaPrioritasIcon />, path: "/legal/approvals" },
-          { name: "Legal Archive", icon: <DokumentasiIcon />, path: "/legal/archive" },
-          { name: "Compliance", icon: <GridIcon />, path: "/legal/compliance" },
-          { name: "Legal Request", icon: <PengumumanIcon />, path: "/legal/requests" },
-          { name: "Reports", icon: <DokumenIcon />, path: "/legal/reports" },
-          { name: "Settings", icon: <HorizontaLDots />, path: "/legal/settings" }
+          { name: "Legal Karyawan", icon: <KaryawanIcon />, path: "/legal/employee-legal" },
+          { name: "Alur Persetujuan", icon: <SkalaPrioritasIcon />, path: "/legal/approvals" },
+          { name: "Arsip Hukum", icon: <DokumentasiIcon />, path: "/legal/archive" },
+          { name: "Kepatuhan", icon: <GridIcon />, path: "/legal/compliance" },
+          { name: "Permintaan Legal", icon: <PengumumanIcon />, path: "/legal/requests" },
+          { name: "Laporan", icon: <DokumenIcon />, path: "/legal/reports" },
+          { name: "Pengaturan", icon: <HorizontaLDots />, path: "/legal/settings" }
         ]
       });
     }

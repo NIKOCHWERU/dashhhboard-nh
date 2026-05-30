@@ -8,37 +8,37 @@ export default function DigitalSignaturePage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Digital Signature</h1>
-        <p className="text-gray-500">Secure digital signing and stamping with audit trails.</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tanda Tangan Digital</h1>
+        <p className="text-gray-500">Tanda tangan digital dan pembubuhan stempel yang aman dengan jejak audit.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Sign Document</CardTitle>
-            <CardDescription>Upload a document to apply your digital signature.</CardDescription>
+            <CardTitle>Tandatangani Dokumen</CardTitle>
+            <CardDescription>Unggah dokumen untuk membubuhkan tanda tangan digital Anda.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:bg-gray-50 transition cursor-pointer">
               <UploadCloud className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="font-medium text-gray-900">Drag & Drop or Click to Upload</p>
-              <p className="text-sm text-gray-500 mt-1">Supports PDF, DOCX (Max 10MB)</p>
+              <p className="font-medium text-gray-900">Seret & Letakkan atau Klik untuk Mengunggah</p>
+              <p className="text-sm text-gray-500 mt-1">Mendukung PDF, DOCX (Maks 10MB)</p>
             </div>
-            <Button className="w-full"><PenTool className="w-4 h-4 mr-2"/> Apply Signature</Button>
+            <Button className="w-full"><PenTool className="w-4 h-4 mr-2"/> Bubuhkan Tanda Tangan</Button>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Signature Audit Trail</CardTitle>
-            <CardDescription>Recent documents signed by you.</CardDescription>
+            <CardTitle>Jejak Audit Tanda Tangan</CardTitle>
+            <CardDescription>Dokumen terbaru yang ditandatangani oleh Anda.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {[
-                { title: "NDA Freelancer - Q3", date: "Today, 14:00" },
-                { title: "Vendor Agreement PT XYZ", date: "Yesterday, 10:30" },
-                { title: "SPK Renewal 2026", date: "24 May 2026, 09:15" },
+                { title: "NDA Freelancer - Q3", date: "Hari ini, 14:00" },
+                { title: "Vendor Agreement PT XYZ", date: "Kemarin, 10:30" },
+                { title: "SPK Renewal 2026", date: "24 Mei 2026, 09:15" },
               ].map((doc, i) => (
                 <div key={i} className="flex justify-between items-center p-3 border rounded-lg">
                   <div className="flex items-center gap-3">
@@ -50,7 +50,7 @@ export default function DigitalSignaturePage() {
                       <p className="text-xs text-gray-500">{doc.date}</p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm">View Log</Button>
+                  <Button variant="outline" size="sm">Lihat Log</Button>
                 </div>
               ))}
             </div>

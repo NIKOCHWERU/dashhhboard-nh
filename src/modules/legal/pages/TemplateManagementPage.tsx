@@ -24,42 +24,42 @@ export default function TemplateManagementPage() {
     <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Template Management</h1>
-          <p className="text-gray-500">Manage DOCX templates for automatic document generation.</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Manajemen Templat</h1>
+          <p className="text-gray-500">Kelola templat DOCX untuk otomatisasi pembuatan dokumen hukum.</p>
         </div>
-        <Button><Upload className="w-4 h-4 mr-2" /> Upload Template</Button>
+        <Button><Upload className="w-4 h-4 mr-2" /> Unggah Templat</Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Document Templates</CardTitle>
-          <CardDescription>A list of all templates available for document automation.</CardDescription>
+          <CardTitle>Templat Dokumen</CardTitle>
+          <CardDescription>Daftar seluruh templat yang tersedia untuk otomatisasi pembuatan dokumen.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4 mb-6">
             <div className="relative w-full max-w-sm">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
               <Input 
-                placeholder="Search templates..." 
+                placeholder="Cari templat..." 
                 className="pl-9" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <div className="flex gap-2">
-              <Button variant="outline">Filter Category</Button>
+              <Button variant="outline">Filter Kategori</Button>
             </div>
           </div>
 
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Template Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Version</TableHead>
-                <TableHead>Last Updated</TableHead>
+                <TableHead>Nama Templat</TableHead>
+                <TableHead>Kategori</TableHead>
+                <TableHead>Versi</TableHead>
+                <TableHead>Terakhir Diperbarui</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -78,9 +78,9 @@ export default function TemplateManagementPage() {
                   <TableCell className="text-gray-500">{t.date}</TableCell>
                   <TableCell>
                     {t.status === "active" ? (
-                      <Badge variant="success" className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200"><CheckCircle2 className="w-3 h-3 mr-1"/> Active</Badge>
+                      <Badge variant="success" className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200"><CheckCircle2 className="w-3 h-3 mr-1"/> Aktif</Badge>
                     ) : (
-                      <Badge variant="secondary" className="bg-gray-100 text-gray-800"><XCircle className="w-3 h-3 mr-1"/> Inactive</Badge>
+                      <Badge variant="secondary" className="bg-gray-100 text-gray-800"><XCircle className="w-3 h-3 mr-1"/> Nonaktif</Badge>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
@@ -91,7 +91,7 @@ export default function TemplateManagementPage() {
               {filtered.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center text-gray-500">
-                    No templates found.
+                    Templat tidak ditemukan.
                   </TableCell>
                 </TableRow>
               )}
