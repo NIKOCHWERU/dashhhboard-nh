@@ -231,11 +231,17 @@ export default function GenerateSuratPage() {
     }
   }, []);
 
-  // Reset form fields when template changes
+  // Reset form fields and compile text with defaults when template changes
   useEffect(() => {
     const template = TEMPLATES_LIBRARY[selectedTemplateKey];
     setWizardFormData(template.defaults);
-    setEditableText(template.text);
+    
+    // Pre-compile template text with default values initially
+    let compiledText = template.text;
+    Object.entries(template.defaults).forEach(([k, v]) => {
+      compiledText = compiledText.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), v || `[${k}]`);
+    });
+    setEditableText(compiledText);
     setIsSuccessWizard(false);
   }, [selectedTemplateKey]);
 
