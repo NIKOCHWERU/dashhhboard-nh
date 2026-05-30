@@ -58,7 +58,11 @@ const TableCell: React.FC<TableCellProps> = ({
   className,
 }) => {
   const CellTag = isHeader ? "th" : "td";
-  return <CellTag className={` ${className}`}>{children}</CellTag>;
+  return (
+    <CellTag className={`break-words whitespace-normal text-xs md:text-sm ${className || ""}`}>
+      {children}
+    </CellTag>
+  );
 };
 
 export { Table, TableHeader, TableBody, TableRow, TableCell };

@@ -220,6 +220,17 @@ export default function GenerateSuratPage() {
   const [isGeneratingUpload, setIsGeneratingUpload] = useState(false);
   const [isSuccessUpload, setIsSuccessUpload] = useState(false);
 
+  // Set initial template from query parameter if present on load
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tempParam = params.get("template");
+      if (tempParam && tempParam in TEMPLATES_LIBRARY) {
+        setSelectedTemplateKey(tempParam as any);
+      }
+    }
+  }, []);
+
   // Reset form fields when template changes
   useEffect(() => {
     const template = TEMPLATES_LIBRARY[selectedTemplateKey];

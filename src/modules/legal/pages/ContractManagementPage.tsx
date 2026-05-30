@@ -19,46 +19,67 @@ const INITIAL_DUMMY_CONTRACTS = [
 export default function ContractManagementPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [retainers, setRetainers] = useState<{ id: string; clientName: string }[]>([]);
+  const [employees, setEmployees] = useState<{ id: string; name: string }[]>([]);
   const [selectedRetainer, setSelectedRetainer] = useState<string>("ALL");
-  const [contracts, setContracts] = useState<any[]>(INITIAL_DUMMY_CONTRACTS);
+  const [contracts, setContracts] = useState<any[]>([]);
   
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newType, setNewType] = useState("Vendor");
   const [newRetainerId, setNewRetainerId] = useState("");
+  const [newPicName, setNewPicName] = useState("");
   const [newStartDate, setNewStartDate] = useState("");
   const [newEndDate, setNewEndDate] = useState("");
   const [newStatus, setNewStatus] = useState("Draft");
 
-  // Fetch Retainer data from database API
+  // Fetch Retainer & Employee data from database API
   useEffect(() => {
-    const fetchRetainers = async () => {
+    const fetchData = async () => {
+      let fetchedRetainers: any[] = [];
+      let fetchedEmployees: any[] = [];
+
       try {
         const res = await fetch("/api/retainer");
         if (res.ok) {
-          const data = await res.json();
-          setRetainers(data);
-          
-          // Map dummy contracts to actual database retainers if they exist
-          if (data.length > 0) {
-            const mappedContracts = INITIAL_DUMMY_CONTRACTS.map((c, index) => {
-              const rIndex = index % data.length;
-              return {
-                ...c,
-                retainerId: data[rIndex].id,
-                retainerName: data[rIndex].clientName,
-                title: c.title.replace(/PT Maju Bersama|Freelance Designer|Sarah Johnson|Kantor Pusat|API|Universitas Bina Nusantara/g, data[rIndex].clientName)
-              };
-            });
-            setContracts(mappedContracts);
-          }
+          fetchedRetainers = await res.json();
+          setRetainers(fetchedRetainers);
         }
       } catch (err) {
         console.error("Failed to load retainers:", err);
       }
+
+      try {
+        const res = await fetch("/api/karyawan");
+        if (res.ok) {
+          fetchedEmployees = await res.json();
+          setEmployees(fetchedEmployees);
+        }
+      } catch (err) {
+        console.error("Failed to load employees:", err);
+      }
+
+      // Map dummy contracts to actual database retainers and employees if they exist
+      const mappedContracts = INITIAL_DUMMY_CONTRACTS.map((c, index) => {
+        const rIndex = index % (fetchedRetainers.length || 1);
+        const eIndex = index % (fetchedEmployees.length || 1);
+        const ret = fetchedRetainers[rIndex];
+        const emp = fetchedEmployees[eIndex];
+
+        return {
+          ...c,
+          retainerId: ret ? ret.id : `RET-00${rIndex + 1}`,
+          retainerName: ret ? ret.clientName : (index % 2 === 0 ? "PT Braga Jaya Konstruksindo" : "PT Maju Bersama"),
+          picName: emp ? emp.name : (index % 2 === 0 ? "Sarah Johnson" : "Budi Santoso"),
+          title: ret 
+            ? c.title.replace(/PT Maju Bersama|Freelance Designer|Sarah Johnson|Kantor Pusat|API|Universitas Bina Nusantara/g, ret.clientName)
+            : c.title
+        };
+      });
+      setContracts(mappedContracts);
     };
-    fetchRetainers();
+    
+    fetchData();
   }, []);
 
   const handleCreateContract = () => {
@@ -77,7 +98,8 @@ export default function ContractManagementPage() {
       endDate: newEndDate,
       status: newStatus,
       retainerId: newRetainerId || undefined,
-      retainerName: selectedRet ? selectedRet.clientName : "Umum"
+      retainerName: selectedRet ? selectedRet.clientName : "Umum / Tanpa Klien",
+      picName: newPicName || "Budi Santoso"
     };
 
     setContracts([newContract, ...contracts]);
@@ -87,6 +109,7 @@ export default function ContractManagementPage() {
     setNewTitle("");
     setNewType("Vendor");
     setNewRetainerId("");
+    setNewPicName("");
     setNewStartDate("");
     setNewEndDate("");
     setNewStatus("Draft");
@@ -166,12 +189,12 @@ export default function ContractManagementPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID Kontrak</TableHead>
-                <TableHead>Judul</TableHead>
-                <TableHead>Klien Retainer</TableHead>
+                <TableHead className="w-[100px]">ID Kontrak</TableHead>
+                <TableHead className="max-w-[200px]">Judul</TableHead>
+                <TableHead>PIC / Karyawan</TableHead>
+                <TableHead>Perusahaan / PT Klien</TableHead>
                 <TableHead>Jenis</TableHead>
-                <TableHead>Tanggal Mulai</TableHead>
-                <TableHead>Tanggal Selesai</TableHead>
+                <TableHead>Masa Berlaku</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
@@ -180,20 +203,25 @@ export default function ContractManagementPage() {
               {filtered.map((c) => (
                 <TableRow key={c.id}>
                   <TableCell className="font-medium text-gray-900">{c.id}</TableCell>
-                  <TableCell>
+                  <TableCell className="max-w-[200px] break-words font-semibold">
                     <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-brand-500" />
-                      {c.title}
+                      <FileText className="w-4 h-4 text-brand-500 flex-shrink-0" />
+                      <span className="truncate md:whitespace-normal">{c.title}</span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="bg-brand-50/50 text-brand-700 border-brand-200">
+                    <div className="font-medium text-gray-900">{c.picName || "Sarah Johnson"}</div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="bg-brand-50/50 text-brand-700 border-brand-200 text-[10px]">
                       {c.retainerName || "Umum"}
                     </Badge>
                   </TableCell>
-                  <TableCell><span className="text-gray-500">{c.type}</span></TableCell>
-                  <TableCell className="text-gray-500">{c.startDate}</TableCell>
-                  <TableCell className="text-gray-500">{c.endDate}</TableCell>
+                  <TableCell><span className="text-gray-500 text-xs">{c.type}</span></TableCell>
+                  <TableCell className="text-gray-500 text-xs">
+                    <div>{c.startDate}</div>
+                    <div className="text-[10px] text-gray-400">s/d {c.endDate}</div>
+                  </TableCell>
                   <TableCell>{getStatusBadge(c.status)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
@@ -252,7 +280,7 @@ export default function ContractManagementPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-gray-700">Klien Retainer</label>
+                  <label className="font-semibold text-gray-700">Klien Retainer / PT</label>
                   <select
                     value={newRetainerId}
                     onChange={(e) => setNewRetainerId(e.target.value)}
@@ -262,6 +290,36 @@ export default function ContractManagementPage() {
                     {retainers.map(r => (
                       <option key={r.id} value={r.id}>{r.clientName}</option>
                     ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="font-semibold text-gray-700">PIC / Karyawan</label>
+                  <select
+                    value={newPicName}
+                    onChange={(e) => setNewPicName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg outline-none bg-white text-xs"
+                  >
+                    <option value="">-- Pilih PIC Karyawan --</option>
+                    {employees.map(emp => (
+                      <option key={emp.id} value={emp.name}>{emp.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-gray-700">Status Awal</label>
+                  <select
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg outline-none bg-white text-xs"
+                  >
+                    <option value="Draft">Draf</option>
+                    <option value="Review">Dalam Peninjauan</option>
+                    <option value="Signed">Ditandatangani</option>
+                    <option value="Approved">Disetujui</option>
                   </select>
                 </div>
               </div>
@@ -286,20 +344,6 @@ export default function ContractManagementPage() {
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg outline-none text-xs bg-white"
                   />
                 </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-semibold text-gray-700">Status Awal</label>
-                <select
-                  value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg outline-none bg-white text-xs"
-                >
-                  <option value="Draft">Draf</option>
-                  <option value="Review">Dalam Peninjauan</option>
-                  <option value="Signed">Ditandatangani</option>
-                  <option value="Approved">Disetujui</option>
-                </select>
               </div>
             </div>
 
