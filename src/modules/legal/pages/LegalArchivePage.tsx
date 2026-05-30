@@ -206,7 +206,7 @@ export default function LegalArchivePage() {
                 <p>{selectedDoc.summary}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 border-t border-b py-3 font-semibold text-gray-600">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-b py-3 font-semibold text-gray-600">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-gray-400" />
                   <div>

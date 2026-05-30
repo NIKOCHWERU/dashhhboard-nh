@@ -28,7 +28,11 @@ interface TableCellProps extends React.HTMLAttributes<HTMLTableCellElement> {
 
 // Table Component
 const Table: React.FC<TableProps> = ({ children, className, ...props }) => {
-  return <table className={`min-w-full ${className || ""}`} {...props}>{children}</table>;
+  return (
+    <div className="w-full overflow-x-auto max-w-full scrollbar-thin">
+      <table className={`min-w-full ${className || ""}`} {...props}>{children}</table>
+    </div>
+  );
 };
 
 // TableHeader Component

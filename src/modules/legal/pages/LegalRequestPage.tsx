@@ -170,17 +170,17 @@ export default function LegalRequestPage() {
 
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center border-b border-gray-150 pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-150 pb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Permintaan Legal</h1>
           <p className="text-gray-500">Sistem tiket internal divisi untuk konsultasi hukum, pembuatan berkas, dan peninjauan draf.</p>
         </div>
-        <Button onClick={() => setIsCreateModalOpen(true)}><Plus className="w-4 h-4 mr-2" /> Buat Permintaan</Button>
+        <Button onClick={() => setIsCreateModalOpen(true)} className="w-full sm:w-auto"><Plus className="w-4 h-4 mr-2" /> Buat Permintaan</Button>
       </div>
 
       <Card className="shadow-lg">
         <CardHeader className="border-b border-gray-50 py-4">
-          <div className="flex gap-4 border-b border-gray-100 pb-2">
+          <div className="flex gap-4 border-b border-gray-100 pb-2 overflow-x-auto no-scrollbar">
             {[
               { key: "Open", label: "Terbuka" },
               { key: "In Progress", label: "Sedang Diproses" },
@@ -256,7 +256,7 @@ export default function LegalRequestPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="font-semibold text-gray-700">Skala Prioritas</label>
                   <select
