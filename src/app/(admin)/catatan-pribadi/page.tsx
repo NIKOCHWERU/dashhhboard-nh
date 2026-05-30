@@ -21,6 +21,14 @@ interface PersonalNote {
 }
 
 export default function PersonalNotesPage() {
+  const getTodayDateString = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const { data: session } = useSession();
   const [notesList, setNotesList] = useState<PersonalNote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +42,7 @@ export default function PersonalNotesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "PENDING" | "ONGOING" | "COMPLETED">("ALL");
   const [priorityFilter, setPriorityFilter] = useState<"ALL" | "Q1" | "Q2" | "Q3">("ALL");
-  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
 
   // Form States
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
@@ -216,6 +224,21 @@ export default function PersonalNotesPage() {
   const toggleNoteStatus = async (note: PersonalNote, e: React.MouseEvent) => {
     e.stopPropagation();
     const newStatus = note.status === "COMPLETED" ? "PENDING" : "COMPLETED";
+
+    let updatedEndDate = note.endDate;
+    if (newStatus === "COMPLETED") {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+      updatedEndDate = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+    } else {
+      updatedEndDate = "";
+    }
+
     try {
       const res = await fetch(`/api/personal-tasks?id=${note.id}`, {
         method: "PUT",
@@ -223,6 +246,7 @@ export default function PersonalNotesPage() {
         body: JSON.stringify({
           ...note,
           status: newStatus,
+          endDate: updatedEndDate,
         }),
       });
       if (res.ok) {
@@ -233,12 +257,17 @@ export default function PersonalNotesPage() {
     }
   };
 
-  const resetForm = () => {
+  const resetForm = (defaultDate?: string) => {
     setTitle("");
-    setStartDate(new Date().toISOString().split("T")[0]);
-    setStartTime("09:00");
+    setStartDate(defaultDate || getTodayDateString());
+    
+    const now = new Date();
+    const currentHours = String(now.getHours()).padStart(2, "0");
+    const currentMinutes = String(now.getMinutes()).padStart(2, "0");
+    setStartTime(`${currentHours}:${currentMinutes}`);
+    
     setEndDate("");
-    setEndTime("10:00");
+    setEndTime("");
     setPriority("Q2");
     setStatus("PENDING");
     setDescription("");
@@ -287,8 +316,15 @@ export default function PersonalNotesPage() {
                   </TableCell>
                   <TableCell className="py-4 px-4 text-gray-500 dark:text-gray-400 max-w-[200px] break-words whitespace-normal">{note.description || "-"}</TableCell>
                   <TableCell className="py-4 px-4 text-gray-500 dark:text-gray-400 max-w-[200px] break-words whitespace-normal">{note.notes || "-"}</TableCell>
-                  <TableCell className="py-4 px-4 text-gray-500 dark:text-gray-400 max-w-[150px] break-words whitespace-normal">
-                    {new Date(note.startDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })} - {note.startDate.split("T")[1]?.slice(0,5) || "09:00"}
+                  <TableCell className="py-4 px-4 text-gray-500 dark:text-gray-400 max-w-[150px] break-words whitespace-normal text-xs">
+                    <div>
+                      <span className="font-semibold text-gray-700 dark:text-gray-300">Mulai:</span> {note.startDate.split("T")[1]?.slice(0, 5) || "09:00"}
+                    </div>
+                    {note.endDate && note.status === "COMPLETED" && (
+                      <div className="text-emerald-600 font-bold mt-1">
+                        <span className="font-bold">Selesai:</span> {note.endDate.split("T")[1]?.slice(0, 5) || "09:00"}
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center">
@@ -371,7 +407,7 @@ export default function PersonalNotesPage() {
         </div>
         <button
           onClick={() => {
-            resetForm();
+            resetForm(selectedDate);
             setIsEditing(true);
             setIsModalOpen(true);
           }}
@@ -571,8 +607,10 @@ export default function PersonalNotesPage() {
                     <p className="mt-1 font-bold text-black dark:text-white">{formatDateIndo(startDate)} - {startTime}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase">Selesai / Tenggat</p>
-                    <p className="mt-1 font-bold text-black dark:text-white">{formatDateIndo(endDate || startDate)} - {endTime}</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase">Waktu Selesai</p>
+                    <p className="mt-1 font-bold text-emerald-600">
+                      {status === "COMPLETED" && endDate ? `${formatDateIndo(endDate)} - ${endDate.split("T")[1]?.slice(0, 5) || "09:00"}` : "Belum Selesai (Aktif)"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-gray-400 uppercase">Skala Prioritas</p>
@@ -652,26 +690,6 @@ export default function PersonalNotesPage() {
                       type="time"
                       value={startTime}
                       onChange={(e) => setStartTime(e.target.value)}
-                      className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-xs text-black outline-none transition focus:border-amber-500 dark:border-form-strokedark dark:bg-form-input dark:text-white"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-xs font-black uppercase text-gray-500">Tanggal Selesai / Tenggat</label>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-xs text-black outline-none transition focus:border-amber-500 dark:border-form-strokedark dark:bg-form-input dark:text-white"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-xs font-black uppercase text-gray-500">Jam Selesai</label>
-                    <input
-                      type="time"
-                      value={endTime}
-                      onChange={(e) => setEndTime(e.target.value)}
                       className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-xs text-black outline-none transition focus:border-amber-500 dark:border-form-strokedark dark:bg-form-input dark:text-white"
                     />
                   </div>
@@ -812,6 +830,56 @@ export default function PersonalNotesPage() {
                   >
                     Tutup
                   </button>
+                  {selectedNoteId && (
+                    status === "COMPLETED" ? (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const note = notesList.find(n => n.id === selectedNoteId);
+                          if (note) {
+                            await fetch(`/api/personal-tasks?id=${note.id}`, {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ ...note, status: "PENDING", endDate: "" }),
+                            });
+                            setIsModalOpen(false);
+                            fetchNotes();
+                          }
+                        }}
+                        className="px-6 py-2.5 rounded-none text-xs font-black bg-amber-500 text-white uppercase tracking-widest hover:bg-amber-600 cursor-pointer"
+                      >
+                        Tandai Pending
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const note = notesList.find(n => n.id === selectedNoteId);
+                          if (note) {
+                            const now = new Date();
+                            const year = now.getFullYear();
+                            const month = String(now.getMonth() + 1).padStart(2, "0");
+                            const day = String(now.getDate()).padStart(2, "0");
+                            const hours = String(now.getHours()).padStart(2, "0");
+                            const minutes = String(now.getMinutes()).padStart(2, "0");
+                            const seconds = String(now.getSeconds()).padStart(2, "0");
+                            const updatedEndDate = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+
+                            await fetch(`/api/personal-tasks?id=${note.id}`, {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ ...note, status: "COMPLETED", endDate: updatedEndDate }),
+                            });
+                            setIsModalOpen(false);
+                            fetchNotes();
+                          }
+                        }}
+                        className="px-6 py-2.5 rounded-none text-xs font-black bg-emerald-600 text-white uppercase tracking-widest hover:bg-emerald-700 cursor-pointer"
+                      >
+                        Tugas Selesai
+                      </button>
+                    )
+                  )}
                   <button
                     type="button"
                     onClick={() => setIsEditing(true)}
