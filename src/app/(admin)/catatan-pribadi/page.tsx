@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Modal } from "@/components/ui/modal";
+import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
 
 interface PersonalNote {
   id: string;
@@ -258,38 +259,38 @@ export default function PersonalNotesPage() {
 
   const renderNotesTable = (notesGroup: PersonalNote[]) => {
     return (
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b border-gray-200 dark:border-gray-800 text-[10px] font-black uppercase text-gray-400 tracking-wider">
-              <th className="py-3 px-4 w-12 text-center">No</th>
-              <th className="py-3 px-4">Judul</th>
-              <th className="py-3 px-4">Keterangan</th>
-              <th className="py-3 px-4">Catatan</th>
-              <th className="py-3 px-4">Waktu Pengerjaan</th>
-              <th className="py-3 px-4 w-20 text-center">Ceklist</th>
-              <th className="py-3 px-4 w-28 text-right">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60 text-xs">
+      <div className="w-full max-w-full overflow-hidden">
+        <Table className="w-full text-left">
+          <TableHeader>
+            <TableRow className="border-b border-gray-250 dark:border-gray-850 text-[10px] font-black uppercase text-gray-400 tracking-wider">
+              <TableCell isHeader className="py-3 px-4 w-12 text-center font-black">No</TableCell>
+              <TableCell isHeader className="py-3 px-4 max-w-[150px] font-black">Judul</TableCell>
+              <TableCell isHeader className="py-3 px-4 max-w-[200px] font-black">Keterangan</TableCell>
+              <TableCell isHeader className="py-3 px-4 max-w-[200px] font-black">Catatan</TableCell>
+              <TableCell isHeader className="py-3 px-4 max-w-[150px] font-black">Waktu Pengerjaan</TableCell>
+              <TableCell isHeader className="py-3 px-4 w-20 text-center font-black">Ceklist</TableCell>
+              <TableCell isHeader className="py-3 px-4 w-28 text-right font-black">Aksi</TableCell>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {notesGroup.map((note, index) => {
               const isCompleted = note.status === "COMPLETED";
               return (
-                <tr 
+                <TableRow 
                   key={note.id}
                   className="hover:bg-gray-50/50 dark:hover:bg-white/[0.01] transition-colors cursor-pointer group"
                   onClick={() => loadNoteIntoForm(note, false)}
                 >
-                  <td className="py-4 px-4 text-center font-bold text-gray-400">{index + 1}</td>
-                  <td className="py-4 px-4 font-bold text-gray-900 dark:text-white max-w-xs truncate">
+                  <TableCell className="py-4 px-4 text-center font-bold text-gray-400">{index + 1}</TableCell>
+                  <TableCell className="py-4 px-4 font-bold text-gray-900 dark:text-white max-w-[150px] break-words whitespace-normal">
                     <span className={isCompleted ? "line-through text-gray-400 dark:text-gray-500" : ""}>{note.title}</span>
-                  </td>
-                  <td className="py-4 px-4 text-gray-500 dark:text-gray-400 max-w-xs truncate">{note.description || "-"}</td>
-                  <td className="py-4 px-4 text-gray-500 dark:text-gray-400 max-w-xs truncate">{note.notes || "-"}</td>
-                  <td className="py-4 px-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                  </TableCell>
+                  <TableCell className="py-4 px-4 text-gray-500 dark:text-gray-400 max-w-[200px] break-words whitespace-normal">{note.description || "-"}</TableCell>
+                  <TableCell className="py-4 px-4 text-gray-500 dark:text-gray-400 max-w-[200px] break-words whitespace-normal">{note.notes || "-"}</TableCell>
+                  <TableCell className="py-4 px-4 text-gray-500 dark:text-gray-400 max-w-[150px] break-words whitespace-normal">
                     {new Date(note.startDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })} - {note.startDate.split("T")[1]?.slice(0,5) || "09:00"}
-                  </td>
-                  <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
+                  </TableCell>
+                  <TableCell className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center">
                       <button
                         onClick={(e) => toggleNoteStatus(note, e)}
@@ -306,9 +307,9 @@ export default function PersonalNotesPage() {
                         )}
                       </button>
                     </div>
-                  </td>
-                  <td className="py-4 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-end gap-3">
+                  </TableCell>
+                  <TableCell className="py-4 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-3 text-xs">
                       <button
                         onClick={() => loadNoteIntoForm(note, false)}
                         className="text-gray-500 hover:text-black dark:hover:text-white hover:underline transition"
@@ -328,12 +329,12 @@ export default function PersonalNotesPage() {
                         Hapus
                       </button>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     );
   };
