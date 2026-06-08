@@ -498,8 +498,94 @@ export default function PersonalNotesPage() {
             <div key={n} className="h-32 border border-gray-150 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.01] animate-pulse rounded-none"></div>
           ))}
         </div>
+      ) : notesList.length === 0 ? (
+        <div className="space-y-8 animate-in fade-in duration-500">
+          {/* Main Empty State Banner */}
+          <div className="flex flex-col items-center justify-center text-center py-12 border border-dashed border-gray-250 dark:border-gray-850 bg-white dark:bg-white/[0.01] p-6 shadow-md">
+            <svg className="w-16 h-16 text-amber-500 mb-4 animate-bounce" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
+            </svg>
+            <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-wider">Belum Ada Catatan Pribadi</h3>
+            <p className="text-xs text-gray-400 mt-1 max-w-md">
+              Halaman ini digunakan untuk mengelola ide, draf berkas hukum, dan catatan kerja harian Anda. Silakan ikuti panduan di bawah ini untuk memulai.
+            </p>
+          </div>
+
+          {/* Guide Steps Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Step 1 */}
+            <div className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-850 p-6 shadow-md flex flex-col justify-between hover:shadow-lg transition-all duration-300">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center font-black text-sm">
+                  1
+                </div>
+                <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Membuat Catatan Baru</h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                  Klik tombol <span className="font-bold text-amber-600 dark:text-amber-500">+ Buat Catatan Baru</span> di sudut kanan atas halaman. Isi judul catatan, tanggal mulai kegiatan, serta keterangan pengerjaan atau list sub-kegiatan internal.
+                </p>
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-850 p-6 shadow-md flex flex-col justify-between hover:shadow-lg transition-all duration-300">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-full bg-red-500/10 text-red-600 flex items-center justify-center font-black text-sm">
+                  2
+                </div>
+                <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Mengatur Skala Prioritas</h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                  Tentukan urgensi catatan menggunakan matriks prioritas kerja:
+                </p>
+                <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-1 pl-4 list-disc">
+                  <li><span className="font-bold text-red-600">Q1 (Tinggi)</span>: Tugas mendesak & penting.</li>
+                  <li><span className="font-bold text-amber-500">Q2 (Sedang)</span>: Tugas penting jangka menengah.</li>
+                  <li><span className="font-bold text-green-600">Q3 (Rendah)</span>: Tugas rutin harian biasa.</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-850 p-6 shadow-md flex flex-col justify-between hover:shadow-lg transition-all duration-300">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-black text-sm">
+                  3
+                </div>
+                <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Menandai Checklist & Selesai</h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                  Gunakan kotak ceklist pada tabel untuk menandai catatan atau tugas yang telah **Selesai (Completed)**. Sistem akan otomatis mencatat waktu selesai pengerjaan Anda untuk memantau produktivitas.
+                </p>
+              </div>
+            </div>
+
+            {/* Step 4 */}
+            <div className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-850 p-6 shadow-md flex flex-col justify-between hover:shadow-lg transition-all duration-300">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-600 flex items-center justify-center font-black text-sm">
+                  4
+                </div>
+                <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Pencarian & Filter Instan</h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                  Cari kata kunci secara real-time pada kolom pencarian. Anda juga bisa mempersempit daftar catatan berdasarkan Status pengerjaan, Prioritas urgensi, atau mencocokkannya dengan tanggal tertentu.
+                </p>
+              </div>
+            </div>
+
+            {/* Step 5 */}
+            <div className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-850 p-6 shadow-md flex flex-col justify-between hover:shadow-lg transition-all duration-300">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-full bg-violet-500/10 text-violet-600 flex items-center justify-center font-black text-sm">
+                  5
+                </div>
+                <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Unggah Gambar Pendukung</h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                  Unggah lampiran bukti foto atau gambar referensi langsung dari formulir catatan pribadi. Lampiran berkas ini akan otomatis tersimpan dalam folder arsip Google Drive dashboard Anda.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       ) : filteredNotes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center text-center py-20 border border-dashed border-gray-250 dark:border-gray-800 bg-white dark:bg-white/[0.01]">
+        <div className="flex flex-col items-center justify-center text-center py-20 border border-dashed border-gray-250 dark:border-gray-850 bg-white dark:bg-white/[0.01]">
           <svg className="w-16 h-16 text-gray-300 dark:text-gray-700 mb-4" fill="none" stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
