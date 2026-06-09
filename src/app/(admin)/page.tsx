@@ -73,6 +73,7 @@ export default function Dashboard() {
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [announcements, setAnnouncements] = useState<Pengumuman[]>([]);
   const [recentDocs, setRecentDocs] = useState<GDriveItem[]>([]);
+  const [gdriveError, setGdriveError] = useState<string | null>(null);
   
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -88,9 +89,10 @@ export default function Dashboard() {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setGdriveError(null);
 
         // Fetch Agendas
-        const resAgenda = await fetch("/api/agenda");
+        const resAgenda = await fetch("/api/laporan-operasional?agenda=true");
         const agendas = resAgenda.ok ? await resAgenda.json() : [];
         setAllAgendas(agendas);
         setDisplayAgendas(agendas.slice(0, 5));
@@ -109,7 +111,7 @@ export default function Dashboard() {
           fetch("/api/perorangan"),
           fetch("/api/personal-tasks"),
           fetch("/api/pengumuman"),
-          fetch("/api/narasumber-hukum")
+          fetch("/api/gdrive/recent?limit=5")
         ]);
 
         const team = resKaryawan.ok ? await resKaryawan.json() : [];
@@ -117,14 +119,30 @@ export default function Dashboard() {
         const peroranganData = resPerorangan.ok ? await resPerorangan.json() : [];
         const tasks = resPersonalTasks.ok ? await resPersonalTasks.json() : [];
         const ann = resPengumuman.ok ? await resPengumuman.json() : [];
-        const docResult = resDocs.ok ? await resDocs.json() : { items: [] };
+        
+        let docs: GDriveItem[] = [];
+        if (resDocs.ok) {
+          const docData = await resDocs.json();
+          if (Array.isArray(docData)) {
+            docs = docData;
+          } else if (docData && typeof docData === "object" && docData.error) {
+            setGdriveError(docData.error);
+          }
+        } else {
+          try {
+            const errData = await resDocs.json();
+            setGdriveError(errData.error || "Gagal memuat dokumen.");
+          } catch {
+            setGdriveError("Koneksi Google Drive terputus.");
+          }
+        }
 
         setKaryawanList(team);
         setRetainers(retainerData);
         setPerorangan(peroranganData);
         setPersonalTasks(tasks);
         setAnnouncements(ann.slice(0, 3));
-        setRecentDocs(docResult.items ? docResult.items.slice(0, 5) : []);
+        setRecentDocs(docs);
 
         // Fetch Activity Logs (Admin Only)
         if ((session?.user as any)?.role === "admin") {
@@ -533,6 +551,15 @@ export default function Dashboard() {
           <div className="space-y-3">
             {loading ? (
               [1, 2, 3].map(i => <div key={i} className="h-14 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
+            ) : gdriveError ? (
+              <div className="text-center py-16 px-4">
+                <svg className="w-8 h-8 text-amber-500 mx-auto mb-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold leading-relaxed">
+                  {gdriveError}
+                </p>
+              </div>
             ) : recentDocs.length > 0 ? (
               recentDocs.map((doc) => (
                 <div key={doc.id} className="flex items-center justify-between p-3.5 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/20 dark:bg-white/[0.002] hover:border-brand-500/30 transition-colors">

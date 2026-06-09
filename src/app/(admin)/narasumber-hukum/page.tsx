@@ -12,6 +12,8 @@ interface GDriveItem {
   webViewLink?: string;
   webContentLink?: string;
   createdTime?: string;
+  modifiedTime?: string;
+  owners?: Array<{ displayName: string }>;
   isFolder: boolean;
   customName?: string;
   description?: string;
@@ -80,11 +82,15 @@ export default function NarasumberHukumPage() {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<GDriveItem | null>(null);
 
+  const [recentFilesList, setRecentFilesList] = useState<GDriveItem[]>([]);
+  const [previewItem, setPreviewItem] = useState<GDriveItem | null>(null);
+
   // Fetch initial data
   useEffect(() => {
     fetchPTs();
     fetchEmployees();
-    browseFolder(null, "NARASUMBER HUKUM", true);
+    browseFolder(null, "Arsip Utama", true);
+    fetchRecentFiles();
   }, []);
 
   // Handle click outside PIC dropdown
@@ -159,7 +165,7 @@ export default function NarasumberHukumPage() {
 
       if (pushHistory) {
         if (folderId === null) {
-          setFolderHistory([{ id: data.folderId, name: "NARASUMBER HUKUM" }]);
+          setFolderHistory([{ id: data.folderId, name: "Arsip Utama" }]);
         } else {
           setFolderHistory((prev) => [...prev, { id: folderId, name: folderName }]);
         }
@@ -167,6 +173,43 @@ export default function NarasumberHukumPage() {
     } catch (error) {
       console.error(error);
       alert("Sistem gagal terhubung ke Google Drive. Pastikan konfigurasi jaringan atau izin akses Anda telah aktif.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRecentFiles = async () => {
+    try {
+      const res = await fetch("/api/gdrive/recent");
+      if (res.ok) {
+        const data = await res.json();
+        setRecentFilesList(Array.isArray(data) ? data : []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch recent files:", e);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    alert("Tautan berhasil disalin ke papan klip!");
+  };
+
+  const handleSearch = async (query: string) => {
+    setSearchTerm(query);
+    if (!query.trim()) {
+      browseFolder(activeFolderId, activeFolderName, false);
+      return;
+    }
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/narasumber-hukum?search=${encodeURIComponent(query)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setItems(data.items || []);
+      }
+    } catch (error) {
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -180,7 +223,7 @@ export default function NarasumberHukumPage() {
     setFolderHistory(newHistory);
     // If going back to root
     if (newHistory.length === 1) {
-      browseFolder(null, "NARASUMBER HUKUM", false);
+      browseFolder(null, "Arsip Utama", false);
     } else {
       browseFolder(parentFolder.id, parentFolder.name, false);
     }
@@ -581,12 +624,12 @@ export default function NarasumberHukumPage() {
               Dokumen Terbaru
             </h3>
             <div className="flex-1 overflow-y-auto no-scrollbar py-3 space-y-2.5">
-              {recentFiles.length === 0 ? (
+              {recentFilesList.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-center text-gray-450 dark:text-gray-500 text-[10px] italic">
-                  Belum ada berkas di folder ini.
+                  Belum ada dokumen terbaru.
                 </div>
               ) : (
-                recentFiles.map(file => (
+                recentFilesList.map(file => (
                   <div 
                     key={file.id} 
                     className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-gray-100/50 dark:hover:bg-white/[0.03] transition-colors cursor-pointer group"
@@ -603,7 +646,7 @@ export default function NarasumberHukumPage() {
                         {file.customName || file.name}
                       </p>
                       <p className="text-[9px] text-gray-400 font-medium">
-                        {formatSize(file.size)} • {file.createdTime ? new Date(file.createdTime).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : ""}
+                        {formatSize(file.size)} • {file.modifiedTime ? new Date(file.modifiedTime).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : ""}
                       </p>
                     </div>
                   </div>
@@ -632,7 +675,7 @@ export default function NarasumberHukumPage() {
               )}
               <span
                 className="cursor-pointer hover:text-brand-500 text-gray-500"
-                onClick={() => browseFolder(null, "NARASUMBER HUKUM", true)}
+                onClick={() => browseFolder(null, "Arsip Utama", true)}
               >
                 DRIVE
               </span>
@@ -661,10 +704,10 @@ export default function NarasumberHukumPage() {
             <div className="relative w-full md:w-80">
               <input
                 type="text"
-                placeholder="Cari nama, PT, keterangan..."
+                placeholder="Cari Folder atau Dokumen..."
                 className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl bg-transparent text-gray-700 dark:text-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/50 transition-colors text-xs font-semibold"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => handleSearch(e.target.value)}
               />
               <svg className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -712,6 +755,8 @@ export default function NarasumberHukumPage() {
                       <th className="p-4">Akses PIC</th>
                       <th className="p-4">Ukuran</th>
                       <th className="p-4">Diunggah</th>
+                      <th className="p-4">Terakhir Diubah</th>
+                      <th className="p-4">Pemilik</th>
                       <th className="p-4 pr-6 text-right">Aksi</th>
                     </tr>
                   </thead>
@@ -782,9 +827,22 @@ export default function NarasumberHukumPage() {
                             }) : "-"}
                           </td>
 
+                          {/* Modified At Col */}
+                          <td className="p-4 text-gray-400 font-medium">
+                            {item.modifiedTime ? new Date(item.modifiedTime).toLocaleDateString("id-ID", {
+                              day: "numeric",
+                              month: "short",
+                            }) : "-"}
+                          </td>
+
+                          {/* Owner Col */}
+                          <td className="p-4 text-gray-400 font-medium truncate max-w-[120px]">
+                            {item.owners && item.owners[0] ? item.owners[0].displayName : "-"}
+                          </td>
+
                           {/* Action buttons */}
                           <td className="p-4 pr-6 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
+                            <div className="flex items-center justify-end gap-1.5 flex-wrap">
                               {item.isFolder ? (
                                 <>
                                   <button
@@ -793,63 +851,85 @@ export default function NarasumberHukumPage() {
                                   >
                                     Buka
                                   </button>
-                                  <button
-                                    onClick={() => {
-                                      setEditingFolderItem(item);
-                                      setEditFolderName(item.name);
-                                      setEditFolderModalOpen(true);
-                                    }}
-                                    className="px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
-                                  >
-                                    Ubah
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteFolder(item.id)}
-                                    className="px-2.5 py-1 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
-                                  >
-                                    Hapus
-                                  </button>
+                                  {isAdmin && (
+                                    <>
+                                      <button
+                                        onClick={() => {
+                                          setEditingFolderItem(item);
+                                          setEditFolderName(item.name);
+                                          setEditFolderModalOpen(true);
+                                        }}
+                                        className="px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
+                                      >
+                                        Ubah
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteFolder(item.id)}
+                                        className="px-2.5 py-1 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
+                                      >
+                                        Hapus
+                                      </button>
+                                    </>
+                                  )}
                                 </>
                               ) : (
                                 <>
                                   <button
-                                    onClick={() => {
-                                      setSelectedItem(item);
-                                      setDetailModalOpen(true);
-                                    }}
-                                    className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-350 hover:bg-gray-200 dark:hover:bg-gray-700 text-[10px] font-black rounded-lg uppercase transition-colors"
+                                    onClick={() => setPreviewItem(item)}
+                                    className="px-2.5 py-1 bg-brand-500/10 text-brand-600 dark:text-brand-400 hover:bg-brand-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
                                   >
-                                    Detail
+                                    Lihat
                                   </button>
-                                  <button
-                                    onClick={() => {
-                                      setEditingFileItem(item);
-                                      setEditFileName(item.customName || item.name);
-                                      setEditDescription(item.description || "");
-                                      setEditPT(item.pt || "");
-                                      setSelectedPICs(item.pic ? item.pic.split(",").map((p) => p.trim()).filter(Boolean) : []);
-                                      setEditFileModalOpen(true);
-                                    }}
-                                    className="px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
-                                  >
-                                    Edit
-                                  </button>
+                                  {item.webContentLink && (
+                                    <a
+                                      href={item.webContentLink}
+                                      download
+                                      className="px-2.5 py-1 bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-500/20 text-[10px] font-black rounded-lg uppercase transition-colors inline-block text-center"
+                                    >
+                                      Unduh
+                                    </a>
+                                  )}
+                                  {item.webViewLink && (
+                                    <button
+                                      onClick={() => copyToClipboard(item.webViewLink!)}
+                                      className="px-2.5 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
+                                    >
+                                      Salin Link
+                                    </button>
+                                  )}
                                   {item.webViewLink && (
                                     <a
                                       href={item.webViewLink}
                                       target="_blank"
                                       rel="noreferrer"
-                                      className="px-2.5 py-1 bg-brand-500/10 text-brand-600 dark:text-brand-400 hover:bg-brand-500/20 text-[10px] font-black rounded-lg uppercase transition-colors inline-block text-center"
+                                      className="px-2.5 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 text-[10px] font-black rounded-lg uppercase transition-colors inline-block text-center"
                                     >
-                                      Lihat
+                                      G-Drive
                                     </a>
                                   )}
-                                  <button
-                                    onClick={() => handleDeleteFile(item.id)}
-                                    className="px-2.5 py-1 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
-                                  >
-                                    Hapus
-                                  </button>
+                                  {isAdmin && (
+                                    <>
+                                      <button
+                                        onClick={() => {
+                                          setEditingFileItem(item);
+                                          setEditFileName(item.customName || item.name);
+                                          setEditDescription(item.description || "");
+                                          setEditPT(item.pt || "");
+                                          setSelectedPICs(item.pic ? item.pic.split(",").map((p) => p.trim()).filter(Boolean) : []);
+                                          setEditFileModalOpen(true);
+                                        }}
+                                        className="px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteFile(item.id)}
+                                        className="px-2.5 py-1 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
+                                      >
+                                        Hapus
+                                      </button>
+                                    </>
+                                  )}
                                 </>
                               )}
                             </div>
@@ -1342,6 +1422,83 @@ export default function NarasumberHukumPage() {
           </div>
         )}
       </FeatureModal>
+
+      {/* GDRIVE PREVIEW MODAL */}
+      {previewItem && (
+        <FeatureModal
+          isOpen={!!previewItem}
+          onClose={() => setPreviewItem(null)}
+          title={`Pratinjau Berkas: ${previewItem.customName || previewItem.name}`}
+        >
+          <div className="space-y-4 pt-2">
+            <div className="border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-black/5 dark:bg-white/5 flex items-center justify-center min-h-[300px]">
+              {previewItem.mimeType.includes("pdf") || 
+               previewItem.mimeType.includes("image") || 
+               previewItem.mimeType.includes("video") ? (
+                <iframe
+                  src={`https://drive.google.com/file/d/${previewItem.id}/preview`}
+                  className="w-full h-[500px] border-none rounded-xl"
+                  allow="autoplay"
+                ></iframe>
+              ) : (
+                <div className="p-8 text-center space-y-4">
+                  <svg className="w-16 h-16 text-brand-500 mx-auto" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                  <div>
+                    <h4 className="text-sm font-black text-black dark:text-white uppercase tracking-wider">{previewItem.customName || previewItem.name}</h4>
+                    <p className="text-xs text-gray-400 mt-1">Ekstensi/Jenis file ini memerlukan aplikasi eksternal untuk dibuka secara interaktif. Berikut rincian metadatanya:</p>
+                  </div>
+                  <div className="max-w-md mx-auto bg-gray-50 dark:bg-gray-900 border border-gray-150 dark:border-gray-800 rounded-xl p-4 text-left grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <span className="text-[10px] text-gray-450 font-bold uppercase tracking-widest">Ukuran</span>
+                      <span className="block font-bold text-black dark:text-white mt-0.5">{formatSize(previewItem.size)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-gray-455 font-bold uppercase tracking-widest">Jenis Berkas</span>
+                      <span className="block font-bold text-black dark:text-white mt-0.5 uppercase">{previewItem.mimeType.split("/")[1] || "Dokumen"}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-gray-450 font-bold uppercase tracking-widest">Dibuat Pada</span>
+                      <span className="block font-bold text-black dark:text-white mt-0.5">{previewItem.createdTime ? new Date(previewItem.createdTime).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "-"}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-gray-450 font-bold uppercase tracking-widest">Terakhir Diubah</span>
+                      <span className="block font-bold text-black dark:text-white mt-0.5">{previewItem.modifiedTime ? new Date(previewItem.modifiedTime).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "-"}</span>
+                    </div>
+                    {previewItem.owners && previewItem.owners[0] && (
+                      <div className="col-span-2">
+                        <span className="text-[10px] text-gray-450 font-bold uppercase tracking-widest">Pemilik</span>
+                        <span className="block font-bold text-black dark:text-white mt-0.5">{previewItem.owners[0].displayName}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-end gap-2 pt-4 border-t border-stroke dark:border-strokedark">
+              <button
+                type="button"
+                onClick={() => setPreviewItem(null)}
+                className="px-4 py-2 border border-stroke rounded-xl text-xs font-black uppercase text-gray-600 hover:bg-gray-50 dark:border-strokedark dark:text-gray-300 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+              >
+                Tutup
+              </button>
+              {previewItem.webViewLink && (
+                <a
+                  href={previewItem.webViewLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-4 py-2 bg-brand-500 text-white rounded-xl hover:bg-brand-600 text-xs font-black uppercase transition-colors inline-block cursor-pointer text-center"
+                >
+                  Buka di Google Drive
+                </a>
+              )}
+            </div>
+          </div>
+        </FeatureModal>
+      )}
     </div>
   );
 }

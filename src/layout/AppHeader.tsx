@@ -44,6 +44,7 @@ const AppHeader: React.FC = () => {
       case "/karyawan": return "Daftar Karyawan";
       case "/skala-prioritas": return "Skala Prioritas";
       case "/internal": return "Surat Internal";
+      case "/laporan-operasional": return "Laporan Operasional";
       default: return "Sistem Manajemen";
     }
   };

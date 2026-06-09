@@ -49,6 +49,7 @@ const staticMenuGroups: MenuGroups[] = [
     title: "Manajemen Arsip",
     items: [
       { name: "Arsip Dokumen", icon: <DokumenIcon />, path: "/narasumber-hukum" },
+      { name: "Laporan Operasional", icon: <SkalaPrioritasIcon />, path: "/laporan-operasional" },
     ],
   },
   {
@@ -119,7 +120,10 @@ const AppSidebar: React.FC = () => {
     // 2. NARASUMBER HUKUM Group
     groups.push({
       title: "Manajemen Arsip",
-      items: [{ name: "Arsip Dokumen", icon: <DokumenIcon />, path: "/narasumber-hukum" }]
+      items: [
+        { name: "Arsip Dokumen", icon: <DokumenIcon />, path: "/narasumber-hukum" },
+        { name: "Laporan Operasional", icon: <SkalaPrioritasIcon />, path: "/laporan-operasional" }
+      ]
     });
 
     // 3. Project Group

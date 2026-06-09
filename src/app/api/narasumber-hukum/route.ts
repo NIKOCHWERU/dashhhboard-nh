@@ -54,20 +54,38 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const folderId = searchParams.get("folderId");
+    const search = searchParams.get("search");
 
-    // Initialize root if no folderId specified
+    let gdriveItems = [];
     let targetFolderId = folderId;
-    if (!targetFolderId) {
-      targetFolderId = await initializeNarasumberHukumFolders();
+    let dbFiles = [];
+
+    if (search) {
+      const accessToken = await getAccessToken();
+      const cleanSearch = search.replace(/'/g, "\\'");
+      const query = encodeURIComponent(`(name contains '${cleanSearch}') and trashed=false`);
+      const fields = encodeURIComponent("files(id,name,mimeType,size,webViewLink,webContentLink,thumbnailLink,createdTime,modifiedTime,owners,description)");
+      const searchUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=${fields}&pageSize=100`;
+      const gdriveRes = await fetch(searchUrl, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const gdriveData = await gdriveRes.json();
+      gdriveItems = gdriveData.files || [];
+
+      const fileIds = gdriveItems.map((item: any) => item.id);
+      dbFiles = await prisma.narasumberHukum.findMany({
+        where: { googleFileId: { in: fileIds } },
+      });
+    } else {
+      if (!targetFolderId) {
+        targetFolderId = "1mIfFQSMviTEO8wCm8YXWAMKLMjA1jRoq";
+      }
+      gdriveItems = await listFiles(targetFolderId!);
+      dbFiles = await prisma.narasumberHukum.findMany({
+        where: { googleFolderId: targetFolderId! },
+      });
     }
-
-    // 1. Get files & subfolders from Google Drive
-    const gdriveItems = await listFiles(targetFolderId!);
-
-    // 2. Get metadata files from Database to match description, custom name, and PIC
-    const dbFiles = await prisma.narasumberHukum.findMany({
-      where: { googleFolderId: targetFolderId! },
-    });
 
     const user = session.user as any;
     const userEmail = user.email?.toLowerCase();
@@ -75,7 +93,7 @@ export async function GET(req: Request) {
 
     // 3. Merge items and apply PIC viewing restrictions
     const filteredItems = gdriveItems
-      .map((item) => {
+      .map((item: any) => {
         // If it's a folder, anyone can browse it
         if (item.mimeType === "application/vnd.google-apps.folder") {
           return { ...item, isFolder: true };

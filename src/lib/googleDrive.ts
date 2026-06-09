@@ -231,7 +231,7 @@ export async function listFiles(parentId: string): Promise<any[]> {
   try {
     const accessToken = await getAccessToken();
     const query = encodeURIComponent(`'${parentId}' in parents and trashed=false`);
-    const fields = encodeURIComponent("files(id,name,mimeType,size,webViewLink,webContentLink,thumbnailLink,createdTime,description)");
+    const fields = encodeURIComponent("files(id,name,mimeType,size,webViewLink,webContentLink,thumbnailLink,createdTime,modifiedTime,owners,description)");
     const searchUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=${fields}&orderBy=folder,name`;
 
     const res = await fetch(searchUrl, {
