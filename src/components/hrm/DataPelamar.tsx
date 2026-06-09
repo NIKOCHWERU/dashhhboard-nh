@@ -176,19 +176,19 @@ export default function DataPelamar() {
           <h2 className="text-xl font-bold text-black dark:text-white leading-tight uppercase tracking-wider">Talent Acquisition & Pelamar</h2>
           <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">Data rekrutmen dan kandidat karyawan baru</p>
         </div>
-        <button onClick={() => handleOpenModal()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-none bg-brand-500 text-xs font-bold text-white hover:bg-brand-600 transition-all shadow-sm uppercase tracking-wider">
+        <button onClick={() => handleOpenModal()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-500 text-xs font-bold text-white hover:bg-brand-600 transition-all shadow-sm uppercase tracking-wider">
           + Tambah Pelamar
         </button>
       </div>
 
       {/* FILTER PANEL */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-50 dark:bg-gray-900/50 p-3 border border-stroke dark:border-strokedark rounded-none">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-50 dark:bg-gray-900/50 p-3 border border-stroke dark:border-strokedark rounded-2xl">
         <input
           type="text"
           placeholder="Cari kandidat, posisi, atau PT..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="px-3 py-1.5 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 text-xs font-semibold rounded-none w-full md:max-w-xs focus:outline-none focus:border-brand-500"
+          className="px-3 py-1.5 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 text-xs font-semibold rounded-xl w-full md:max-w-xs focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500"
         />
 
         <div className="flex items-center gap-2 w-full md:w-auto justify-end">
@@ -196,7 +196,7 @@ export default function DataPelamar() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as any)}
-            className="px-2 py-1 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 text-[10px] font-bold uppercase rounded-none focus:outline-none focus:border-brand-500"
+            className="px-2 py-1 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 text-[10px] font-bold uppercase rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 cursor-pointer"
           >
             <option value="apply-newest">Baru Melamar</option>
             <option value="apply-oldest">Lama Melamar</option>
@@ -207,9 +207,9 @@ export default function DataPelamar() {
         </div>
       </div>
 
-      <div className="rounded-none border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-gray-900 overflow-hidden">
+      <div className="rounded-2xl border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-gray-900 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left border-collapse">
+          <table className="w-full text-xs text-left border-collapse min-w-[800px]">
             <thead className="bg-gray-50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 font-bold border-b border-stroke dark:border-strokedark uppercase tracking-wider text-[10px]">
               <tr>
                 <th className="px-5 py-3">Nama Kandidat</th>
@@ -251,9 +251,9 @@ export default function DataPelamar() {
                     </div>
                   </td>
                   <td className="px-5 py-3 text-right whitespace-nowrap space-x-1">
-                    <button onClick={() => handleOpenDetail(item)} className="px-2 py-1.5 border border-stroke dark:border-strokedark text-[10px] font-bold text-brand-500 hover:bg-brand-50 rounded-none transition-colors uppercase">Detail</button>
-                    <button onClick={() => handleOpenModal(item)} className="px-2 py-1.5 border border-stroke dark:border-strokedark text-[10px] font-bold text-blue-500 hover:bg-blue-50 rounded-none transition-colors uppercase">Edit</button>
-                    <button onClick={() => handleDelete(item.id)} className="px-2 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 text-[10px] font-bold rounded-none transition-colors uppercase">Hapus</button>
+                    <button onClick={() => handleOpenDetail(item)} className="px-2 py-1.5 border border-stroke dark:border-strokedark text-[10px] font-bold text-brand-500 hover:bg-brand-50 rounded-xl transition-colors uppercase">Detail</button>
+                    <button onClick={() => handleOpenModal(item)} className="px-2 py-1.5 border border-stroke dark:border-strokedark text-[10px] font-bold text-blue-500 hover:bg-blue-50 rounded-xl transition-colors uppercase">Edit</button>
+                    <button onClick={() => handleDelete(item.id)} className="px-2 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 text-[10px] font-bold rounded-xl transition-colors uppercase">Hapus</button>
                   </td>
                 </tr>
               ))}
@@ -266,35 +266,35 @@ export default function DataPelamar() {
       </div>
 
       {/* MODAL CRUD */}
-      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-2xl !rounded-none !bg-transparent !p-0">
-        <div className="bg-white dark:bg-gray-900 rounded-none w-full shadow-2xl border border-stroke dark:border-strokedark">
+      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-2xl !rounded-2xl !bg-transparent !p-0">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl w-full shadow-2xl border border-stroke dark:border-strokedark overflow-hidden">
           <div className="p-5 border-b border-stroke dark:border-strokedark flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
             <h3 className="text-sm font-black text-black dark:text-white uppercase tracking-wider">{selectedId ? "Ubah Data Kandidat" : "Tambah Kandidat Baru"}</h3>
           </div>
           <div className="p-5 grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className="block text-[11px] font-bold text-gray-400 uppercase mb-1">Nama Kandidat</label>
-              <input type="text" value={formData.namaKandidat} placeholder="Contoh: Budi Santoso" onChange={e => setFormData({...formData, namaKandidat: e.target.value})} className="w-full p-2.5 border border-stroke rounded-none dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:border-brand-500 font-medium" />
+              <input type="text" value={formData.namaKandidat} placeholder="Contoh: Budi Santoso" onChange={e => setFormData({...formData, namaKandidat: e.target.value})} className="w-full p-2.5 border border-stroke rounded-xl dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 font-medium" />
             </div>
             <div>
               <label className="block text-[11px] font-bold text-gray-400 uppercase mb-1">Posisi Dilamar</label>
-              <input type="text" list="posisi-history" value={formData.posisi} placeholder="Contoh: Legal Officer" onChange={e => setFormData({...formData, posisi: e.target.value})} className="w-full p-2.5 border border-stroke rounded-none dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:border-brand-500 font-medium" />
+              <input type="text" list="posisi-history" value={formData.posisi} placeholder="Contoh: Legal Officer" onChange={e => setFormData({...formData, posisi: e.target.value})} className="w-full p-2.5 border border-stroke rounded-xl dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 font-medium" />
             </div>
             <div>
               <label className="block text-[11px] font-bold text-gray-400 uppercase mb-1">No HP</label>
-              <input type="text" value={formData.noHp} placeholder="Contoh: 08123456789" onChange={e => setFormData({...formData, noHp: e.target.value})} className="w-full p-2.5 border border-stroke rounded-none dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:border-brand-500 font-medium" />
+              <input type="text" value={formData.noHp} placeholder="Contoh: 08123456789" onChange={e => setFormData({...formData, noHp: e.target.value})} className="w-full p-2.5 border border-stroke rounded-xl dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 font-medium" />
             </div>
             <div>
               <label className="block text-[11px] font-bold text-gray-400 uppercase mb-1">Tanggal Melamar</label>
-              <input type="date" value={formData.tanggalApply} onChange={e => setFormData({...formData, tanggalApply: e.target.value})} className="w-full p-2.5 border border-stroke rounded-none dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:border-brand-500 font-medium" />
+              <input type="date" value={formData.tanggalApply} onChange={e => setFormData({...formData, tanggalApply: e.target.value})} className="w-full p-2.5 border border-stroke rounded-xl dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 font-medium" />
             </div>
             <div>
               <label className="block text-[11px] font-bold text-gray-400 uppercase mb-1">Tahapan Sesi</label>
-              <input type="text" list="sesi-history" value={formData.sesi} placeholder="Contoh: Tahap Wawancara Direksi" onChange={e => setFormData({...formData, sesi: e.target.value})} className="w-full p-2.5 border border-stroke rounded-none dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:border-brand-500 font-medium" />
+              <input type="text" list="sesi-history" value={formData.sesi} placeholder="Contoh: Tahap Wawancara Direksi" onChange={e => setFormData({...formData, sesi: e.target.value})} className="w-full p-2.5 border border-stroke rounded-xl dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 font-medium" />
             </div>
             <div>
               <label className="block text-[11px] font-bold text-gray-400 uppercase mb-1">Status Talent</label>
-              <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} className="w-full p-2.5 border border-stroke rounded-none dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:border-brand-500 font-semibold cursor-pointer">
+              <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} className="w-full p-2.5 border border-stroke rounded-xl dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 font-semibold cursor-pointer">
                 <option value="Applied">Applied</option>
                 <option value="Interview">Interview</option>
                 <option value="Hired">Hired</option>
@@ -303,7 +303,7 @@ export default function DataPelamar() {
             </div>
             <div>
               <label className="block text-[11px] font-bold text-gray-400 uppercase mb-1">Sumber Pelamar</label>
-              <input type="text" list="sumber-history" value={formData.sumber} placeholder="Contoh: LinkedIn / JobsDB" onChange={e => setFormData({...formData, sumber: e.target.value})} className="w-full p-2.5 border border-stroke rounded-none dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:border-brand-500 font-medium" />
+              <input type="text" list="sumber-history" value={formData.sumber} placeholder="Contoh: LinkedIn / JobsDB" onChange={e => setFormData({...formData, sumber: e.target.value})} className="w-full p-2.5 border border-stroke rounded-xl dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 font-medium" />
             </div>
 
             {/* DYNAMIC COMPANY (PT) SELECTION */}
@@ -312,7 +312,7 @@ export default function DataPelamar() {
               <select
                 value={formData.pt}
                 onChange={(e) => setFormData({ ...formData, pt: e.target.value })}
-                className="w-full p-2.5 border border-stroke rounded-none dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:border-brand-500 font-semibold cursor-pointer"
+                className="w-full p-2.5 border border-stroke rounded-xl dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 font-semibold cursor-pointer"
               >
                 <option value="">-- BELUM DIALOKASIKAN --</option>
                 {retainers.map((r) => (
@@ -325,26 +325,26 @@ export default function DataPelamar() {
 
             <div className="col-span-2">
               <label className="block text-[11px] font-bold text-gray-400 uppercase mb-1">Keterangan / Catatan Kualifikasi</label>
-              <input type="text" list="keterangan-history" value={formData.keterangan} placeholder="Tulis kualifikasi singkat kandidat..." onChange={e => setFormData({...formData, keterangan: e.target.value})} className="w-full p-2.5 border border-stroke rounded-none dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:border-brand-500 font-medium" />
+              <input type="text" list="keterangan-history" value={formData.keterangan} placeholder="Tulis kualifikasi singkat kandidat..." onChange={e => setFormData({...formData, keterangan: e.target.value})} className="w-full p-2.5 border border-stroke rounded-xl dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 font-medium" />
             </div>
           </div>
           <div className="p-5 border-t border-stroke dark:border-strokedark flex justify-end gap-3 bg-gray-50 dark:bg-gray-900/50">
-            <button onClick={closeModal} className="px-4 py-2 border border-stroke bg-white text-gray-700 text-xs font-bold rounded-none hover:bg-gray-100 dark:bg-gray-800 dark:border-strokedark dark:text-gray-300 transition-colors">Batal</button>
-            <button onClick={handleSave} className="px-4 py-2 bg-brand-500 text-white text-xs font-bold rounded-none hover:bg-brand-600 transition-colors shadow-sm">Simpan Kandidat</button>
+            <button onClick={closeModal} className="px-4 py-2 border border-stroke bg-white text-gray-700 text-xs font-bold rounded-xl hover:bg-gray-100 dark:bg-gray-800 dark:border-strokedark dark:text-gray-300 transition-colors">Batal</button>
+            <button onClick={handleSave} className="px-4 py-2 bg-brand-500 text-white text-xs font-bold rounded-xl hover:bg-brand-600 transition-colors shadow-sm">Simpan Kandidat</button>
           </div>
         </div>
       </Modal>
 
       {/* VIEW DETAIL MODAL */}
-      <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} className="max-w-2xl !rounded-none !bg-transparent !p-0">
+      <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} className="max-w-2xl !rounded-2xl !bg-transparent !p-0">
         {selectedItem && (
-          <div className="bg-white dark:bg-gray-900 rounded-none w-full shadow-2xl border border-stroke dark:border-strokedark overflow-hidden">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl w-full shadow-2xl border border-stroke dark:border-strokedark overflow-hidden">
             <div className="p-5 border-b border-stroke dark:border-strokedark flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
               <div>
                 <span className="text-[9px] font-black text-brand-500 uppercase tracking-widest">Detail Profil Pelamar</span>
                 <h3 className="text-sm font-black text-black dark:text-white uppercase tracking-wider mt-0.5">{selectedItem.namaKandidat}</h3>
               </div>
-              <span className={`px-2.5 py-0.5 rounded-none text-[9px] font-black uppercase tracking-wider ${
+              <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
                 selectedItem.status === "Hired"
                   ? "bg-green-50 text-green-700 border border-green-200 dark:bg-green-500/10 dark:text-green-400"
                   : selectedItem.status === "Interview"
@@ -357,17 +357,17 @@ export default function DataPelamar() {
 
             <div className="p-6 space-y-4 text-xs">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 dark:bg-gray-800/40 p-4 border border-stroke dark:border-strokedark rounded-none">
+                <div className="bg-gray-50 dark:bg-gray-800/40 p-4 border border-stroke dark:border-strokedark rounded-xl">
                   <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Posisi Yang Dilamar</span>
                   <span className="text-sm font-bold text-black dark:text-white uppercase">💼 {selectedItem.posisi}</span>
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-800/40 p-4 border border-stroke dark:border-strokedark rounded-none">
+                <div className="bg-gray-50 dark:bg-gray-800/40 p-4 border border-stroke dark:border-strokedark rounded-xl">
                   <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Alokasi Perusahaan (PT)</span>
                   <span className="text-sm font-bold text-brand-500 uppercase">🏢 {selectedItem.pt || "Belum Dialokasikan"}</span>
                 </div>
               </div>
 
-              <div className="border border-stroke dark:border-strokedark rounded-none overflow-hidden">
+              <div className="border border-stroke dark:border-strokedark rounded-xl overflow-hidden">
                 <table className="w-full text-xs text-left border-collapse">
                   <tbody className="divide-y divide-stroke dark:divide-strokedark text-gray-700 dark:text-gray-300">
                     <tr>
@@ -402,7 +402,7 @@ export default function DataPelamar() {
             </div>
 
             <div className="p-5 border-t border-stroke dark:border-strokedark flex justify-end bg-gray-50 dark:bg-gray-900/50">
-              <button onClick={() => setIsDetailOpen(false)} className="px-4 py-2 bg-brand-500 text-white text-xs font-bold rounded-none hover:bg-brand-600 transition-colors shadow-sm uppercase tracking-wider">
+              <button onClick={() => setIsDetailOpen(false)} className="px-4 py-2 bg-brand-500 text-white text-xs font-bold rounded-xl hover:bg-brand-600 transition-colors shadow-sm uppercase tracking-wider">
                 Tutup Detail
               </button>
             </div>

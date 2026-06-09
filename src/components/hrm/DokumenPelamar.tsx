@@ -81,12 +81,12 @@ export default function DokumenPelamar() {
       });
 
       if (res.ok) {
-        alert(`Berkas ${uploadForm.documentType} berhasil diupload ke Google Drive dan disimpan di database!`);
+        alert(`Berkas ${uploadForm.documentType} berhasil diunggah ke Google Drive dan disimpan dalam basis data!`);
         closeModal();
         fetchData();
       } else {
         const errJson = await res.json();
-        alert(`Gagal mengupload berkas: ${errJson.error || "Error tidak diketahui"}`);
+        alert(`Gagal mengunggah berkas: ${errJson.error || "Galat tidak diketahui"}`);
       }
     } catch (e: any) {
       console.error(e);
@@ -129,20 +129,20 @@ export default function DokumenPelamar() {
           <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">Manajemen arsip dokumen kandidat, alokasi PT, dan PIC</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={handleUploadClick} className="flex items-center gap-1.5 px-3 py-1.5 rounded-none bg-brand-500 text-xs font-bold text-white hover:bg-brand-600 transition-all shadow-sm uppercase tracking-wider">
+          <button onClick={handleUploadClick} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-500 text-xs font-bold text-white hover:bg-brand-600 transition-all shadow-sm uppercase tracking-wider">
             + Upload Dokumen Baru
           </button>
         </div>
       </div>
 
       {/* FILTER & SORT BAR */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-50 dark:bg-gray-900/50 p-3 border border-stroke dark:border-strokedark rounded-none">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-50 dark:bg-gray-900/50 p-3 border border-stroke dark:border-strokedark rounded-2xl">
         <input
           type="text"
           placeholder="Cari kandidat, posisi, atau PT..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="px-3 py-1.5 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 text-xs font-semibold rounded-none w-full md:max-w-xs focus:outline-none focus:border-brand-500"
+          className="px-3 py-1.5 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 text-xs font-semibold rounded-xl w-full md:max-w-xs focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500"
         />
 
         <div className="flex items-center gap-2 w-full md:w-auto justify-end">
@@ -150,7 +150,7 @@ export default function DokumenPelamar() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as any)}
-            className="px-2 py-1 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 text-[10px] font-bold uppercase rounded-none focus:outline-none focus:border-brand-500"
+            className="px-2 py-1 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 text-[10px] font-bold uppercase rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 cursor-pointer"
           >
             <option value="date">Terbaru Diupload</option>
             <option value="name">Nama Kandidat (A-Z)</option>
@@ -159,9 +159,9 @@ export default function DokumenPelamar() {
         </div>
       </div>
 
-      <div className="rounded-none border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-gray-900 overflow-hidden">
+      <div className="rounded-2xl border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-gray-900 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left border-collapse">
+          <table className="w-full text-xs text-left border-collapse min-w-[800px]">
             <thead className="bg-gray-50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 font-bold border-b border-stroke dark:border-strokedark uppercase tracking-wider text-[10px]">
               <tr>
                 <th className="px-5 py-3">Nama Kandidat</th>
@@ -229,8 +229,8 @@ export default function DokumenPelamar() {
         </div>
       </div>
 
-      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-md !rounded-none !bg-transparent !p-0">
-        <div className="bg-white dark:bg-gray-900 rounded-none w-full shadow-2xl border border-stroke dark:border-strokedark">
+      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-md !rounded-2xl !bg-transparent !p-0">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl w-full shadow-2xl border border-stroke dark:border-strokedark overflow-hidden">
           <div className="p-5 border-b border-stroke dark:border-strokedark flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
             <h3 className="text-sm font-black text-black dark:text-white uppercase tracking-wider">Upload Dokumen Baru</h3>
           </div>
@@ -240,7 +240,7 @@ export default function DokumenPelamar() {
               <select
                 value={uploadForm.pelamarId}
                 onChange={(e) => setUploadForm({ ...uploadForm, pelamarId: e.target.value })}
-                className="w-full p-2.5 border border-stroke rounded-none dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:border-brand-500 font-semibold cursor-pointer"
+                className="w-full p-2.5 border border-stroke rounded-xl dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 font-semibold cursor-pointer"
               >
                 <option value="">Pilih Kandidat...</option>
                 {pelamarList.map((p) => (
@@ -255,7 +255,7 @@ export default function DokumenPelamar() {
               <select
                 value={uploadForm.documentType}
                 onChange={(e) => setUploadForm({ ...uploadForm, documentType: e.target.value })}
-                className="w-full p-2.5 border border-stroke rounded-none dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:border-brand-500 font-semibold cursor-pointer"
+                className="w-full p-2.5 border border-stroke rounded-xl dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 font-semibold cursor-pointer"
               >
                 <option value="CV / Resume">CV / Resume</option>
                 <option value="KTP">KTP</option>
@@ -269,7 +269,7 @@ export default function DokumenPelamar() {
               <input
                 type="file"
                 onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                className="w-full p-2 border border-stroke rounded-none dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:border-brand-500 cursor-pointer font-semibold"
+                className="w-full p-2 border border-stroke rounded-xl dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 cursor-pointer font-semibold"
               />
               {selectedFile && (
                 <div className="mt-2 text-[10px] font-bold text-brand-500 uppercase">
@@ -279,10 +279,10 @@ export default function DokumenPelamar() {
             </div>
           </div>
           <div className="p-5 border-t border-stroke dark:border-strokedark flex justify-end gap-3 bg-gray-50 dark:bg-gray-900/50">
-            <button onClick={closeModal} className="px-4 py-2 border border-stroke bg-white text-gray-700 text-xs font-bold rounded-none hover:bg-gray-100 dark:bg-gray-800 dark:border-strokedark dark:text-gray-300 transition-colors" disabled={uploading}>Batal</button>
+            <button onClick={closeModal} className="px-4 py-2 border border-stroke bg-white text-gray-700 text-xs font-bold rounded-xl hover:bg-gray-100 dark:bg-gray-800 dark:border-strokedark dark:text-gray-300 transition-colors" disabled={uploading}>Batal</button>
             <button 
               onClick={handleSaveUpload} 
-              className="px-4 py-2 bg-brand-500 text-white text-xs font-bold rounded-none hover:bg-brand-600 transition-colors shadow-sm flex items-center gap-1.5"
+              className="px-4 py-2 bg-brand-500 text-white text-xs font-bold rounded-xl hover:bg-brand-600 transition-colors shadow-sm flex items-center gap-1.5"
               disabled={uploading}
             >
               {uploading ? (

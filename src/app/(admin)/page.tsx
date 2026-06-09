@@ -218,11 +218,11 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-1 md:px-3" suppressHydrationWarning>
       
-      {/* Header Operational command center */}
+      {/* Header Ringkasan Operasional */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-4 border-b border-gray-200 dark:border-gray-800 gap-4" suppressHydrationWarning>
         <div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-tight uppercase tracking-wider">
-            Operational Command Center
+            Ringkasan Operasional
           </h1>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Selamat Datang, <span className="font-bold text-brand-500">{session?.user?.name || "User"}</span>. Ringkasan aktivitas operasional kantor hukum hari ini.
@@ -233,7 +233,7 @@ export default function Dashboard() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
           </span>
-          <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Sistem Online</span>
+          <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Sistem Aktif</span>
         </div>
       </div>
 
@@ -359,7 +359,7 @@ export default function Dashboard() {
           
           {/* Quick Actions Container */}
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 space-y-3">
-            <h4 className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">Tindakan Cepat</h4>
+            <h4 className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">Akses Cepat</h4>
             <div className="grid grid-cols-2 gap-2">
               <Link 
                 href="/catatan-pribadi" 
@@ -398,7 +398,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3 dark:border-gray-800">
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-4 bg-red-500 rounded-full"></span>
-              <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Deadline Mendekat</h2>
+              <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Tenggat Waktu Mendekat</h2>
             </div>
           </div>
           <div className="space-y-3">
@@ -422,7 +422,7 @@ export default function Dashboard() {
               ))
             ) : (
               <div className="text-center py-16">
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider italic">Tidak ada deadline kontrak mendesak.</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider italic">Tidak ada tenggat waktu kontrak mendesak.</p>
               </div>
             )}
           </div>
@@ -526,7 +526,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3 dark:border-gray-800">
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-4 bg-violet-500 rounded-full"></span>
-              <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Arsip Hukum Terbaru</h2>
+              <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Dokumen Terbaru</h2>
             </div>
             <Link href="/narasumber-hukum" className="text-brand-500 font-black hover:underline text-[10px] uppercase tracking-wider">Eksplor</Link>
           </div>

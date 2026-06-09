@@ -267,7 +267,7 @@ export default function DashboardHRM() {
         {/* Payroll Table */}
         <div className="border border-gray-100 dark:border-gray-850 rounded-xl overflow-hidden shadow-inner">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full text-left border-collapse text-xs min-w-[900px]">
               <thead>
                 <tr className="border-b border-gray-150 dark:border-gray-800 text-[10px] font-bold text-gray-405 uppercase tracking-widest bg-gray-50/25 dark:bg-white/[0.01]">
                   <th className="p-3.5 pl-6">Karyawan</th>

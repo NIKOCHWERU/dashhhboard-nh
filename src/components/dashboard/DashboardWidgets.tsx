@@ -51,7 +51,7 @@ export const DigitalClock = () => {
           </div>
           <div className="mt-1 flex items-center justify-end gap-1 select-none">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Live System</span>
+            <span className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Sistem Aktif</span>
           </div>
         </div>
       </div>

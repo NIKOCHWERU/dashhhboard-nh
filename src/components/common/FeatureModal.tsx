@@ -37,14 +37,14 @@ export const FeatureModal: React.FC<ModalProps> = ({
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/45 backdrop-blur-[12px] animate-in fade-in duration-300">
       <div 
-        className={`bg-white dark:bg-boxdark w-full ${width} rounded-none shadow-2xl border border-stroke dark:border-strokedark overflow-hidden animate-in zoom-in duration-300`}
+        className={`bg-white dark:bg-boxdark w-full ${width} rounded-2xl shadow-2xl border border-stroke dark:border-strokedark overflow-hidden animate-in zoom-in duration-300`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Modern style from Jadwal */}
         <div className="px-8 py-6 bg-white dark:bg-boxdark border-b border-stroke dark:border-strokedark flex justify-between items-center">
           <div className="flex items-center gap-4">
             {icon && (
-              <div className="w-12 h-12 rounded-none bg-brand-500/10 flex items-center justify-center text-brand-500">
+              <div className="w-12 h-12 rounded-xl bg-brand-500/10 flex items-center justify-center text-brand-500">
                 {icon}
               </div>
             )}
@@ -55,7 +55,8 @@ export const FeatureModal: React.FC<ModalProps> = ({
           </div>
           <button 
             onClick={onClose}
-            className="p-2 rounded-none hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition-colors focus:ring-2 focus:ring-brand-500/50 outline-none"
+            aria-label="Tutup"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>

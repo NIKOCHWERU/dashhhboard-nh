@@ -39,16 +39,16 @@ const staticMenuGroups: MenuGroups[] = [
     title: "Menu",
     items: [
       { name: "Dashboard Utama", icon: <GridIcon />, path: "/" },
-      { name: "Jadwal", icon: <CalenderIcon />, path: "/calendar" },
+      { name: "Jadwal Sidang & Rapat", icon: <CalenderIcon />, path: "/calendar" },
       { name: "Berkas", icon: <DokumenIcon />, path: "/dokumen" },
       { name: "Dokumentasi", icon: <DokumentasiIcon />, path: "/dokumentasi" },
       { name: "Pengumuman", icon: <PengumumanIcon />, path: "/pengumuman" },
     ],
   },
   {
-    title: "NARASUMBER HUKUM",
+    title: "Manajemen Arsip",
     items: [
-      { name: "Arsip NH", icon: <DokumenIcon />, path: "/narasumber-hukum" },
+      { name: "Arsip Dokumen", icon: <DokumenIcon />, path: "/narasumber-hukum" },
     ],
   },
   {
@@ -61,7 +61,7 @@ const staticMenuGroups: MenuGroups[] = [
   {
     title: "Karyawan",
     items: [
-      { name: "Tim WFO", icon: <KaryawanIcon />, path: "/karyawan" },
+      { name: "Daftar Karyawan", icon: <KaryawanIcon />, path: "/karyawan" },
       { name: "Skala Prioritas", icon: <SkalaPrioritasIcon />, path: "/skala-prioritas" },
       { name: "Surat Internal", icon: <DokumenIcon />, path: "/internal" }
     ],
@@ -108,8 +108,8 @@ const AppSidebar: React.FC = () => {
     // 1. Menu Group
     const menuItems = [
       { name: "Dashboard Utama", icon: <GridIcon />, path: "/" },
-      { name: "Kalender Tim", icon: <CalenderIcon />, path: "/calendar" },
-      { name: "Catatan Pribadi", icon: <CatatanIcon />, path: "/catatan-pribadi" },
+      { name: "Jadwal Sidang & Rapat", icon: <CalenderIcon />, path: "/calendar" },
+      { name: "Daftar Prioritas Kerja", icon: <CatatanIcon />, path: "/catatan-pribadi" },
       { name: "Berkas", icon: <DokumenIcon />, path: "/dokumen" },
       { name: "Dokumentasi", icon: <DokumentasiIcon />, path: "/dokumentasi" },
       { name: "Pengumuman", icon: <PengumumanIcon />, path: "/pengumuman" }
@@ -118,8 +118,8 @@ const AppSidebar: React.FC = () => {
 
     // 2. NARASUMBER HUKUM Group
     groups.push({
-      title: "NARASUMBER HUKUM",
-      items: [{ name: "Arsip NH", icon: <DokumenIcon />, path: "/narasumber-hukum" }]
+      title: "Manajemen Arsip",
+      items: [{ name: "Arsip Dokumen", icon: <DokumenIcon />, path: "/narasumber-hukum" }]
     });
 
     // 3. Project Group
@@ -135,7 +135,7 @@ const AppSidebar: React.FC = () => {
     groups.push({
       title: "Karyawan",
       items: [
-        { name: "Tim WFO", icon: <KaryawanIcon />, path: "/karyawan" },
+        { name: "Daftar Karyawan", icon: <KaryawanIcon />, path: "/karyawan" },
         { name: "Skala Prioritas", icon: <SkalaPrioritasIcon />, path: "/skala-prioritas" },
         { name: "Surat Internal", icon: <DokumenIcon />, path: "/internal" }
       ]
@@ -193,7 +193,7 @@ const AppSidebar: React.FC = () => {
       groups.push({
         title: "Admin",
         items: [
-          { name: "Admin Control", icon: <CatatanIcon />, path: "/admin-control" }
+          { name: "Manajemen Akses", icon: <CatatanIcon />, path: "/admin-control" }
         ]
       });
     }

@@ -251,7 +251,7 @@ export default function DokumenPage() {
             e.stopPropagation();
             setPreviewItem(file);
           }}
-          className="w-10 h-10 border border-stroke dark:border-strokedark overflow-hidden rounded-none flex-shrink-0 cursor-pointer relative group/thumb"
+          className="w-10 h-10 border border-stroke dark:border-strokedark overflow-hidden rounded-lg flex-shrink-0 cursor-pointer relative group/thumb"
         >
           <img
             src={(file as any).thumbnailLink.replace(/=s\d+$/, "=s120")}
@@ -299,7 +299,7 @@ export default function DokumenPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">Berkas Arsip Kantor</h1>
+          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">Manajemen Arsip</h1>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Akses langsung berkas dan arsip perusahaan Anda terintegrasi penuh ke Google Drive.
           </p>
@@ -307,8 +307,30 @@ export default function DokumenPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+        <div className="space-y-8">
+          <div>
+            <div className="border-l-4 border-brand-500 pl-3 mb-4">
+              <div className="h-4 bg-gray-150 dark:bg-gray-800 rounded w-24 animate-pulse"></div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <div
+                  key={i}
+                  className="p-5 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 rounded-2xl h-36 flex flex-col justify-between animate-pulse"
+                >
+                  <div>
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-gray-150 dark:bg-gray-800"></div>
+                      <div className="w-20 h-3.5 bg-gray-150 dark:bg-gray-800 rounded"></div>
+                    </div>
+                    <div className="h-3 bg-gray-150 dark:bg-gray-800 rounded w-3/4 mt-2"></div>
+                    <div className="h-2 bg-gray-150 dark:bg-gray-800 rounded w-1/2 mt-1"></div>
+                  </div>
+                  <div className="h-3 bg-gray-150 dark:bg-gray-800 rounded w-1/3 mt-2"></div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       ) : !selectedClient ? (
         // Grid View of Clients
@@ -326,7 +348,7 @@ export default function DokumenPage() {
                   <div
                     key={client.id}
                     onClick={() => handleClientSelect(client)}
-                    className="p-5 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 rounded-none cursor-pointer hover:border-brand-500 dark:hover:border-brand-500 hover:shadow-lg transition-all group flex flex-col justify-between h-36"
+                    className="p-5 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 rounded-2xl cursor-pointer hover:border-brand-500 dark:hover:border-brand-500 hover:shadow-lg transition-all group flex flex-col justify-between h-36"
                   >
                     <div>
                       <div className="flex justify-between items-start mb-2">
@@ -334,7 +356,7 @@ export default function DokumenPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
                         {client.googleFolderId && (
-                          <span className="text-[9px] bg-green-50 text-green-600 font-bold px-1.5 py-0.5 rounded-none dark:bg-green-500/10 dark:text-green-400 uppercase">G-Drive Connected</span>
+                          <span className="text-[9px] bg-green-50 text-green-600 font-bold px-1.5 py-0.5 rounded-md dark:bg-green-500/10 dark:text-green-400 uppercase">G-Drive Connected</span>
                         )}
                       </div>
                       <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-wide group-hover:text-brand-500 transition-colors line-clamp-1">
@@ -365,7 +387,7 @@ export default function DokumenPage() {
                   <div
                     key={client.id}
                     onClick={() => handleClientSelect(client)}
-                    className="p-5 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 rounded-none cursor-pointer hover:border-brand-500 dark:hover:border-brand-500 hover:shadow-lg transition-all group flex flex-col justify-between h-36"
+                    className="p-5 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 rounded-2xl cursor-pointer hover:border-brand-500 dark:hover:border-brand-500 hover:shadow-lg transition-all group flex flex-col justify-between h-36"
                   >
                     <div>
                       <div className="flex justify-between items-start mb-2">
@@ -373,7 +395,7 @@ export default function DokumenPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                         {client.googleFolderId && (
-                          <span className="text-[9px] bg-green-50 text-green-600 font-bold px-1.5 py-0.5 rounded-none dark:bg-green-500/10 dark:text-green-400 uppercase">G-Drive Connected</span>
+                          <span className="text-[9px] bg-green-50 text-green-600 font-bold px-1.5 py-0.5 rounded-md dark:bg-green-500/10 dark:text-green-400 uppercase">G-Drive Connected</span>
                         )}
                       </div>
                       <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-wide group-hover:text-brand-500 transition-colors line-clamp-1">
@@ -394,11 +416,11 @@ export default function DokumenPage() {
       ) : (
         // File Manager View for Selected Client
         <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border border-stroke dark:border-strokedark p-4 bg-white dark:bg-gray-900 rounded-none">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border border-stroke dark:border-strokedark p-4 bg-white dark:bg-gray-900 rounded-2xl">
             <div className="flex items-center gap-3">
               <button
                 onClick={handleBack}
-                className="p-2 border border-stroke dark:border-strokedark rounded-none hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="p-2 border border-stroke dark:border-strokedark rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
                 <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -411,7 +433,7 @@ export default function DokumenPage() {
                   <button
                     onClick={handleRecreateFolder}
                     disabled={repairing}
-                    className="px-2 py-0.5 border border-amber-500 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 text-[9px] font-black rounded-none uppercase transition-colors disabled:opacity-50 flex items-center gap-1"
+                    className="px-2 py-0.5 border border-amber-500 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 text-[9px] font-black rounded-lg uppercase transition-colors disabled:opacity-50 flex items-center gap-1"
                     title="Perbaiki & Sinkronisasi Folder Google Drive"
                   >
                     {repairing ? (
@@ -450,7 +472,7 @@ export default function DokumenPage() {
           </div>
 
           {/* FILE LIST OR LOADING */}
-          <div className="border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 rounded-none shadow-sm">
+          <div className="border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm">
             <div className="p-5 border-b border-stroke dark:border-strokedark flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-gray-50 dark:bg-gray-900/50">
               <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
                 <svg className="w-4 h-4 text-brand-500 fill-brand-500" viewBox="0 0 24 24">
@@ -462,7 +484,7 @@ export default function DokumenPage() {
               {/* UPLOAD BUTTON */}
               {activeFolderId && activeFolderId !== selectedClient.googleFolderId && (
                 <div>
-                  <label className={`px-4 py-2 bg-brand-500 text-white text-xs font-bold rounded-none hover:bg-brand-600 transition-colors shadow-sm cursor-pointer inline-flex items-center gap-2 ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+                  <label className={`px-4 py-2 bg-brand-500 text-white text-xs font-bold rounded-xl hover:bg-brand-600 transition-colors shadow-sm cursor-pointer inline-flex items-center gap-2 ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
@@ -474,8 +496,16 @@ export default function DokumenPage() {
             </div>
 
             {loadingFiles ? (
-              <div className="flex justify-center items-center py-20">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+              <div className="p-6 space-y-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex items-center gap-4 animate-pulse">
+                    <div className="w-8 h-8 rounded-lg bg-gray-150 dark:bg-gray-800 flex-shrink-0"></div>
+                    <div className="flex-1 space-y-2 py-1">
+                      <div className="h-3 bg-gray-150 dark:bg-gray-800 rounded w-1/4"></div>
+                      <div className="h-2.5 bg-gray-150 dark:bg-gray-800 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : files.length === 0 ? (
               <div className="text-center py-16 text-xs text-gray-400 italic">
@@ -483,7 +513,7 @@ export default function DokumenPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse min-w-[800px]">
                   <thead>
                     <tr className="border-b border-stroke dark:border-strokedark text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                       <th className="p-4 pl-6">Nama File</th>
@@ -522,7 +552,7 @@ export default function DokumenPage() {
                             {isFolder ? (
                               <button
                                 onClick={() => browseFolder(file.id, file.name)}
-                                className="px-3 py-1 bg-brand-50 text-brand-700 hover:bg-brand-100 text-[10px] font-black rounded-none uppercase transition-colors"
+                                className="px-3 py-1 bg-brand-50 text-brand-700 hover:bg-brand-100 text-[10px] font-black rounded-lg uppercase transition-colors"
                               >
                                 Buka
                               </button>
@@ -533,14 +563,14 @@ export default function DokumenPage() {
                                     href={file.webViewLink}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="px-3 py-1 bg-brand-50 text-brand-700 hover:bg-brand-100 text-[10px] font-black rounded-none uppercase transition-colors inline-block"
+                                    className="px-3 py-1 bg-brand-50 text-brand-700 hover:bg-brand-100 text-[10px] font-black rounded-lg uppercase transition-colors inline-block"
                                   >
                                     Lihat
                                   </a>
                                 )}
                                 <button
                                   onClick={() => handleFileDelete(file.id)}
-                                  className="px-3 py-1 bg-red-50 text-red-700 hover:bg-red-100 text-[10px] font-black rounded-none uppercase transition-colors"
+                                  className="px-3 py-1 bg-red-50 text-red-700 hover:bg-red-100 text-[10px] font-black rounded-lg uppercase transition-colors"
                                 >
                                   Hapus
                                 </button>
@@ -572,10 +602,10 @@ export default function DokumenPage() {
           </button>
           
           <div
-            className="max-w-4xl max-h-[85vh] w-full flex flex-col bg-gray-900 border border-white/10 p-6 rounded-none relative"
+            className="max-w-4xl max-h-[85vh] w-full flex flex-col bg-gray-900 border border-white/10 p-6 rounded-2xl relative"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex-1 flex items-center justify-center overflow-hidden max-h-[60vh] bg-black/40 border border-white/5">
+            <div className="flex-1 flex items-center justify-center overflow-hidden max-h-[60vh] bg-black/40 border border-white/5 rounded-xl">
               {previewItem.thumbnailLink ? (
                 <img
                   src={previewItem.thumbnailLink.replace(/=s\d+$/, "=s1200")}
@@ -602,14 +632,14 @@ export default function DokumenPage() {
                     href={previewItem.webViewLink}
                     target="_blank"
                     rel="noreferrer"
-                    className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-black text-xs uppercase tracking-wider rounded-none transition-all flex items-center gap-2"
+                    className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-2"
                   >
                     Buka di Google Drive
                   </a>
                 )}
                 <button
                   onClick={() => setPreviewItem(null)}
-                  className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 font-black text-xs uppercase tracking-wider rounded-none transition-all"
+                  className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 font-black text-xs uppercase tracking-wider rounded-xl transition-all"
                 >
                   Tutup
                 </button>

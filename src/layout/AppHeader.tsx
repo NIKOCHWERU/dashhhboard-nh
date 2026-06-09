@@ -41,7 +41,7 @@ const AppHeader: React.FC = () => {
       case "/pengumuman": return "Pengumuman";
       case "/retainer": return "Retainer";
       case "/perorangan": return "Perorangan";
-      case "/karyawan": return "Tim WFO";
+      case "/karyawan": return "Daftar Karyawan";
       case "/skala-prioritas": return "Skala Prioritas";
       case "/internal": return "Surat Internal";
       default: return "Sistem Manajemen";

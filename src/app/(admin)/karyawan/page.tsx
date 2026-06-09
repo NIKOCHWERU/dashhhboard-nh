@@ -100,7 +100,7 @@ export default function TimPage() {
           <input
             type="text"
             placeholder="Cari nama, email, jabatan..."
-            className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-white/[0.02] text-gray-700 dark:text-white outline-none focus:border-brand-500 transition-colors text-xs font-semibold"
+            className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-white/[0.02] text-gray-700 dark:text-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/50 transition-colors text-xs font-semibold"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -116,8 +116,16 @@ export default function TimPage() {
         <div className="xl:col-span-7 flex flex-col space-y-4">
           <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.03] rounded-2xl shadow-xl overflow-hidden">
             {loading ? (
-              <div className="flex justify-center items-center py-20">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+              <div className="p-5 space-y-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex items-center gap-4 animate-pulse">
+                    <div className="w-8 h-8 rounded-full bg-gray-150 dark:bg-gray-800 flex-shrink-0"></div>
+                    <div className="flex-1 space-y-2 py-1">
+                      <div className="h-3 bg-gray-150 dark:bg-gray-800 rounded w-1/3"></div>
+                      <div className="h-2.5 bg-gray-150 dark:bg-gray-800 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : filteredData.length === 0 ? (
               <div className="text-center py-20 text-xs text-gray-450 dark:text-gray-500 italic">
@@ -125,7 +133,7 @@ export default function TimPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse min-w-[600px]">
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-gray-800 text-[10px] font-bold text-gray-405 uppercase tracking-widest bg-gray-50/20 dark:bg-white/[0.01]">
                       <th className="p-4 pl-6">Karyawan</th>

@@ -166,7 +166,7 @@ export default function NarasumberHukumPage() {
       }
     } catch (error) {
       console.error(error);
-      alert("Gagal memuat dokumen. Pastikan konfigurasi Google Drive Anda aktif.");
+      alert("Sistem gagal terhubung ke Google Drive. Pastikan konfigurasi jaringan atau izin akses Anda telah aktif.");
     } finally {
       setLoading(false);
     }
@@ -524,7 +524,7 @@ export default function NarasumberHukumPage() {
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-stroke dark:border-strokedark">
         <div>
-          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">Arsip Narasumber Hukum</h1>
+          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">Manajemen Arsip</h1>
           <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
             Dokumentasi berkas hukum, legal opinion, somasi, dan surat kontrak diatur secara dinamis per perusahaan.
           </p>
@@ -578,7 +578,7 @@ export default function NarasumberHukumPage() {
               <svg className="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Berkas Terbaru
+              Dokumen Terbaru
             </h3>
             <div className="flex-1 overflow-y-auto no-scrollbar py-3 space-y-2.5">
               {recentFiles.length === 0 ? (
@@ -662,7 +662,7 @@ export default function NarasumberHukumPage() {
               <input
                 type="text"
                 placeholder="Cari nama, PT, keterangan..."
-                className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl bg-transparent text-gray-700 dark:text-white outline-none focus:border-brand-500 transition-colors text-xs font-semibold"
+                className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl bg-transparent text-gray-700 dark:text-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/50 transition-colors text-xs font-semibold"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -687,8 +687,16 @@ export default function NarasumberHukumPage() {
             </div>
 
             {loading ? (
-              <div className="flex justify-center items-center py-24">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+              <div className="p-6 space-y-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex items-center gap-4 animate-pulse">
+                    <div className="w-8 h-8 rounded-lg bg-gray-150 dark:bg-gray-800 flex-shrink-0"></div>
+                    <div className="flex-1 space-y-2 py-1">
+                      <div className="h-3 bg-gray-150 dark:bg-gray-800 rounded w-1/4"></div>
+                      <div className="h-2.5 bg-gray-150 dark:bg-gray-800 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : filteredItems.length === 0 ? (
               <div className="text-center py-20 text-xs text-gray-400 italic bg-white dark:bg-transparent">
@@ -696,7 +704,7 @@ export default function NarasumberHukumPage() {
               </div>
             ) : (
               <div className="overflow-x-auto text-[13px]">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse min-w-[800px]">
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-gray-800 text-[10px] font-bold text-gray-405 uppercase tracking-widest bg-gray-50/20 dark:bg-white/[0.01]">
                       <th className="p-4 pl-6">Nama</th>

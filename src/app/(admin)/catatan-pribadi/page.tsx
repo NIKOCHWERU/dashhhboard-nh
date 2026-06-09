@@ -407,10 +407,10 @@ export default function PersonalNotesPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-200 dark:border-gray-800 pb-6">
         <div>
           <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-wider">
-            Catatan Pribadi
+            Daftar Prioritas Kerja
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Kelola ide, tugas, draf berkas hukum, dan catatan kerja harian Anda dalam satu dashboard terpadu.
+            Kelola ide, tugas, draf berkas hukum, dan catatan kerja harian Anda dalam satu ruang kerja terpadu.
           </p>
         </div>
         <button
@@ -419,7 +419,7 @@ export default function PersonalNotesPage() {
             setIsEditing(true);
             setIsModalOpen(true);
           }}
-          className="flex items-center justify-center gap-2 px-6 py-3 rounded-none bg-amber-500 hover:bg-amber-600 text-white font-black text-xs uppercase tracking-widest cursor-pointer shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
+          className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-black text-xs uppercase tracking-widest cursor-pointer shadow-lg shadow-brand-500/10 active:scale-95 transition-all"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -438,7 +438,7 @@ export default function PersonalNotesPage() {
               placeholder="Cari kata kunci di judul atau deskripsi..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-none border border-gray-200 bg-gray-50/50 text-xs text-black outline-none transition focus:border-amber-500 dark:border-gray-800 dark:bg-gray-900/50 dark:text-white"
+              className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-xs text-black outline-none transition focus:border-brand-500 focus:ring-1 focus:ring-brand-500/25 dark:border-gray-800 dark:bg-gray-900/50 dark:text-white"
             />
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -452,11 +452,11 @@ export default function PersonalNotesPage() {
             <select
               value={statusFilter}
               onChange={(e: any) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-3 rounded-none border border-gray-200 bg-gray-50/50 text-xs text-black outline-none transition focus:border-amber-500 dark:border-gray-800 dark:bg-gray-900/50 dark:text-white"
+              className="w-full px-3 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-xs text-black outline-none transition focus:border-brand-500 focus:ring-1 focus:ring-brand-500/25 dark:border-gray-800 dark:bg-gray-900/50 dark:text-white"
             >
               <option value="ALL">Semua Status</option>
-              <option value="PENDING">Tunda (Pending)</option>
-              <option value="ONGOING">Sedang Berjalan</option>
+              <option value="PENDING">Tertunda</option>
+              <option value="ONGOING">Dalam Proses</option>
               <option value="COMPLETED">Selesai</option>
             </select>
           </div>
@@ -466,12 +466,12 @@ export default function PersonalNotesPage() {
             <select
               value={priorityFilter}
               onChange={(e: any) => setPriorityFilter(e.target.value)}
-              className="w-full px-3 py-3 rounded-none border border-gray-200 bg-gray-50/50 text-xs text-black outline-none transition focus:border-amber-500 dark:border-gray-800 dark:bg-gray-900/50 dark:text-white"
+              className="w-full px-3 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-xs text-black outline-none transition focus:border-brand-500 focus:ring-1 focus:ring-brand-500/25 dark:border-gray-800 dark:bg-gray-900/50 dark:text-white"
             >
-              <option value="ALL">Semua Prioritas</option>
-              <option value="Q1">Prioritas Tinggi (Q1)</option>
-              <option value="Q2">Prioritas Sedang (Q2)</option>
-              <option value="Q3">Prioritas Rendah (Q3)</option>
+              <option value="ALL">Semua Tingkat Prioritas</option>
+              <option value="Q1">Prioritas Utama (Q1)</option>
+              <option value="Q2">Prioritas Menengah (Q2)</option>
+              <option value="Q3">Prioritas Rutin (Q3)</option>
             </select>
           </div>
 
@@ -481,7 +481,7 @@ export default function PersonalNotesPage() {
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full px-3 py-3 rounded-none border border-gray-200 bg-gray-50/50 text-xs text-black outline-none transition focus:border-amber-500 dark:border-gray-800 dark:bg-gray-900/50 dark:text-white"
+              className="w-full px-3 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-xs text-black outline-none transition focus:border-brand-500 focus:ring-1 focus:ring-brand-500/25 dark:border-gray-800 dark:bg-gray-900/50 dark:text-white"
             />
           </div>
         </div>
@@ -508,86 +508,35 @@ export default function PersonalNotesPage() {
         </div>
       ) : notesList.length === 0 ? (
         <div className="space-y-8 animate-in fade-in duration-500">
-          {/* Main Empty State Banner */}
-          <div className="flex flex-col items-center justify-center text-center py-12 border border-dashed border-gray-250 dark:border-gray-850 bg-white dark:bg-white/[0.01] p-6 shadow-md">
-            <svg className="w-16 h-16 text-amber-500 mb-4 animate-bounce" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
-            </svg>
-            <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-wider">Belum Ada Catatan Pribadi</h3>
-            <p className="text-xs text-gray-400 mt-1 max-w-md">
-              Halaman ini digunakan untuk mengelola ide, draf berkas hukum, dan catatan kerja harian Anda. Silakan ikuti panduan di bawah ini untuk memulai.
+          <div className="max-w-2xl mx-auto border border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.02] p-6 rounded-2xl shadow-sm space-y-4">
+            <div className="flex items-center gap-3 border-b border-gray-100 dark:border-gray-800 pb-3">
+              <span className="w-1.5 h-4 bg-brand-500 rounded-full"></span>
+              <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Panduan Manajemen Prioritas Kerja</h3>
+            </div>
+            <p className="text-xs text-gray-550 dark:text-gray-400 leading-relaxed">
+              Halaman ini digunakan untuk mengorganisasi tugas harian, draf dokumen hukum, dan agenda kerja Anda berdasarkan tingkat prioritas. Ikuti panduan singkat berikut untuk memulai:
             </p>
-          </div>
-
-          {/* Guide Steps Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Step 1 */}
-            <div className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-850 p-6 shadow-md flex flex-col justify-between hover:shadow-lg transition-all duration-300">
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center font-black text-sm">
-                  1
+            <div className="space-y-3.5 pl-1 text-xs text-gray-750 dark:text-gray-300">
+              <div className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center font-bold text-[10px]">1</span>
+                <div>
+                  <span className="font-bold text-gray-900 dark:text-white block leading-none">Buat Catatan Kegiatan</span>
+                  <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5 leading-relaxed">Tekan tombol <strong>+ Buat Catatan Baru</strong> untuk merekam tugas. Tentukan jadwal dan rincian pekerjaan.</p>
                 </div>
-                <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Membuat Catatan Baru</h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                  Klik tombol <span className="font-bold text-amber-600 dark:text-amber-500">+ Buat Catatan Baru</span> di sudut kanan atas halaman. Isi judul catatan, tanggal mulai kegiatan, serta keterangan pengerjaan atau list sub-kegiatan internal.
-                </p>
               </div>
-            </div>
-
-            {/* Step 2 */}
-            <div className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-850 p-6 shadow-md flex flex-col justify-between hover:shadow-lg transition-all duration-300">
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-full bg-red-500/10 text-red-600 flex items-center justify-center font-black text-sm">
-                  2
+              <div className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center font-bold text-[10px]">2</span>
+                <div>
+                  <span className="font-bold text-gray-900 dark:text-white block leading-none">Tentukan Tingkat Prioritas</span>
+                  <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5 leading-relaxed">Kelompokkan perkara: <strong>Prioritas Utama (Q1)</strong> untuk tugas mendesak, <strong>Prioritas Menengah (Q2)</strong> untuk janji temu penting, dan <strong>Prioritas Rutin (Q3)</strong> untuk administrasi harian biasa.</p>
                 </div>
-                <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Mengatur Skala Prioritas</h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                  Tentukan urgensi catatan menggunakan matriks prioritas kerja:
-                </p>
-                <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-1 pl-4 list-disc">
-                  <li><span className="font-bold text-red-600">Q1 (Tinggi)</span>: Tugas mendesak & penting.</li>
-                  <li><span className="font-bold text-amber-500">Q2 (Sedang)</span>: Tugas penting jangka menengah.</li>
-                  <li><span className="font-bold text-green-600">Q3 (Rendah)</span>: Tugas rutin harian biasa.</li>
-                </ul>
               </div>
-            </div>
-
-            {/* Step 3 */}
-            <div className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-850 p-6 shadow-md flex flex-col justify-between hover:shadow-lg transition-all duration-300">
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-black text-sm">
-                  3
+              <div className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center font-bold text-[10px]">3</span>
+                <div>
+                  <span className="font-bold text-gray-900 dark:text-white block leading-none">Tandai Jika Telah Selesai</span>
+                  <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5 leading-relaxed">Centang kotak pada kartu tugas setelah selesai dikerjakan. Sistem akan merekam waktu penyelesaian secara otomatis.</p>
                 </div>
-                <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Menandai Checklist & Selesai</h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                  Gunakan kotak ceklist pada tabel untuk menandai catatan atau tugas yang telah **Selesai (Completed)**. Sistem akan otomatis mencatat waktu selesai pengerjaan Anda untuk memantau produktivitas.
-                </p>
-              </div>
-            </div>
-
-            {/* Step 4 */}
-            <div className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-850 p-6 shadow-md flex flex-col justify-between hover:shadow-lg transition-all duration-300">
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-600 flex items-center justify-center font-black text-sm">
-                  4
-                </div>
-                <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Pencarian & Filter Instan</h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                  Cari kata kunci secara real-time pada kolom pencarian. Anda juga bisa mempersempit daftar catatan berdasarkan Status pengerjaan, Prioritas urgensi, atau mencocokkannya dengan tanggal tertentu.
-                </p>
-              </div>
-            </div>
-
-            {/* Step 5 */}
-            <div className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-850 p-6 shadow-md flex flex-col justify-between hover:shadow-lg transition-all duration-300">
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-full bg-violet-500/10 text-violet-600 flex items-center justify-center font-black text-sm">
-                  5
-                </div>
-                <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Unggah Gambar Pendukung</h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                  Unggah lampiran bukti foto atau gambar referensi langsung dari formulir catatan pribadi. Lampiran berkas ini akan otomatis tersimpan dalam folder arsip Google Drive dashboard Anda.
-                </p>
               </div>
             </div>
           </div>
@@ -609,9 +558,9 @@ export default function PersonalNotesPage() {
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2.5">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm shadow-red-500/20"></span>
-                <h2 className="text-xs font-black uppercase tracking-wider text-red-650 dark:text-red-400">Tinggi (Q1)</h2>
+                <h2 className="text-xs font-black uppercase tracking-wider text-red-655 dark:text-red-400">Prioritas Utama (Q1)</h2>
               </div>
-              <span className="text-[10px] font-black text-red-650 bg-red-50 dark:bg-red-950/20 px-2.5 py-0.5 rounded-lg">
+              <span className="text-[10px] font-black text-red-655 bg-red-50 dark:bg-red-950/20 px-2.5 py-0.5 rounded-lg">
                 {filteredNotes.filter(n => n.priority === "Q1").length}
               </span>
             </div>
@@ -627,9 +576,9 @@ export default function PersonalNotesPage() {
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2.5">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm shadow-amber-500/20"></span>
-                <h2 className="text-xs font-black uppercase tracking-wider text-amber-650 dark:text-amber-400">Sedang (Q2)</h2>
+                <h2 className="text-xs font-black uppercase tracking-wider text-amber-655 dark:text-amber-400">Prioritas Menengah (Q2)</h2>
               </div>
-              <span className="text-[10px] font-black text-amber-650 bg-amber-50 dark:bg-amber-950/20 px-2.5 py-0.5 rounded-lg">
+              <span className="text-[10px] font-black text-amber-655 bg-amber-50 dark:bg-amber-950/20 px-2.5 py-0.5 rounded-lg">
                 {filteredNotes.filter(n => n.priority === "Q2").length}
               </span>
             </div>
@@ -645,7 +594,7 @@ export default function PersonalNotesPage() {
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2.5">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm shadow-green-500/20"></span>
-                <h2 className="text-xs font-black uppercase tracking-wider text-green-655 dark:text-green-400">Rendah (Q3)</h2>
+                <h2 className="text-xs font-black uppercase tracking-wider text-green-655 dark:text-green-400">Prioritas Rutin (Q3)</h2>
               </div>
               <span className="text-[10px] font-black text-green-655 bg-green-50 dark:bg-green-950/20 px-2.5 py-0.5 rounded-lg">
                 {filteredNotes.filter(n => n.priority === "Q3").length}
@@ -662,22 +611,22 @@ export default function PersonalNotesPage() {
 
       {/* CORE SEPARATED MODAL: VIEW & WRITE NOTE */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <div className="bg-white dark:bg-boxdark rounded-none overflow-hidden shadow-2xl border border-stroke dark:border-strokedark max-w-2xl w-full mx-auto animate-in zoom-in duration-300">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl border border-gray-150 dark:border-gray-800 max-w-2xl w-full mx-auto animate-in zoom-in duration-300">
           
           {/* Modal Header */}
-          <div className="px-8 py-6 bg-white dark:bg-boxdark border-b border-stroke dark:border-strokedark flex justify-between items-center">
+          <div className="px-8 py-6 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-500/10 text-amber-500 flex items-center justify-center rounded-none">
+              <div className="w-10 h-10 bg-brand-500/10 text-brand-500 flex items-center justify-center rounded-xl">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-lg font-black text-black dark:text-white uppercase tracking-wider">
-                  {selectedNoteId ? (isEditing ? "Ubah Catatan Pribadi" : "Detail Catatan Pribadi") : "Buat Catatan Baru"}
+                <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-wider">
+                  {selectedNoteId ? (isEditing ? "Ubah Catatan Kerja" : "Detail Catatan Kerja") : "Buat Catatan Baru"}
                 </h3>
-                <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wide">
-                  {isEditing ? "Rincikan informasi checklist dan draf tugas Anda" : "Informasi detail beserta lampiran berkas berkas"}
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wide">
+                  {isEditing ? "Rincikan informasi checklist dan draf tugas Anda" : "Informasi detail beserta lampiran berkas"}
                 </p>
               </div>
             </div>
@@ -768,7 +717,7 @@ export default function PersonalNotesPage() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Contoh: Menyiapkan Lampiran Berkas Perkara PT. XYZ"
-                    className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-xs text-black outline-none transition focus:border-amber-500 dark:border-form-strokedark dark:bg-form-input dark:text-white"
+                    className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-transparent px-5 py-3 text-xs text-black outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:text-white"
                   />
                 </div>
 
@@ -780,7 +729,7 @@ export default function PersonalNotesPage() {
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-xs text-black outline-none transition focus:border-amber-500 dark:border-form-strokedark dark:bg-form-input dark:text-white"
+                      className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-transparent px-5 py-3 text-xs text-black outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:text-white"
                     />
                   </div>
 
@@ -790,7 +739,7 @@ export default function PersonalNotesPage() {
                       type="time"
                       value={startTime}
                       onChange={(e) => setStartTime(e.target.value)}
-                      className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-xs text-black outline-none transition focus:border-amber-500 dark:border-form-strokedark dark:bg-form-input dark:text-white"
+                      className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-transparent px-5 py-3 text-xs text-black outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:text-white"
                     />
                   </div>
                 </div>
@@ -801,18 +750,18 @@ export default function PersonalNotesPage() {
                     <label className="block text-xs font-black uppercase text-gray-500 mb-2">Prioritas</label>
                     <div className="grid grid-cols-3 gap-2">
                       {[
-                        { key: "Q1", label: "Tinggi (Q1)" },
-                        { key: "Q2", label: "Sedang (Q2)" },
-                        { key: "Q3", label: "Rendah (Q3)" },
+                        { key: "Q1", label: "Utama (Q1)" },
+                        { key: "Q2", label: "Menengah (Q2)" },
+                        { key: "Q3", label: "Rutin (Q3)" },
                       ].map((p) => (
                         <button
                           key={p.key}
                           type="button"
                           onClick={() => setPriority(p.key as any)}
-                          className={`py-2 rounded-none border font-black text-[10px] uppercase transition-colors ${
+                          className={`py-2 rounded-xl border font-black text-[10px] uppercase transition-colors focus:ring-2 focus:ring-brand-500/20 outline-none ${
                             priority === p.key
                               ? p.key === "Q1" ? "border-red-500 bg-red-500 text-white" : p.key === "Q2" ? "border-amber-500 bg-amber-500 text-white" : "border-green-500 bg-green-500 text-white"
-                              : "border-stroke text-gray-400 hover:border-amber-500"
+                              : "border-gray-200 dark:border-gray-800 text-gray-400 hover:border-brand-500"
                           }`}
                         >
                           {p.label}
@@ -825,18 +774,18 @@ export default function PersonalNotesPage() {
                     <label className="block text-xs font-black uppercase text-gray-500 mb-2">Status Catatan</label>
                     <div className="grid grid-cols-3 gap-2">
                       {[
-                        { key: "PENDING", label: "Tunda" },
-                        { key: "ONGOING", label: "Proses" },
+                        { key: "PENDING", label: "Tertunda" },
+                        { key: "ONGOING", label: "Dalam Proses" },
                         { key: "COMPLETED", label: "Selesai" },
                       ].map((s) => (
                         <button
                           key={s.key}
                           type="button"
                           onClick={() => setStatus(s.key as any)}
-                          className={`py-2 rounded-none border font-black text-[10px] uppercase transition-colors ${
+                          className={`py-2 rounded-xl border font-black text-[10px] uppercase transition-colors focus:ring-2 focus:ring-brand-500/20 outline-none ${
                             status === s.key
-                              ? "border-amber-500 bg-amber-500 text-white"
-                              : "border-stroke text-gray-400 hover:border-amber-500"
+                              ? "border-brand-500 bg-brand-500 text-white"
+                              : "border-gray-200 dark:border-gray-800 text-gray-400 hover:border-brand-500"
                           }`}
                         >
                           {s.label}
@@ -850,8 +799,8 @@ export default function PersonalNotesPage() {
                 <div>
                   <label className="block text-xs font-black uppercase text-gray-500 mb-2">Unggah Lampiran Gambar / Foto</label>
                   <div className="flex flex-col gap-3">
-                    <label className={`px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-black dark:text-white border border-dashed border-stroke dark:border-strokedark text-center text-xs font-black uppercase tracking-wider cursor-pointer rounded-none inline-flex items-center justify-center gap-2 ${uploadingImage ? "opacity-50 pointer-events-none" : ""}`}>
-                      {uploadingImage ? "Mengunggah..." : "Pilih File Foto"}
+                    <label className={`px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-black dark:text-white border border-dashed border-gray-250 dark:border-gray-800 text-center text-xs font-black uppercase tracking-wider cursor-pointer rounded-xl inline-flex items-center justify-center gap-2 ${uploadingImage ? "opacity-50 pointer-events-none" : ""}`}>
+                      {uploadingImage ? "Mengunggah..." : "Pilih Berkas Foto"}
                       <input
                         type="file"
                         accept="image/*"
@@ -862,7 +811,7 @@ export default function PersonalNotesPage() {
                     </label>
                     
                     {imageUrl && (
-                      <div className="relative w-32 h-24 border border-stroke overflow-hidden rounded-none mt-2">
+                      <div className="relative w-32 h-24 border border-gray-250 dark:border-gray-800 overflow-hidden rounded-xl mt-2">
                         <img
                           src={imageUrl}
                           alt="Attachment Uploaded"
@@ -888,7 +837,7 @@ export default function PersonalNotesPage() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Tulis deskripsi draf pengerjaan berkas, janji temu klien, dsb..."
-                    className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-xs text-black outline-none transition focus:border-amber-500 dark:border-form-strokedark dark:bg-form-input dark:text-white"
+                    className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-transparent px-5 py-3 text-xs text-black outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:text-white"
                   ></textarea>
                 </div>
 
@@ -900,7 +849,7 @@ export default function PersonalNotesPage() {
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Sub-checklist atau instruksi spesifik tambahan..."
-                    className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-xs text-black outline-none transition focus:border-amber-500 dark:border-form-strokedark dark:bg-form-input dark:text-white"
+                    className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-transparent px-5 py-3 text-xs text-black outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:text-white"
                   ></textarea>
                 </div>
               </div>
@@ -908,13 +857,13 @@ export default function PersonalNotesPage() {
           </div>
 
           {/* Modal Footer */}
-          <div className="px-8 py-6 bg-white dark:bg-boxdark border-t border-stroke dark:border-strokedark flex justify-between items-center">
+          <div className="px-8 py-6 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
             <div>
               {selectedNoteId && isEditing && (
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-none text-xs font-black text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 uppercase tracking-widest cursor-pointer"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black text-red-500 hover:bg-red-500 hover:text-white transition-all uppercase tracking-widest cursor-pointer"
                 >
                   Hapus Catatan
                 </button>
@@ -926,7 +875,7 @@ export default function PersonalNotesPage() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-6 py-2.5 rounded-none text-xs font-black text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 uppercase tracking-widest cursor-pointer"
+                    className="px-6 py-2.5 rounded-xl text-xs font-black text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-850 uppercase tracking-widest cursor-pointer"
                   >
                     Tutup
                   </button>
@@ -946,9 +895,9 @@ export default function PersonalNotesPage() {
                             fetchNotes();
                           }
                         }}
-                        className="px-6 py-2.5 rounded-none text-xs font-black bg-amber-500 text-white uppercase tracking-widest hover:bg-amber-600 cursor-pointer"
+                        className="px-6 py-2.5 rounded-xl text-xs font-black bg-brand-500 text-white uppercase tracking-widest hover:bg-brand-600 cursor-pointer"
                       >
-                        Tandai Pending
+                        Tandai Tertunda
                       </button>
                     ) : (
                       <button
@@ -974,16 +923,16 @@ export default function PersonalNotesPage() {
                             fetchNotes();
                           }
                         }}
-                        className="px-6 py-2.5 rounded-none text-xs font-black bg-emerald-600 text-white uppercase tracking-widest hover:bg-emerald-700 cursor-pointer"
+                        className="px-6 py-2.5 rounded-xl text-xs font-black bg-emerald-600 text-white uppercase tracking-widest hover:bg-emerald-700 cursor-pointer"
                       >
-                        Tugas Selesai
+                        Catatan Selesai
                       </button>
                     )
                   )}
                   <button
                     type="button"
                     onClick={() => setIsEditing(true)}
-                    className="px-8 py-2.5 rounded-none text-xs font-black bg-amber-500 text-white uppercase tracking-widest shadow-lg hover:bg-amber-600 cursor-pointer"
+                    className="px-8 py-2.5 rounded-xl text-xs font-black bg-brand-500 text-white uppercase tracking-widest shadow-lg hover:bg-brand-600 cursor-pointer"
                   >
                     Ubah Catatan
                   </button>
@@ -999,14 +948,14 @@ export default function PersonalNotesPage() {
                         setIsModalOpen(false); // Close completely
                       }
                     }}
-                    className="px-6 py-2.5 rounded-none text-xs font-black text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 uppercase tracking-widest cursor-pointer"
+                    className="px-6 py-2.5 rounded-xl text-xs font-black text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-850 uppercase tracking-widest cursor-pointer"
                   >
                     Batal
                   </button>
                   <button
                     type="button"
                     onClick={handleSubmit}
-                    className="px-8 py-2.5 rounded-none text-xs font-black bg-amber-500 text-white uppercase tracking-widest shadow-lg hover:bg-amber-600 cursor-pointer"
+                    className="px-8 py-2.5 rounded-xl text-xs font-black bg-brand-500 text-white uppercase tracking-widest shadow-lg hover:bg-brand-600 cursor-pointer"
                   >
                     Simpan Catatan
                   </button>

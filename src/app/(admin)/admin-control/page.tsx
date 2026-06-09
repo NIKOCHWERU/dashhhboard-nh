@@ -154,7 +154,7 @@ export default function AdminControlPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-4 border-b border-gray-200 dark:border-gray-800 gap-4">
         <div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-tight uppercase tracking-wider">
-            Admin Control & Monitoring
+            Manajemen Akses & Monitoring
           </h1>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Pantau log aktivitas CRUD seluruh sistem secara real-time dan kelola hak akses karyawan secara terpusat.
