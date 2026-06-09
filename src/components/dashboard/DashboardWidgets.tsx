@@ -1,5 +1,15 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { Clock, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+
+// Helper function to calculate ISO week number
+const calculateWeekNumber = (d: Date) => {
+  const date = new Date(d.getTime());
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+  const week1 = new Date(date.getFullYear(), 0, 4);
+  return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+};
 
 // --- WIDGET JAM DIGITAL ---
 export const DigitalClock = () => {
@@ -13,19 +23,35 @@ export const DigitalClock = () => {
   const time = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", hour12: false }).replace(".", ":");
   const seconds = now.getSeconds().toString().padStart(2, "0");
   const day = now.toLocaleDateString("id-ID", { weekday: "long" });
-  const date = now.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  const date = now.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+  const weekNum = calculateWeekNumber(now);
 
   return (
-    <div className="rounded-sm border border-stroke bg-white p-5 shadow-default dark:border-strokedark dark:bg-gray-900">
-      <div className="flex items-center justify-between">
+    <div className="relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white p-5 shadow-sm dark:border-gray-800/80 dark:bg-gray-900 transition-all duration-300 hover:shadow-md hover:border-brand-500/30">
+      {/* Subtle top-right ambient glow */}
+      <div className="absolute -top-6 -right-6 w-20 h-20 bg-brand-500/5 dark:bg-brand-500/10 rounded-full blur-xl pointer-events-none"></div>
+
+      <div className="flex items-center justify-between relative z-10">
         <div className="flex flex-col">
-          <span className="text-xs font-bold uppercase tracking-widest text-brand-500">{day}</span>
-          <span className="text-sm font-medium text-black dark:text-white">{date}</span>
+          <div className="flex items-center gap-1.5 mb-1">
+            <Clock className="w-3.5 h-3.5 text-brand-500 animate-spin-[spin_8s_linear_infinite]" style={{ animation: 'spin 12s linear infinite' }} />
+            <span className="text-[10px] font-black uppercase tracking-widest text-brand-500">{day}</span>
+          </div>
+          <span className="text-xs font-bold text-gray-800 dark:text-gray-200">{date}</span>
+          <div className="mt-2">
+            <span className="inline-flex items-center gap-1 bg-brand-500/10 dark:bg-brand-500/15 text-brand-600 dark:text-brand-400 text-[9px] font-black tracking-widest px-2 py-0.5 rounded border border-brand-500/20 uppercase">
+              Week {weekNum}
+            </span>
+          </div>
         </div>
         <div className="text-right">
-          <div className="flex items-baseline justify-end">
-            <span className="text-3xl font-black text-black dark:text-white">{time}</span>
-            <span className="ml-1 text-sm font-bold text-brand-500 w-5">{seconds}</span>
+          <div className="flex items-baseline justify-end font-mono">
+            <span className="text-3xl font-black text-gray-900 dark:text-white leading-none tracking-tight">{time}</span>
+            <span className="ml-1 text-sm font-black text-brand-500 w-5 animate-pulse">{seconds}</span>
+          </div>
+          <div className="mt-1 flex items-center justify-end gap-1 select-none">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Live System</span>
           </div>
         </div>
       </div>
@@ -73,14 +99,6 @@ export const MiniCalendar: React.FC<MiniCalendarProps> = ({ agendas, onDateClick
   const blankDays = Array.from({ length: firstDayOfMonth });
   const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
-  const getWeekNumber = (d: Date) => {
-    const date = new Date(d.getTime());
-    date.setHours(0, 0, 0, 0);
-    date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-    const week1 = new Date(date.getFullYear(), 0, 4);
-    return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-  };
-
   const isToday = (day: number) => {
     const today = new Date();
     return today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
@@ -110,32 +128,51 @@ export const MiniCalendar: React.FC<MiniCalendarProps> = ({ agendas, onDateClick
     return hD.getMonth() === month && hD.getFullYear() === year;
   });
 
+  const weekNum = calculateWeekNumber(viewDate);
+
   return (
-    <div className="rounded-sm border border-stroke bg-white p-3 shadow-default dark:border-strokedark dark:bg-gray-900">
-      <div className="flex items-center justify-between mb-3">
+    <div className="relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white p-5 shadow-sm dark:border-gray-800/80 dark:bg-gray-900 transition-all duration-300 hover:shadow-md hover:border-brand-500/30">
+      {/* Calendar Header */}
+      <div className="flex items-center justify-between mb-4">
         <div className="flex flex-col">
-          <span className="text-xs font-bold text-black dark:text-white">
-            {monthNames[month]} <span className="font-normal opacity-60">{year}</span>
+          <span className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider leading-none">
+            {monthNames[month]} <span className="font-normal text-gray-400 dark:text-gray-500 text-xs ml-0.5">{year}</span>
           </span>
-          <span className="text-[9px] text-brand-500 font-bold uppercase tracking-tight">Week {getWeekNumber(viewDate)} {year}</span>
+          <div className="mt-1">
+            <span className="inline-flex items-center bg-brand-500/10 dark:bg-brand-500/15 text-brand-600 dark:text-brand-400 text-[9px] font-black tracking-widest px-2 py-0.5 rounded border border-brand-500/20 uppercase">
+              Week {weekNum}
+            </span>
+          </div>
         </div>
         <div className="flex gap-1">
-          <button onClick={prevMonth} className="p-1 hover:bg-gray-100 dark:hover:bg-meta-4 rounded transition-colors text-black dark:text-white">
-            <svg className="fill-current" width="12" height="12" viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+          <button 
+            onClick={prevMonth} 
+            className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-850 rounded-lg transition-colors text-gray-500 dark:text-gray-400 hover:text-brand-500 dark:hover:text-brand-500 border border-transparent hover:border-gray-200/60 dark:hover:border-gray-800"
+            title="Bulan Sebelumnya"
+          >
+            <ChevronLeft className="w-4 h-4" />
           </button>
-          <button onClick={nextMonth} className="p-1 hover:bg-gray-100 dark:hover:bg-meta-4 rounded transition-colors text-black dark:text-white">
-            <svg className="fill-current" width="12" height="12" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+          <button 
+            onClick={nextMonth} 
+            className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-850 rounded-lg transition-colors text-gray-500 dark:text-gray-400 hover:text-brand-500 dark:hover:text-brand-500 border border-transparent hover:border-gray-200/60 dark:hover:border-gray-800"
+            title="Bulan Berikutnya"
+          >
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 mb-2 text-center border-b border-stroke pb-1 dark:border-strokedark">
+      {/* Weekday Names */}
+      <div className="grid grid-cols-7 mb-2.5 text-center border-b border-gray-100 dark:border-gray-800/80 pb-2">
         {daysShort.map((day, i) => (
-          <div key={i} className={`text-[9px] font-bold uppercase ${i === 0 ? 'text-red-500' : 'text-gray-400'}`}>{day}</div>
+          <div key={i} className={`text-[10px] font-black uppercase tracking-wider ${i === 0 ? 'text-rose-500' : 'text-gray-400 dark:text-gray-550'}`}>
+            {day}
+          </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 text-center min-h-[160px] content-start">
+      {/* Days Grid */}
+      <div className="grid grid-cols-7 text-center min-h-[160px] content-start gap-y-1.5 gap-x-1">
         {blankDays.map((_, i) => <div key={`blank-${i}`} className="h-7"></div>)}
         {daysArray.map(day => {
           const count = getAgendaCount(day);
@@ -148,16 +185,16 @@ export const MiniCalendar: React.FC<MiniCalendarProps> = ({ agendas, onDateClick
             <div key={day} className="h-7 flex items-center justify-center relative">
               <button
                 onClick={() => onDateClick(new Date(year, month, day))}
-                className={`w-6 h-6 flex items-center justify-center rounded-md text-[10px] transition-all font-bold relative
-                  ${today ? "bg-brand-500 text-white shadow-md" : ""}
-                  ${active && !today ? "bg-brand-100 text-brand-600 dark:bg-brand-500/20" : ""}
-                  ${!today && !active && (holiday || sunday) ? "text-red-500 bg-red-50 dark:bg-red-500/10" : ""}
-                  ${!today && !active && !holiday && !sunday ? "text-black dark:text-white hover:bg-gray-100 dark:hover:bg-meta-4" : ""}
+                className={`w-6 h-6 flex items-center justify-center rounded-lg text-[10px] transition-all font-bold relative
+                  ${today ? "bg-brand-500 text-white shadow-md shadow-brand-500/25 ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-gray-900" : ""}
+                  ${active && !today ? "bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/35 ring-1 ring-brand-500/20" : ""}
+                  ${!today && !active && (holiday || sunday) ? "text-rose-500 bg-rose-500/5 dark:bg-rose-500/10 hover:bg-rose-500/15" : ""}
+                  ${!today && !active && !holiday && !sunday ? "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-850" : ""}
                 `}
               >
                 {day}
                 {count > 0 && (
-                  <span className={`absolute -top-1 -right-1 w-3 h-3 rounded-full text-[7px] flex items-center justify-center border border-white dark:border-boxdark font-black shadow-sm
+                  <span className={`absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full text-[8px] flex items-center justify-center border-2 border-white dark:border-gray-900 font-black shadow-sm transition-transform hover:scale-110
                     ${today ? "bg-white text-brand-500" : "bg-brand-500 text-white"}
                   `}>
                     {count}
@@ -169,21 +206,34 @@ export const MiniCalendar: React.FC<MiniCalendarProps> = ({ agendas, onDateClick
         })}
       </div>
 
-      <div className="mt-3 pt-3 border-t border-stroke dark:border-strokedark h-[80px] overflow-y-auto no-scrollbar">
-        {holidaysInMonth.length > 0 ? (
-          holidaysInMonth.map((h, i) => (
-            <div key={i} className="flex items-start gap-2 mb-1.5 last:mb-0">
-              <div className="flex items-center justify-center min-w-[24px] h-5 rounded bg-red-500 shadow-sm">
-                <span className="text-[9px] font-bold text-white">{new Date(h.date).getDate().toString().padStart(2, '0')}</span>
-              </div>
-              <span className="text-[9px] leading-tight text-black dark:text-white pt-0.5 font-bold">{h.name}</span>
+      {/* Holidays List */}
+      <div className="mt-4 pt-3 border-t border-gray-150 dark:border-gray-800">
+        <div className="flex items-center gap-1.5 mb-2">
+          <CalendarDays className="w-3.5 h-3.5 text-rose-550 dark:text-rose-400" />
+          <span className="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">Hari Libur Nasional</span>
+        </div>
+        
+        <div className="h-[90px] overflow-y-auto pr-1 space-y-1.5 no-scrollbar">
+          {holidaysInMonth.length > 0 ? (
+            holidaysInMonth.map((h, i) => {
+              const hD = new Date(h.date);
+              return (
+                <div key={i} className="flex items-center gap-2.5 p-1.5 rounded-xl border border-rose-500/10 bg-rose-500/[0.02] dark:bg-rose-500/[0.04] transition-all hover:bg-rose-500/[0.06]">
+                  <div className="flex flex-col items-center justify-center w-7 h-7 rounded-lg bg-rose-550/10 text-rose-600 dark:text-rose-455 flex-shrink-0">
+                    <span className="text-[11px] font-black leading-none">{hD.getDate()}</span>
+                    <span className="text-[7px] font-black uppercase tracking-tighter mt-0.5">{monthNames[hD.getMonth()].substring(0, 3)}</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-750 dark:text-gray-300 leading-tight truncate">{h.name}</span>
+                </div>
+              );
+            })
+          ) : (
+            <div className="flex flex-col items-center justify-center py-4 text-center">
+              <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500 italic">Tidak ada hari libur bulan ini</span>
             </div>
-          ))
-        ) : (
-          <p className="text-[9px] italic text-gray-400 text-center pt-2">Tidak ada hari libur</p>
-        )}
+          )}
+        </div>
       </div>
     </div>
-
   );
 };

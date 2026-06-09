@@ -212,19 +212,19 @@ const AppSidebar: React.FC = () => {
           <li key={nav.name}>
             {nav.subItems ? (
               <div
-                className={`flex items-center justify-between px-4 py-3 rounded-xl font-bold transition-all duration-200 cursor-pointer ${
+                className={`flex items-center justify-between px-4 py-2.5 rounded-xl font-bold transition-all duration-200 cursor-pointer ${
                   active
-                    ? "bg-brand-500 text-white shadow-lg shadow-brand-500/20"
+                    ? "bg-brand-500 text-white shadow-md shadow-brand-500/20"
                     : "text-gray-500 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-brand-500/10 dark:text-gray-400"
                 } ${!isExpanded && !isHovered ? "lg:justify-center" : "lg:justify-start"}`}
                 onClick={() => toggleSubmenu(nav.name)}
               >
                 <div className="flex items-center gap-3">
-                  <span className={`${active ? "text-white" : "text-gray-400 group-hover:text-brand-500"}`}>
+                  <span className={`flex-shrink-0 w-5 h-5 flex items-center justify-center transition-colors ${active ? "text-white" : "text-gray-400 group-hover:text-brand-500"}`}>
                     {nav.icon}
                   </span>
                   {(isExpanded || isHovered || isMobileOpen) && (
-                    <span className="text-sm truncate">{nav.name}</span>
+                    <span className="text-sm truncate font-semibold">{nav.name}</span>
                   )}
                 </div>
                 {(isExpanded || isHovered || isMobileOpen) && (
@@ -236,17 +236,17 @@ const AppSidebar: React.FC = () => {
             ) : (
               <Link
                 href={nav.path!}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 ${
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-bold transition-all duration-200 ${
                   active
-                    ? "bg-brand-500 text-white shadow-lg shadow-brand-500/20"
+                    ? "bg-brand-500 text-white shadow-md shadow-brand-500/20"
                     : "text-gray-500 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-brand-500/10 dark:text-gray-400"
                 } ${!isExpanded && !isHovered ? "lg:justify-center" : "lg:justify-start"}`}
               >
-                <span className={`${active ? "text-white" : "text-gray-400 group-hover:text-brand-500"}`}>
+                <span className={`flex-shrink-0 w-5 h-5 flex items-center justify-center transition-colors ${active ? "text-white" : "text-gray-400 group-hover:text-brand-500"}`}>
                   {nav.icon}
                 </span>
                 {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className="text-sm truncate">{nav.name}</span>
+                  <span className="text-sm truncate font-semibold">{nav.name}</span>
                 )}
               </Link>
             )}

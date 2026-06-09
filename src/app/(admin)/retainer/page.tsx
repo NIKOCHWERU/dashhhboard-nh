@@ -38,6 +38,11 @@ export default function RetainerPage() {
   // Sorting state
   const [sortBy, setSortBy] = useState<"name-asc" | "name-desc" | "date-newest" | "date-oldest">("name-asc");
 
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [categoryFilter, setCategoryFilter] = useState("All");
+
   // Form state
   const [formData, setFormData] = useState({
     clientName: "",
@@ -177,7 +182,21 @@ export default function RetainerPage() {
   };
 
   // Sort and filter data
-  const sortedData = [...data].sort((a, b) => {
+  const filteredData = data.filter((item) => {
+    const matchesSearch = 
+      item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.projectName.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "All" || item.status === statusFilter;
+    
+    const matchesCategory = 
+      categoryFilter === "All" || 
+      (item.categories && item.categories.split(",").map(c => c.trim().toUpperCase()).includes(categoryFilter.toUpperCase()));
+      
+    return matchesSearch && matchesStatus && matchesCategory;
+  });
+
+  const sortedData = [...filteredData].sort((a, b) => {
     if (sortBy === "name-asc") {
       return a.clientName.localeCompare(b.clientName);
     }
@@ -204,7 +223,7 @@ export default function RetainerPage() {
         </div>
         <button
           onClick={handleOpenCreate}
-          className="bg-brand-500 text-white px-5 py-2.5 rounded-none font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-brand-600 shadow-sm transition-all"
+          className="bg-brand-500 text-white px-5 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-brand-600 shadow-sm transition-all"
         >
           <PlusIcon /> Tambah Retainer Baru
         </button>
@@ -212,7 +231,7 @@ export default function RetainerPage() {
 
       {/* Expiration warning alerts panel if any contract is ending */}
       {data.some((r) => getExpirationWarning(r.endDate)?.type === "warning") && (
-        <div className="bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-500 p-4 rounded-none">
+        <div className="bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-500 p-4 rounded-xl">
           <div className="flex gap-2">
             <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -227,24 +246,72 @@ export default function RetainerPage() {
         </div>
       )}
 
-      {/* Sorting bar */}
-      <div className="flex justify-between items-center gap-4 bg-gray-50 dark:bg-gray-900/50 p-3 border border-stroke dark:border-strokedark rounded-none">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Urutkan:</span>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
-            className="px-2 py-1 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 text-[10px] font-bold uppercase rounded-none focus:outline-none focus:border-brand-500"
-          >
-            <option value="name-asc">Nama Klien (A-Z)</option>
-            <option value="name-desc">Nama Klien (Z-A)</option>
-            <option value="date-newest">Baru Ditambahkan</option>
-            <option value="date-oldest">Lama Ditambahkan</option>
-          </select>
+      {/* Unified Filters Dashboard */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white dark:bg-white/[0.02] p-4 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+          {/* Search bar */}
+          <div className="relative flex-1">
+            <input
+              type="text"
+              placeholder="Cari nama klien / proyek..."
+              className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl bg-transparent text-gray-700 dark:text-white outline-none focus:border-brand-500 transition-colors text-xs font-semibold"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <svg className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+
+          {/* Filter Status */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider hidden sm:inline">Status:</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-200 dark:border-gray-800 bg-transparent text-gray-700 dark:text-white text-xs font-bold uppercase rounded-xl focus:outline-none focus:border-brand-500"
+            >
+              <option value="All">Semua Status</option>
+              <option value="Active">Active</option>
+              <option value="Finished">Finished</option>
+              <option value="On Hold">On Hold</option>
+            </select>
+          </div>
+
+          {/* Filter Kategori */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider hidden sm:inline">Kategori:</span>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-200 dark:border-gray-800 bg-transparent text-gray-700 dark:text-white text-xs font-bold uppercase rounded-xl focus:outline-none focus:border-brand-500"
+            >
+              <option value="All">Semua Kategori</option>
+              <option value="HRM">HRM</option>
+              <option value="CORPORATE LEGAL">Corporate Legal</option>
+              <option value="PAJAK">Pajak</option>
+            </select>
+          </div>
         </div>
-        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-          Total: {data.length} Klien
-        </span>
+
+        <div className="flex items-center justify-between sm:justify-end gap-4 border-t xl:border-t-0 border-gray-150 dark:border-gray-850 pt-3 xl:pt-0">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Urutkan:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="px-3 py-2 border border-gray-200 dark:border-gray-800 bg-transparent text-gray-700 dark:text-white text-xs font-bold uppercase rounded-xl focus:outline-none focus:border-brand-500"
+            >
+              <option value="name-asc">Nama Klien (A-Z)</option>
+              <option value="name-desc">Nama Klien (Z-A)</option>
+              <option value="date-newest">Baru Ditambahkan</option>
+              <option value="date-oldest">Lama Ditambahkan</option>
+            </select>
+          </div>
+          <span className="text-[10px] font-black text-brand-500 bg-brand-500/10 px-2.5 py-1 rounded-full uppercase tracking-wider">
+            {filteredData.length} Klien
+          </span>
+        </div>
       </div>
 
       {/* RETAINER GRID */}
@@ -253,28 +320,30 @@ export default function RetainerPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
         </div>
       ) : sortedData.length === 0 ? (
-        <div className="border border-stroke dark:border-strokedark p-16 text-center text-xs text-gray-400 italic bg-white dark:bg-gray-900 rounded-none">
-          Belum ada data retainer terdaftar. Silakan tambah data baru.
+        <div className="border border-gray-200 dark:border-gray-800 p-16 text-center text-xs text-gray-400 italic bg-white dark:bg-white/[0.03] rounded-2xl">
+          Tidak ada data retainer terdaftar yang cocok dengan filter Anda.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {sortedData.map((item) => {
             const expWarn = getExpirationWarning(item.endDate);
             return (
               <div
                 key={item.id}
-                className="bg-white dark:bg-gray-900 border border-stroke dark:border-strokedark p-5 rounded-none hover:border-brand-500 hover:shadow-lg transition-all flex flex-col justify-between"
+                className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 p-5 rounded-2xl hover:border-brand-500 hover:shadow-xl transition-all flex flex-col justify-between"
               >
                 <div>
                   <div className="flex justify-between items-start mb-3">
-                    <span className="px-2 py-0.5 bg-brand-50 text-brand-700 text-[8px] font-black uppercase dark:bg-brand-500/10 dark:text-brand-400 tracking-widest rounded-none">
+                    <span className="px-2 py-0.5 bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[8px] font-black uppercase tracking-widest rounded-full border border-brand-500/20">
                       Retainer
                     </span>
                     <span
-                      className={`text-[9px] font-black uppercase px-2.5 py-0.5 rounded-none tracking-widest ${
+                      className={`text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full tracking-widest ${
                         item.status === "Active"
-                          ? "bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400"
-                          : "bg-gray-50 text-gray-700 dark:bg-gray-500/10 dark:text-gray-400"
+                          ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20"
+                          : item.status === "On Hold"
+                          ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                          : "bg-gray-500/10 text-gray-600 dark:text-gray-400 border border-gray-500/20"
                       }`}
                     >
                       {item.status}
@@ -284,17 +353,17 @@ export default function RetainerPage() {
                   <h3 className="text-sm font-black text-black dark:text-white uppercase tracking-wide line-clamp-1">
                     {item.clientName}
                   </h3>
-                  <p className="text-[11px] text-gray-400 font-semibold line-clamp-1 mt-0.5">
+                  <p className="text-[11px] text-gray-455 dark:text-gray-400 font-semibold line-clamp-1 mt-0.5">
                     Proyek: {item.projectName}
                   </p>
 
                   {/* Expiration warning badge inside card */}
                   {expWarn && (
                     <div
-                      className={`text-[9px] font-black tracking-wider uppercase px-2.5 py-1 mt-3 text-center rounded-none ${
+                      className={`text-[9px] font-black tracking-wider uppercase px-2.5 py-1 mt-3 text-center rounded-lg ${
                         expWarn.type === "expired"
-                          ? "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400 border border-red-200 dark:border-red-500/20"
-                          : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20"
+                          ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200/30 dark:border-red-800/30"
+                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200/30 dark:border-amber-800/30"
                       }`}
                     >
                       {expWarn.message}
@@ -307,7 +376,7 @@ export default function RetainerPage() {
                       {item.categories.split(",").map((cat) => (
                         <span
                           key={cat}
-                          className="px-2 py-0.5 border border-stroke dark:border-strokedark text-gray-400 dark:text-gray-500 text-[8px] font-black uppercase rounded-none tracking-wider"
+                          className="px-2 py-0.5 border border-gray-200 dark:border-gray-800 text-gray-400 dark:text-gray-500 text-[8px] font-black uppercase rounded-lg tracking-wider"
                         >
                           {cat}
                         </span>
@@ -316,7 +385,7 @@ export default function RetainerPage() {
                   )}
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-stroke dark:border-strokedark flex flex-wrap justify-between items-center gap-4">
+                <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800/80 flex flex-wrap justify-between items-center gap-4">
                   <div className="text-[10px] text-gray-400 font-semibold space-y-1">
                     <p>
                       Mulai:{" "}
@@ -342,22 +411,22 @@ export default function RetainerPage() {
                     )}
                   </div>
 
-                  <div className="flex gap-1">
+                  <div className="flex gap-1.5">
                     <button
                       onClick={() => handleOpenView(item)}
-                      className="px-3 py-1.5 bg-brand-50 text-brand-700 hover:bg-brand-100 dark:bg-brand-500/10 dark:text-brand-400 text-[10px] font-black uppercase tracking-wider rounded-none transition-colors border border-brand-200 dark:border-brand-500/20"
+                      className="px-3 py-1.5 bg-brand-500/10 text-brand-600 dark:text-brand-400 hover:bg-brand-500/20 text-[10px] font-black uppercase tracking-wider rounded-lg transition-colors border border-brand-500/20"
                     >
                       Detail
                     </button>
                     <button
                       onClick={() => handleOpenEdit(item)}
-                      className="px-3 py-1.5 border border-stroke dark:border-strokedark text-[10px] font-black uppercase tracking-wider hover:bg-gray-50 dark:hover:bg-gray-800 rounded-none transition-colors"
+                      className="px-3 py-1.5 border border-gray-250 dark:border-gray-800 text-[10px] font-black uppercase tracking-wider hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
                     >
                       Ubah
                     </button>
                     <button
                       onClick={() => handleDelete(item.id)}
-                      className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 text-[10px] font-black uppercase tracking-wider rounded-none transition-colors"
+                      className="px-3 py-1.5 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 text-[10px] font-black uppercase tracking-wider rounded-lg transition-colors"
                     >
                       Hapus
                     </button>

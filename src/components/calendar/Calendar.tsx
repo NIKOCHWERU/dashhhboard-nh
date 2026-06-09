@@ -22,7 +22,7 @@ interface AgendaEvent extends EventInput {
     scale: string;
     description: string;
     notes: string;
-    type: "google" | "local";
+    type: "google" | "local" | "Tim WFO";
   };
 }
 
@@ -91,6 +91,173 @@ const Calendar: React.FC = () => {
     const dateStr = getEventDateString(ev.start);
     return dateStr === selectedDate;
   });
+
+  const getGroupedEvents = () => {
+    const localNow = new Date();
+    const yyyy = localNow.getFullYear();
+    const mm = String(localNow.getMonth() + 1).padStart(2, "0");
+    const dd = String(localNow.getDate()).padStart(2, "0");
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+
+    const tomorrowObj = new Date(localNow);
+    tomorrowObj.setDate(tomorrowObj.getDate() + 1);
+    const tomorrowYyyy = tomorrowObj.getFullYear();
+    const tomorrowMm = String(tomorrowObj.getDate() + 1).padStart(2, "0"); // wait, tomorrowObj is already mutated, let's just format it
+    const tomorrowMmStr = String(tomorrowObj.getMonth() + 1).padStart(2, "0");
+    const tomorrowDdStr = String(tomorrowObj.getDate()).padStart(2, "0");
+    const tomorrowStr = `${tomorrowYyyy}-${tomorrowMmStr}-${tomorrowDdStr}`;
+
+    const sevenDaysLaterObj = new Date(localNow);
+    sevenDaysLaterObj.setDate(sevenDaysLaterObj.getDate() + 7);
+    
+    const todayEvents: AgendaEvent[] = [];
+    const tomorrowEvents: AgendaEvent[] = [];
+    const thisWeekEvents: AgendaEvent[] = [];
+
+    events.forEach((ev) => {
+      const dateStr = getEventDateString(ev.start);
+      if (!dateStr) return;
+
+      if (dateStr === todayStr) {
+        todayEvents.push(ev);
+      } else if (dateStr === tomorrowStr) {
+        tomorrowEvents.push(ev);
+      } else {
+        const parts = dateStr.split("-");
+        const evDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        
+        const startOfToday = new Date(yyyy, localNow.getMonth(), parseInt(dd));
+        const diffTime = evDate.getTime() - startOfToday.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays > 1 && diffDays <= 7) {
+          thisWeekEvents.push(ev);
+        }
+      }
+    });
+
+    const sortByTime = (a: AgendaEvent, b: AgendaEvent) => {
+      const timeA = a.start ? new Date(a.start as any).getTime() : 0;
+      const timeB = b.start ? new Date(b.start as any).getTime() : 0;
+      return timeA - timeB;
+    };
+
+    return {
+      today: todayEvents.sort(sortByTime),
+      tomorrow: tomorrowEvents.sort(sortByTime),
+      thisWeek: thisWeekEvents.sort(sortByTime),
+    };
+  };
+
+  const renderAgendaItem = (ev: AgendaEvent) => {
+    const isGoogle = ev.extendedProps?.type === "Tim WFO";
+    const startStr = ev.start ? new Date(ev.start as any).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "";
+    const endStr = ev.end ? new Date(ev.end as any).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "";
+    const timeRange = endStr ? `${startStr} - ${endStr}` : startStr;
+
+    return (
+      <div
+        key={ev.id}
+        className="p-3.5 border border-gray-100 dark:border-gray-800/50 bg-gray-50/30 dark:bg-white/[0.02] hover:bg-gray-100/60 dark:hover:bg-white/[0.05] rounded-xl flex flex-col gap-2 transition-all group relative cursor-pointer"
+        onClick={() => handleEventClickFromList(ev)}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                ev.extendedProps?.scale === "Q1"
+                  ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200/30 dark:border-red-800/30"
+                  : ev.extendedProps?.scale === "Q2"
+                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200/30 dark:border-amber-800/30"
+                  : ev.extendedProps?.scale === "Q3"
+                  ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-200/30 dark:border-green-800/30"
+                  : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200/30 dark:border-blue-800/30"
+              }`}
+            >
+              {ev.extendedProps?.scale || "Tim WFO"}
+            </span>
+            {timeRange && (
+              <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {timeRange}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] text-gray-400 font-medium">
+            {ev.start ? new Date(ev.start as any).toLocaleDateString("id-ID", {
+              day: "numeric",
+              month: "short",
+            }) : ""}
+          </span>
+        </div>
+        
+        <h4 className="text-sm font-semibold text-black dark:text-white leading-snug group-hover:text-brand-500 transition-colors truncate">
+          {ev.title}
+        </h4>
+        
+        {ev.extendedProps?.description && (
+          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
+            {ev.extendedProps.description}
+          </p>
+        )}
+        
+        <div className="flex items-center justify-between pt-1 mt-1 border-t border-gray-100/50 dark:border-gray-800/30">
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide flex items-center gap-1">
+            <svg className="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+            PIC: {ev.extendedProps?.pic || "WFO"}
+          </span>
+          <div className="flex gap-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEventClickFromList(ev);
+              }}
+              className="text-[10px] font-bold uppercase text-brand-500 hover:text-brand-600 transition"
+            >
+              View
+            </button>
+            {canManage && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEventClickFromList(ev);
+                  }}
+                  className="text-[10px] font-bold uppercase text-blue-500 hover:text-blue-600 transition"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    if (confirm("Apakah Anda yakin ingin menghapus agenda ini? Agenda di Google Calendar juga akan dihapus.")) {
+                      try {
+                        const isGoogle = (ev.extendedProps?.type as any) === "Tim WFO";
+                        const url = isGoogle ? `/api/calendar/events?id=${ev.id}` : `/api/agenda?id=${ev.id}`;
+                        const response = await fetch(url, { method: "DELETE" });
+                        if (response.ok) {
+                          fetchAllEvents();
+                        }
+                      } catch (err) {
+                        console.error(err);
+                      }
+                    }
+                  }}
+                  className="text-[10px] font-bold uppercase text-red-500 hover:text-red-600 transition"
+                >
+                  Delete
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderDayCellContent = (arg: any) => {
     const year = arg.date.getFullYear();
@@ -336,7 +503,7 @@ const Calendar: React.FC = () => {
   return (
     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
       {/* Left Side: FullCalendar */}
-      <div className="xl:col-span-8 rounded-none border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-2xl p-4 md:p-6">
+      <div className="xl:col-span-8 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-2xl p-4 md:p-6">
         <div className="custom-calendar">
           <FullCalendar
             ref={calendarRef}
@@ -360,13 +527,14 @@ const Calendar: React.FC = () => {
 
       {/* Right Side: Agenda List Panel */}
       <div className="xl:col-span-4 flex flex-col space-y-6">
-        <div className="rounded-none border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-2xl p-4 md:p-6 flex flex-col h-[650px] overflow-hidden">
+        <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-2xl p-4 md:p-6 flex flex-col h-[650px] overflow-hidden">
           {/* Header Panel */}
-          <div className="border-b border-gray-100 dark:border-gray-800 pb-4 space-y-4">
-            <div className="flex flex-col space-y-1">
+          <div className="border-b border-gray-100 dark:border-gray-800 pb-4">
+            <div className="flex flex-col space-y-2">
               <div className="flex justify-between items-center">
-                <h3 className="text-sm font-black text-black dark:text-white uppercase tracking-wider">
-                  {selectedDate ? `Daftar Agenda ${formatDateIndo(selectedDate)}` : "Semua Agenda Tim"}
+                <h3 className="text-sm font-black text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-brand-500"></span>
+                  {selectedDate ? "Agenda Terpilih" : "Agenda Kerja Tim"}
                 </h3>
                 {canManage && (
                   <button
@@ -376,120 +544,134 @@ const Calendar: React.FC = () => {
                       setEndDate(selectedDate || new Date().toISOString().split("T")[0]);
                       openModal();
                     }}
-                    className="px-3 py-1.5 bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 font-black text-[10px] uppercase tracking-widest cursor-pointer shadow active:scale-95 transition-transform"
+                    className="px-3 py-1.5 bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 font-bold text-[10px] uppercase tracking-widest cursor-pointer shadow active:scale-95 transition-transform rounded-lg flex items-center gap-1.5"
                   >
-                    + Agenda
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Agenda
                   </button>
                 )}
               </div>
-              {selectedDate && (
-                <button
-                  onClick={() => setSelectedDate(null)}
-                  className="text-left text-[10px] font-black text-brand-500 uppercase tracking-wider hover:underline mt-1"
-                >
-                  Reset Filter Tanggal ×
-                </button>
-              )}
+              {selectedDate ? (
+                <div className="flex justify-between items-center bg-brand-500/5 dark:bg-brand-500/10 border border-brand-500/20 px-3 py-2 rounded-lg">
+                  <span className="text-[11px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wide truncate">
+                    Tanggal: {formatDateIndo(selectedDate)}
+                  </span>
+                  <button
+                    onClick={() => setSelectedDate(null)}
+                    className="text-gray-400 hover:text-red-500 font-bold text-sm leading-none ml-2 cursor-pointer transition-colors"
+                    title="Reset Filter"
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
 
           {/* Agenda Scroll Area */}
-          <div className="flex-1 overflow-y-auto no-scrollbar py-4 space-y-4">
-            {filteredEvents.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center space-y-3">
-                <svg className="w-10 h-10 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
-                </svg>
-                <p className="text-xs font-semibold text-gray-400">Tidak ada agenda kerja.</p>
-              </div>
-            ) : (
-              filteredEvents.map((ev) => (
-                <div
-                  key={ev.id}
-                  className="p-4 border border-gray-100 dark:border-gray-800 bg-gray-50/20 dark:bg-gray-900/10 hover:bg-gray-50/50 dark:hover:bg-gray-900/20 rounded-none flex flex-col gap-2 transition-all group relative cursor-pointer"
-                  onClick={() => handleEventClickFromList(ev)}
-                >
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-none text-white ${
-                        ev.extendedProps?.scale === "Q1"
-                          ? "bg-red-500"
-                          : ev.extendedProps?.scale === "Q2"
-                          ? "bg-amber-500"
-                          : ev.extendedProps?.scale === "Q3"
-                          ? "bg-green-500"
-                          : "bg-blue-500"
-                      }`}
-                    >
-                      {ev.extendedProps?.scale || "Tim WFO"}
-                    </span>
-                    <span className="text-[10px] text-gray-400">
-                      {ev.start ? new Date(ev.start as any).toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "short",
-                      }) : ""}
-                    </span>
+          <div className="flex-1 overflow-y-auto no-scrollbar py-4 space-y-5">
+            {selectedDate ? (
+              filteredEvents.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center space-y-3">
+                  <svg className="w-10 h-10 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
+                  </svg>
+                  <p className="text-xs font-semibold text-gray-400">Tidak ada agenda pada tanggal ini.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredEvents.map(renderAgendaItem)}
+                </div>
+              )
+            ) : (() => {
+              const grouped = getGroupedEvents();
+              const hasToday = grouped.today.length > 0;
+              const hasTomorrow = grouped.tomorrow.length > 0;
+              const hasThisWeek = grouped.thisWeek.length > 0;
+
+              if (!hasToday && !hasTomorrow && !hasThisWeek) {
+                return (
+                  <div className="h-full flex flex-col items-center justify-center text-center space-y-3">
+                    <svg className="w-10 h-10 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
+                    </svg>
+                    <p className="text-xs font-semibold text-gray-400">Tidak ada agenda mendatang.</p>
                   </div>
-                  <h4 className="text-sm font-bold text-black dark:text-white leading-snug truncate">
-                    {ev.title}
-                  </h4>
-                  {ev.extendedProps?.description && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
-                      {ev.extendedProps.description}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-[10px] font-black text-gray-400 uppercase">
-                      PIC: {ev.extendedProps?.pic || "WFO"}
-                    </span>
-                    <div className="flex gap-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEventClickFromList(ev);
-                        }}
-                        className="text-[9px] font-black uppercase tracking-wider text-brand-500 hover:underline transition"
-                      >
-                        View
-                      </button>
-                      {canManage && (
-                        <>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEventClickFromList(ev);
-                            }}
-                            className="text-[9px] font-black uppercase tracking-wider text-blue-600 hover:underline transition"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              if (confirm("Apakah Anda yakin ingin menghapus agenda ini? Agenda di Google Calendar juga akan dihapus.")) {
-                                try {
-                                  const isGoogle = (ev.extendedProps?.type as any) === "Tim WFO";
-                                  const url = isGoogle ? `/api/calendar/events?id=${ev.id}` : `/api/agenda?id=${ev.id}`;
-                                  const response = await fetch(url, { method: "DELETE" });
-                                  if (response.ok) {
-                                    fetchAllEvents();
-                                  }
-                                } catch (err) {
-                                  console.error(err);
-                                }
-                              }
-                            }}
-                            className="text-[9px] font-black uppercase tracking-wider text-red-600 hover:underline transition"
-                          >
-                            Delete
-                          </button>
-                        </>
-                      )}
+                );
+              }
+
+              return (
+                <div className="space-y-6">
+                  {/* Group 1: Hari Ini */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-black text-red-500 uppercase tracking-widest flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                        Hari Ini
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 bg-red-500/10 text-red-500 rounded-full">
+                        {grouped.today.length}
+                      </span>
                     </div>
+                    {grouped.today.length === 0 ? (
+                      <p className="text-xs text-gray-400 italic pl-3 border-l-2 border-gray-100 dark:border-gray-800">
+                        Tidak ada agenda untuk hari ini.
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {grouped.today.map(renderAgendaItem)}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Group 2: Besok */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-black text-amber-500 uppercase tracking-widest flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        Besok
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-500/10 text-amber-500 rounded-full">
+                        {grouped.tomorrow.length}
+                      </span>
+                    </div>
+                    {grouped.tomorrow.length === 0 ? (
+                      <p className="text-xs text-gray-400 italic pl-3 border-l-2 border-gray-100 dark:border-gray-800">
+                        Tidak ada agenda untuk besok.
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {grouped.tomorrow.map(renderAgendaItem)}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Group 3: Minggu Ini */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-black text-brand-500 uppercase tracking-widest flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+                        Minggu Ini (Mendatang)
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 bg-brand-500/10 text-brand-500 rounded-full">
+                        {grouped.thisWeek.length}
+                      </span>
+                    </div>
+                    {grouped.thisWeek.length === 0 ? (
+                      <p className="text-xs text-gray-400 italic pl-3 border-l-2 border-gray-100 dark:border-gray-800">
+                        Tidak ada agenda mendatang dalam 7 hari ini.
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {grouped.thisWeek.map(renderAgendaItem)}
+                      </div>
+                    )}
                   </div>
                 </div>
-              ))
-            )}
+              );
+            })()}
           </div>
         </div>
       </div>

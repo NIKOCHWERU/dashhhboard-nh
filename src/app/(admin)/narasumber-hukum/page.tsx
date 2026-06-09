@@ -42,6 +42,10 @@ export default function NarasumberHukumPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
 
+  const [rootFolderId, setRootFolderId] = useState<string | null>(null);
+  const [treeData, setTreeData] = useState<Record<string, GDriveItem[]>>({});
+  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
+
   // Modals state
   const [folderModalOpen, setFolderModalOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
@@ -140,6 +144,19 @@ export default function NarasumberHukumPage() {
       setActiveFolderName(folderName);
       setItems(data.items || []);
 
+      // Update tree navigation data
+      const subfolders = (data.items || []).filter((item: GDriveItem) => item.isFolder);
+      setTreeData(prev => ({
+        ...prev,
+        [data.folderId]: subfolders
+      }));
+
+      if (folderId === null) {
+        setRootFolderId(data.folderId);
+        // Automatically expand the root folder
+        setExpandedFolders(prev => ({ ...prev, [data.folderId]: true }));
+      }
+
       if (pushHistory) {
         if (folderId === null) {
           setFolderHistory([{ id: data.folderId, name: "NARASUMBER HUKUM" }]);
@@ -167,6 +184,94 @@ export default function NarasumberHukumPage() {
     } else {
       browseFolder(parentFolder.id, parentFolder.name, false);
     }
+  };
+
+  const fetchSubfolders = async (folderId: string) => {
+    if (treeData[folderId]) return;
+    try {
+      const res = await fetch(`/api/narasumber-hukum?folderId=${folderId}`);
+      if (res.ok) {
+        const data = await res.json();
+        const subfolders = (data.items || []).filter((item: GDriveItem) => item.isFolder);
+        setTreeData(prev => ({
+          ...prev,
+          [folderId]: subfolders
+        }));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const renderFolderTree = (folderId: string, depth = 0) => {
+    const subfolders = treeData[folderId] || [];
+    const isExpanded = !!expandedFolders[folderId];
+    const isActive = activeFolderId === folderId;
+
+    const folderName = folderId === rootFolderId ? "Root Drive" : 
+                       (Object.values(treeData).flat().find(f => f.id === folderId)?.name || 
+                        folderHistory.find(h => h.id === folderId)?.name || "Folder");
+
+    return (
+      <div key={folderId} className="select-none">
+        <div
+          className={`flex items-center justify-between py-1.5 px-2 rounded-xl cursor-pointer transition-all group ${
+            isActive
+              ? "bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold"
+              : "text-gray-700 dark:text-gray-300 hover:bg-gray-150/50 dark:hover:bg-white/[0.03]"
+          }`}
+          onClick={() => browseFolder(folderId, folderName)}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            {/* Caret button */}
+            <button
+              type="button"
+              onClick={async (e) => {
+                e.stopPropagation();
+                const newExpanded = !isExpanded;
+                setExpandedFolders(prev => ({ ...prev, [folderId]: newExpanded }));
+                if (newExpanded) {
+                  await fetchSubfolders(folderId);
+                }
+              }}
+              className="p-1 hover:bg-gray-250 dark:hover:bg-gray-800 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+            >
+              <svg
+                className={`w-3.5 h-3.5 transform transition-transform ${isExpanded ? "rotate-90" : ""}`}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3.5"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+
+            {/* Folder Icon */}
+            <svg className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-brand-500 fill-brand-500" : "text-amber-500 fill-amber-500"}`} viewBox="0 0 24 24">
+              <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
+            </svg>
+
+            {/* Name */}
+            <span className="text-xs truncate font-medium">
+              {folderName}
+            </span>
+          </div>
+        </div>
+
+        {isExpanded && (
+          <div className="mt-1 border-l border-gray-150/60 dark:border-gray-800/60 ml-4.5 pl-1.5 space-y-0.5">
+            {subfolders.length === 0 ? (
+              <div className="pl-6 py-1 text-[10px] text-gray-450 dark:text-gray-500 italic">
+                Kosong
+              </div>
+            ) : (
+              subfolders.map(sub => renderFolderTree(sub.id, depth + 1))
+            )}
+          </div>
+        )}
+      </div>
+    );
   };
 
   // Create folder action
@@ -405,6 +510,15 @@ export default function NarasumberHukumPage() {
     return searchString.includes(searchTerm.toLowerCase());
   });
 
+  const recentFiles = (items || [])
+    .filter(item => !item.isFolder)
+    .sort((a, b) => {
+      const timeA = a.createdTime ? new Date(a.createdTime).getTime() : 0;
+      const timeB = b.createdTime ? new Date(b.createdTime).getTime() : 0;
+      return timeB - timeA;
+    })
+    .slice(0, 5);
+
   return (
     <div className="space-y-6">
       {/* HEADER SECTION */}
@@ -418,7 +532,7 @@ export default function NarasumberHukumPage() {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setFolderModalOpen(true)}
-            className="px-4 py-2 border border-stroke rounded-none bg-white text-gray-700 hover:border-brand-500 outline-none dark:bg-gray-900 dark:border-strokedark dark:text-white transition-colors cursor-pointer text-xs font-black uppercase tracking-wider"
+            className="px-4 py-2 border border-stroke rounded-lg bg-white text-gray-700 hover:border-brand-500 outline-none dark:bg-gray-900 dark:border-strokedark dark:text-white transition-colors cursor-pointer text-xs font-black uppercase tracking-wider"
           >
             + Buat Folder
           </button>
@@ -427,246 +541,320 @@ export default function NarasumberHukumPage() {
               setSelectedPICs([]);
               setUploadModalOpen(true);
             }}
-            className="px-4 py-2 bg-brand-500 text-white rounded-none hover:bg-brand-600 outline-none transition-colors cursor-pointer text-xs font-black uppercase tracking-wider"
+            className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 outline-none transition-colors cursor-pointer text-xs font-black uppercase tracking-wider"
           >
             + Unggah Berkas
           </button>
         </div>
       </div>
 
-      {/* SEARCH AND BREADCRUMBS ROW */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-gray-900 border border-stroke dark:border-strokedark p-4 rounded-none">
-        {/* Navigation Breadcrumbs */}
-        <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-black text-gray-400 uppercase tracking-wider">
-          {folderHistory.length > 1 && (
-            <button
-              onClick={handleBack}
-              className="mr-2 p-1 border border-stroke dark:border-strokedark rounded-none hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      {/* Main Grid Layout: Left Explorer Tree / Right Files List */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        
+        {/* Left Side: Folder Tree Sidebar */}
+        <div className="xl:col-span-3 flex flex-col space-y-6">
+          {/* Folder Tree Card */}
+          <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-xl p-4 flex flex-col h-[400px]">
+            <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-wider pb-3 border-b border-gray-100 dark:border-gray-800/80 flex items-center gap-1.5">
+              <svg className="w-4 h-4 text-brand-500 fill-brand-500" viewBox="0 0 24 24">
+                <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
               </svg>
-            </button>
-          )}
-          <span
-            className="cursor-pointer hover:text-brand-500 text-gray-500"
-            onClick={() => browseFolder(null, "NARASUMBER HUKUM", true)}
-          >
-            HOME
-          </span>
-          {folderHistory.map((hist, idx) => {
-            if (idx === 0) return null; // Skip HOME
-            return (
-              <React.Fragment key={hist.id}>
-                <span>/</span>
-                <span
-                  className={`cursor-pointer hover:text-brand-500 ${idx === folderHistory.length - 1 ? "text-brand-500" : "text-gray-500"}`}
-                  onClick={() => {
-                    if (idx === folderHistory.length - 1) return;
-                    const newHist = folderHistory.slice(0, idx + 1);
-                    setFolderHistory(newHist);
-                    browseFolder(hist.id, hist.name, false);
-                  }}
+              Navigasi Folder
+            </h3>
+            <div className="flex-1 overflow-y-auto no-scrollbar py-3 space-y-1">
+              {rootFolderId ? (
+                renderFolderTree(rootFolderId)
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-500"></div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Recent Files Widget */}
+          <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-xl p-4 flex flex-col h-[280px]">
+            <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-wider pb-3 border-b border-gray-100 dark:border-gray-800/80 flex items-center gap-1.5">
+              <svg className="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Berkas Terbaru
+            </h3>
+            <div className="flex-1 overflow-y-auto no-scrollbar py-3 space-y-2.5">
+              {recentFiles.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-center text-gray-450 dark:text-gray-500 text-[10px] italic">
+                  Belum ada berkas di folder ini.
+                </div>
+              ) : (
+                recentFiles.map(file => (
+                  <div 
+                    key={file.id} 
+                    className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-gray-100/50 dark:hover:bg-white/[0.03] transition-colors cursor-pointer group"
+                    onClick={() => {
+                      setSelectedItem(file);
+                      setDetailModalOpen(true);
+                    }}
+                  >
+                    <div className="flex-shrink-0">
+                      {getFileIcon(file.mimeType)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-black dark:text-white truncate group-hover:text-brand-500 transition-colors">
+                        {file.customName || file.name}
+                      </p>
+                      <p className="text-[9px] text-gray-400 font-medium">
+                        {formatSize(file.size)} • {file.createdTime ? new Date(file.createdTime).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : ""}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Explorer Content Area */}
+        <div className="xl:col-span-9 flex flex-col space-y-6">
+          
+          {/* SEARCH AND BREADCRUMBS ROW */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 p-4 rounded-2xl shadow-sm">
+            {/* Navigation Breadcrumbs */}
+            <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-black text-gray-450 dark:text-gray-400 uppercase tracking-wider">
+              {folderHistory.length > 1 && (
+                <button
+                  onClick={handleBack}
+                  className="mr-2 p-1.5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
-                  {hist.name}
-                </span>
-              </React.Fragment>
-            );
-          })}
-        </div>
+                  <svg className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                </button>
+              )}
+              <span
+                className="cursor-pointer hover:text-brand-500 text-gray-500"
+                onClick={() => browseFolder(null, "NARASUMBER HUKUM", true)}
+              >
+                DRIVE
+              </span>
+              {folderHistory.map((hist, idx) => {
+                if (idx === 0) return null; // Skip HOME
+                return (
+                  <React.Fragment key={hist.id}>
+                    <span className="text-gray-300 dark:text-gray-700">/</span>
+                    <span
+                      className={`cursor-pointer hover:text-brand-500 truncate max-w-[120px] ${idx === folderHistory.length - 1 ? "text-brand-500 font-bold" : "text-gray-500"}`}
+                      onClick={() => {
+                        if (idx === folderHistory.length - 1) return;
+                        const newHist = folderHistory.slice(0, idx + 1);
+                        setFolderHistory(newHist);
+                        browseFolder(hist.id, hist.name, false);
+                      }}
+                    >
+                      {hist.name}
+                    </span>
+                  </React.Fragment>
+                );
+              })}
+            </div>
 
-        {/* Global Search Bar */}
-        <div className="w-full md:w-80">
-          <input
-            type="text"
-            placeholder="Cari nama, PT, keterangan..."
-            className="w-full px-4 py-2 border border-stroke rounded-none bg-white text-gray-700 outline-none focus:border-brand-500 dark:bg-gray-900 dark:border-strokedark dark:text-white transition-colors cursor-pointer text-xs font-semibold"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* ITEMS LISTING TABLE */}
-      <div className="border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 rounded-none shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-stroke dark:border-strokedark bg-gray-50 dark:bg-gray-950 flex items-center justify-between">
-          <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
-            <svg className="w-4 h-4 text-brand-500 fill-brand-500" viewBox="0 0 24 24">
-              <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
-            </svg>
-            📂 {activeFolderName}
-          </h3>
-          <span className="text-[10px] bg-brand-50 text-brand-700 px-2 py-0.5 rounded-none dark:bg-brand-500/10 dark:text-brand-400 font-bold uppercase tracking-wider">
-            {filteredItems.length} ITEM DITEMUKAN
-          </span>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center items-center py-24">
-            <div className="animate-spin rounded-none h-10 w-10 border-b-2 border-brand-500"></div>
+            {/* Search Input */}
+            <div className="relative w-full md:w-80">
+              <input
+                type="text"
+                placeholder="Cari nama, PT, keterangan..."
+                className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl bg-transparent text-gray-700 dark:text-white outline-none focus:border-brand-500 transition-colors text-xs font-semibold"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <svg className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
           </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="text-center py-20 text-xs text-gray-400 italic bg-white dark:bg-gray-900">
-            Belum ada berkas atau subfolder di sini. Gunakan tombol diatas untuk mengisi.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-stroke dark:border-strokedark text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 dark:bg-gray-950">
-                  <th className="p-4 pl-6">Nama</th>
-                  <th className="p-4">PT Asosiasi</th>
-                  <th className="p-4">PIC / Keamanan</th>
-                  <th className="p-4">Ukuran</th>
-                  <th className="p-4">Tanggal Diunggah</th>
-                  <th className="p-4 pr-6 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-stroke dark:divide-strokedark text-xs text-gray-700 dark:text-gray-300">
-                {filteredItems.map((item) => {
-                  return (
-                    <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
-                      {/* Name Col */}
-                      <td className="p-4 pl-6">
-                        <div
-                          onClick={() => item.isFolder && browseFolder(item.id, item.name)}
-                          className={`flex items-center gap-3 font-semibold text-black dark:text-white ${item.isFolder ? "cursor-pointer hover:text-brand-500" : ""}`}
-                        >
-                          {getFileIcon(item.mimeType)}
-                          <div className="flex flex-col">
-                            <span className="hover:underline line-clamp-1 text-xs">
-                              {item.customName || item.name}
-                            </span>
-                            {item.description && (
-                              <span className="text-[10px] text-gray-400 font-medium line-clamp-1 mt-0.5">
-                                {item.description}
+
+          {/* ITEMS LISTING TABLE */}
+          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.03] rounded-2xl shadow-xl overflow-hidden">
+            <div className="p-5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.02] flex items-center justify-between">
+              <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
+                <svg className="w-4 h-4 text-brand-500 fill-brand-500" viewBox="0 0 24 24">
+                  <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
+                </svg>
+                {activeFolderName}
+              </h3>
+              <span className="text-[10px] bg-brand-500/10 text-brand-600 dark:text-brand-400 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
+                {filteredItems.length} Item
+              </span>
+            </div>
+
+            {loading ? (
+              <div className="flex justify-center items-center py-24">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+              </div>
+            ) : filteredItems.length === 0 ? (
+              <div className="text-center py-20 text-xs text-gray-400 italic bg-white dark:bg-transparent">
+                Belum ada berkas atau subfolder di sini. Gunakan tombol diatas untuk mengisi.
+              </div>
+            ) : (
+              <div className="overflow-x-auto text-[13px]">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-800 text-[10px] font-bold text-gray-405 uppercase tracking-widest bg-gray-50/20 dark:bg-white/[0.01]">
+                      <th className="p-4 pl-6">Nama</th>
+                      <th className="p-4">PT Asosiasi</th>
+                      <th className="p-4">Akses PIC</th>
+                      <th className="p-4">Ukuran</th>
+                      <th className="p-4">Diunggah</th>
+                      <th className="p-4 pr-6 text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-xs text-gray-700 dark:text-gray-300">
+                    {filteredItems.map((item) => {
+                      return (
+                        <tr key={item.id} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors">
+                          {/* Name Col */}
+                          <td className="p-4 pl-6">
+                            <div
+                              onClick={() => item.isFolder && browseFolder(item.id, item.name)}
+                              className={`flex items-center gap-3 font-semibold text-black dark:text-white ${item.isFolder ? "cursor-pointer hover:text-brand-500" : ""}`}
+                            >
+                              {getFileIcon(item.mimeType)}
+                              <div className="flex flex-col min-w-0">
+                                <span className="hover:underline line-clamp-1 text-xs">
+                                  {item.customName || item.name}
+                                </span>
+                                {item.description && (
+                                  <span className="text-[10px] text-gray-405 font-medium line-clamp-1 mt-0.5">
+                                    {item.description}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* PT Col */}
+                          <td className="p-4">
+                            {item.pt ? (
+                              <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800/80 text-gray-600 dark:text-gray-300 font-bold uppercase text-[9px] tracking-wider rounded-md border border-gray-200/50 dark:border-gray-700/50">
+                                {item.pt}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-[10px] font-bold">-</span>
+                            )}
+                          </td>
+
+                          {/* PIC Access Constraints */}
+                          <td className="p-4">
+                            {item.pic ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-500/10 text-red-600 dark:text-red-400 font-bold uppercase text-[9px] tracking-wider rounded-md border border-red-200/20 dark:border-red-800/20">
+                                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                                Dibatasi
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400 font-bold uppercase text-[9px] tracking-wider rounded-md border border-green-200/20 dark:border-green-800/20">
+                                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                </svg>
+                                Publik
                               </span>
                             )}
-                          </div>
-                        </div>
-                      </td>
+                          </td>
 
-                      {/* PT Col */}
-                      <td className="p-4">
-                        {item.pt ? (
-                          <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-black uppercase text-[9px] tracking-wider">
-                            {item.pt}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400 text-[10px] font-bold">-</span>
-                        )}
-                      </td>
+                          {/* Size Col */}
+                          <td className="p-4 font-semibold text-gray-400">
+                            {item.isFolder ? "Folder" : formatSize(item.size)}
+                          </td>
 
-                      {/* PIC Access Constraints */}
-                      <td className="p-4">
-                        {item.pic ? (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400 font-black uppercase text-[9px] tracking-wider rounded-none">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                            Restricted ({item.pic.split(",").length} PIC)
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400 font-black uppercase text-[9px] tracking-wider rounded-none">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                            </svg>
-                            Public Access
-                          </span>
-                        )}
-                      </td>
+                          {/* Created At Col */}
+                          <td className="p-4 text-gray-400 font-medium">
+                            {item.createdTime ? new Date(item.createdTime).toLocaleDateString("id-ID", {
+                              day: "numeric",
+                              month: "short",
+                            }) : "-"}
+                          </td>
 
-                      {/* Size Col */}
-                      <td className="p-4 font-semibold text-gray-500">
-                        {item.isFolder ? "Folder" : formatSize(item.size)}
-                      </td>
-
-                      {/* Created At Col */}
-                      <td className="p-4 text-gray-400 font-medium">
-                        {item.createdTime ? new Date(item.createdTime).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        }) : "-"}
-                      </td>
-
-                      {/* Action buttons */}
-                      <td className="p-4 pr-6 text-right space-x-2">
-                        {item.isFolder ? (
-                          <>
-                            <button
-                              onClick={() => browseFolder(item.id, item.name)}
-                              className="px-3 py-1 bg-brand-50 text-brand-700 hover:bg-brand-100 text-[10px] font-black rounded-none uppercase transition-colors"
-                            >
-                              Buka
-                            </button>
-                            <button
-                              onClick={() => {
-                                setEditingFolderItem(item);
-                                setEditFolderName(item.name);
-                                setEditFolderModalOpen(true);
-                              }}
-                              className="px-3 py-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 text-[10px] font-black rounded-none uppercase transition-colors"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteFolder(item.id)}
-                              className="px-3 py-1 bg-red-50 text-red-700 hover:bg-red-100 text-[10px] font-black rounded-none uppercase transition-colors"
-                            >
-                              Hapus
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => {
-                                setSelectedItem(item);
-                                setDetailModalOpen(true);
-                              }}
-                              className="px-3 py-1 bg-gray-100 text-gray-700 hover:bg-gray-200 text-[10px] font-black rounded-none uppercase transition-colors"
-                            >
-                              Detail
-                            </button>
-                            <button
-                              onClick={() => {
-                                setEditingFileItem(item);
-                                setEditFileName(item.customName || item.name);
-                                setEditDescription(item.description || "");
-                                setEditPT(item.pt || "");
-                                setSelectedPICs(item.pic ? item.pic.split(",").map((p) => p.trim()).filter(Boolean) : []);
-                                setEditFileModalOpen(true);
-                              }}
-                              className="px-3 py-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 text-[10px] font-black rounded-none uppercase transition-colors"
-                            >
-                              Edit
-                            </button>
-                            {item.webViewLink && (
-                              <a
-                                href={item.webViewLink}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="px-3 py-1 bg-brand-50 text-brand-700 hover:bg-brand-100 text-[10px] font-black rounded-none uppercase transition-colors inline-block"
-                              >
-                                Lihat
-                              </a>
-                            )}
-                            <button
-                              onClick={() => handleDeleteFile(item.id)}
-                              className="px-3 py-1 bg-red-50 text-red-700 hover:bg-red-100 text-[10px] font-black rounded-none uppercase transition-colors"
-                            >
-                              Hapus
-                            </button>
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                          {/* Action buttons */}
+                          <td className="p-4 pr-6 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {item.isFolder ? (
+                                <>
+                                  <button
+                                    onClick={() => browseFolder(item.id, item.name)}
+                                    className="px-2.5 py-1 bg-brand-500/10 text-brand-600 dark:text-brand-400 hover:bg-brand-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
+                                  >
+                                    Buka
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setEditingFolderItem(item);
+                                      setEditFolderName(item.name);
+                                      setEditFolderModalOpen(true);
+                                    }}
+                                    className="px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
+                                  >
+                                    Ubah
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteFolder(item.id)}
+                                    className="px-2.5 py-1 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
+                                  >
+                                    Hapus
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => {
+                                      setSelectedItem(item);
+                                      setDetailModalOpen(true);
+                                    }}
+                                    className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-350 hover:bg-gray-200 dark:hover:bg-gray-700 text-[10px] font-black rounded-lg uppercase transition-colors"
+                                  >
+                                    Detail
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setEditingFileItem(item);
+                                      setEditFileName(item.customName || item.name);
+                                      setEditDescription(item.description || "");
+                                      setEditPT(item.pt || "");
+                                      setSelectedPICs(item.pic ? item.pic.split(",").map((p) => p.trim()).filter(Boolean) : []);
+                                      setEditFileModalOpen(true);
+                                    }}
+                                    className="px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
+                                  >
+                                    Edit
+                                  </button>
+                                  {item.webViewLink && (
+                                    <a
+                                      href={item.webViewLink}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="px-2.5 py-1 bg-brand-500/10 text-brand-600 dark:text-brand-400 hover:bg-brand-500/20 text-[10px] font-black rounded-lg uppercase transition-colors inline-block text-center"
+                                    >
+                                      Lihat
+                                    </a>
+                                  )}
+                                  <button
+                                    onClick={() => handleDeleteFile(item.id)}
+                                    className="px-2.5 py-1 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
+                                  >
+                                    Hapus
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* CREATE FOLDER MODAL */}
