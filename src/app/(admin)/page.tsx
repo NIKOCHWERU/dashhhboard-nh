@@ -82,6 +82,10 @@ export default function Dashboard() {
     internal: 0
   });
   const [activeBottomTab, setActiveBottomTab] = useState<"announcements" | "docs" | "logs">("announcements");
+  const [laporanTab, setLaporanTab] = useState<"dilo" | "wilo" | "milo">("dilo");
+  const [diloRows, setDiloRows] = useState<any[]>([]);
+  const [wiloRows, setWiloRows] = useState<any[]>([]);
+  const [miloRows, setMiloRows] = useState<any[]>([]);
   
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -113,7 +117,10 @@ export default function Dashboard() {
           resPersonalTasks,
           resPengumuman,
           resDocs,
-          resSummary
+          resSummary,
+          resDilo,
+          resWilo,
+          resMilo
         ] = await Promise.all([
           fetch("/api/karyawan"),
           fetch("/api/retainer"),
@@ -121,7 +128,10 @@ export default function Dashboard() {
           fetch("/api/personal-tasks"),
           fetch("/api/pengumuman"),
           fetch("/api/gdrive/recent?limit=5"),
-          fetch("/api/laporan-operasional?summary=true")
+          fetch("/api/laporan-operasional?summary=true"),
+          fetch("/api/laporan-operasional?sheetName=RETAINER&limit=3"),
+          fetch("/api/laporan-operasional?sheetName=NON_RETAINER&limit=3"),
+          fetch("/api/laporan-operasional?sheetName=INTERNAL&limit=3")
         ]);
 
         const team = resKaryawan.ok ? await resKaryawan.json() : [];
@@ -130,6 +140,9 @@ export default function Dashboard() {
         const tasks = resPersonalTasks.ok ? await resPersonalTasks.json() : [];
         const ann = resPengumuman.ok ? await resPengumuman.json() : [];
         const summaryObj = resSummary.ok ? await resSummary.json() : { activeCount: 0, nonRetainer: 0, retainer: 0, internal: 0 };
+        const diloObj = resDilo.ok ? await resDilo.json() : { data: [] };
+        const wiloObj = resWilo.ok ? await resWilo.json() : { data: [] };
+        const miloObj = resMilo.ok ? await resMilo.json() : { data: [] };
         
         let docs: GDriveItem[] = [];
         if (resDocs.ok) {
@@ -155,6 +168,9 @@ export default function Dashboard() {
         setAnnouncements(ann.slice(0, 3));
         setRecentDocs(docs);
         setSummaryCounts(summaryObj);
+        setDiloRows(diloObj.data || []);
+        setWiloRows(wiloObj.data || []);
+        setMiloRows(miloObj.data || []);
 
         // Fetch Activity Logs (Admin Only)
         if ((session?.user as any)?.role === "admin") {
@@ -441,39 +457,139 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* SECTION 3: Dilo (Skala Prioritas) & Split widget (Pengumuman | Akses Cepat) */}
+      {/* SECTION 3: Laporan (Dilo | Wilo | Milo) & Split widget (Pengumuman | Akses Cepat) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5" suppressHydrationWarning>
         
-        {/* Left Column: Dilo (Skala Prioritas) */}
+        {/* Left Column: Laporan (Dilo, Wilo, Milo) */}
         <div className="lg:col-span-5">
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[210px] max-h-[210px] flex flex-col">
-            <div className="flex items-center gap-2 mb-3 border-b border-gray-100 pb-2 dark:border-gray-800">
-              <span className="w-1.5 h-3.5 bg-red-500 rounded-full"></span>
-              <h2 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">Dilo : Skala Prioritas</h2>
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[210px] max-h-[210px] flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2 border-b border-gray-100 pb-2 dark:border-gray-800">
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-3.5 bg-brand-500 rounded-full"></span>
+                <h2 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">Laporan</h2>
+              </div>
+              <div className="flex gap-1 bg-gray-100 dark:bg-gray-850 p-0.5 rounded-lg select-none">
+                {(["dilo", "wilo", "milo"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setLaporanTab(tab)}
+                    className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider transition-all ${
+                      laporanTab === tab
+                        ? "bg-brand-500 text-white shadow-sm"
+                        : "text-gray-500 dark:text-gray-400 hover:text-brand-500"
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
             </div>
             
-            <div className="space-y-2 overflow-y-auto pr-1 flex-1 no-scrollbar">
-              {[
-                { id: "dummy-1", taskName: "Analisis Dokumen Perkara PT. Mahardika", level: 1, levelLabel: "Level 1 - Urgent", deadline: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000) },
-                { id: "dummy-2", taskName: "Penyusunan Kontrak Kerja Jangka Panjang Vendor", level: 2, levelLabel: "Level 2 - High", deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) },
-                { id: "dummy-3", taskName: "Audit Legal & Kepatuhan Perizinan INTERNAL", level: 3, levelLabel: "Level 3 - Medium", deadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000) }
-              ].map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/20 dark:bg-white/[0.002]">
-                  <div className="overflow-hidden mr-2">
-                    <h4 className="text-[11px] font-bold text-gray-900 dark:text-white leading-tight truncate">{item.taskName}</h4>
-                    <p className="text-[9px] text-gray-400 mt-0.5 font-semibold uppercase tracking-wider">{item.levelLabel}</p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
-                      item.level === 1 ? "bg-red-50 text-red-700 dark:bg-red-950/20" :
-                      item.level === 2 ? "bg-orange-50 text-orange-700 dark:bg-orange-950/20" :
-                      "bg-blue-50 text-blue-700 dark:bg-blue-950/20"
-                    }`}>
-                      {item.deadline.toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
-                    </span>
-                  </div>
-                </div>
-              ))}
+            <div className="flex-1 overflow-hidden">
+              <table className="w-full text-left border-collapse text-[10px]">
+                <thead>
+                  <tr className="border-b border-gray-150 dark:border-gray-800 text-gray-400 uppercase tracking-wider font-bold">
+                    {laporanTab === "dilo" && (
+                      <>
+                        <th className="pb-1 w-8">No</th>
+                        <th className="pb-1">Pekerjaan</th>
+                        <th className="pb-1 w-16">Prioritas</th>
+                        <th className="pb-1 w-16 text-right">Batas</th>
+                      </>
+                    )}
+                    {laporanTab === "wilo" && (
+                      <>
+                        <th className="pb-1 w-8">No</th>
+                        <th className="pb-1">Pekerjaan</th>
+                        <th className="pb-1 w-24">Klien</th>
+                        <th className="pb-1 w-16 text-right">Status</th>
+                      </>
+                    )}
+                    {laporanTab === "milo" && (
+                      <>
+                        <th className="pb-1 w-8">No</th>
+                        <th className="pb-1">Pekerjaan</th>
+                        <th className="pb-1 w-16">PIC</th>
+                        <th className="pb-1 w-16 text-right">Hasil</th>
+                      </>
+                    )}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
+                  {laporanTab === "dilo" && diloRows.length > 0 ? (
+                    diloRows.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.002]">
+                        <td className="py-1.5 font-bold text-gray-450">{item.no}</td>
+                        <td className="py-1.5 font-bold text-gray-900 dark:text-white truncate max-w-[150px]" title={item.deskripsi || item.tugas}>
+                          {item.namaKlien || item.deskripsi || item.tugas}
+                        </td>
+                        <td className="py-1.5">
+                          <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
+                            item.quadran === "Q1" ? "text-red-600 bg-red-50 dark:bg-red-950/20" :
+                            item.quadran === "Q2" ? "text-orange-600 bg-orange-50 dark:bg-orange-950/20" :
+                            "text-blue-600 bg-blue-50 dark:bg-blue-950/20"
+                          }`}>{item.quadran || "Q3"}</span>
+                        </td>
+                        <td className="py-1.5 text-right font-bold text-brand-500">
+                          {item.tanggal ? new Date(item.tanggal).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : "-"}
+                        </td>
+                      </tr>
+                    ))
+                  ) : laporanTab === "dilo" ? (
+                    <tr>
+                      <td colSpan={4} className="py-6 text-center text-gray-400 italic">Tidak ada data Dilo.</td>
+                    </tr>
+                  ) : null}
+                  {laporanTab === "wilo" && wiloRows.length > 0 ? (
+                    wiloRows.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.002]">
+                        <td className="py-1.5 font-bold text-gray-450">{item.no}</td>
+                        <td className="py-1.5 font-bold text-gray-900 dark:text-white truncate max-w-[150px]" title={item.deskripsi || item.tugas}>
+                          {item.deskripsi || item.tugas}
+                        </td>
+                        <td className="py-1.5 text-gray-500 truncate max-w-[80px]" title={item.area}>
+                          {item.area || item.kategori || "-"}
+                        </td>
+                        <td className="py-1.5 text-right">
+                          <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
+                            item.status === "Selesai" ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-955/20" :
+                            item.status === "Aktif" ? "text-blue-600 bg-blue-50 dark:bg-blue-955/20" :
+                            "text-amber-600 bg-amber-50 dark:bg-amber-955/20"
+                          }`}>{item.status || "-"}</span>
+                        </td>
+                      </tr>
+                    ))
+                  ) : laporanTab === "wilo" ? (
+                    <tr>
+                      <td colSpan={4} className="py-6 text-center text-gray-400 italic">Tidak ada data Wilo.</td>
+                    </tr>
+                  ) : null}
+                  {laporanTab === "milo" && miloRows.length > 0 ? (
+                    miloRows.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.002]">
+                        <td className="py-1.5 font-bold text-gray-450">{item.no}</td>
+                        <td className="py-1.5 font-bold text-gray-900 dark:text-white truncate max-w-[150px]" title={item.deskripsi || item.tugas}>
+                          {item.deskripsi || item.tugas}
+                        </td>
+                        <td className="py-1.5 text-gray-500 truncate max-w-[80px]" title={item.penanggungJawab}>
+                          {item.penanggungJawab || "-"}
+                        </td>
+                        <td className="py-1.5 text-right">
+                          <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
+                            item.status === "Selesai" ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-955/20" :
+                            item.status === "Aktif" ? "text-blue-600 bg-blue-50 dark:bg-blue-955/20" :
+                            "text-amber-600 bg-amber-50 dark:bg-amber-955/20"
+                          }`}>{item.status || "-"}</span>
+                        </td>
+                      </tr>
+                    ))
+                  ) : laporanTab === "milo" ? (
+                    <tr>
+                      <td colSpan={4} className="py-6 text-center text-gray-400 italic">Tidak ada data Milo.</td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -537,14 +653,14 @@ export default function Dashboard() {
                   <Link href="/catatan-pribadi" className="flex flex-col items-center justify-center p-2 text-center border border-gray-100 dark:border-gray-850 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] group h-12">
                     <span className="text-[9px] font-black text-gray-800 dark:text-gray-200 group-hover:text-brand-500 uppercase tracking-wider">Catatan</span>
                   </Link>
-                  <Link href="/retainer" className="flex flex-col items-center justify-center p-2 text-center border border-gray-100 dark:border-gray-850 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] group h-12">
-                    <span className="text-[9px] font-black text-gray-800 dark:text-gray-200 group-hover:text-brand-500 uppercase tracking-wider">Pekerjaan</span>
+                  <Link href="/legal/template-management" className="flex flex-col items-center justify-center p-2 text-center border border-gray-100 dark:border-gray-850 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] group h-12">
+                    <span className="text-[9px] font-black text-gray-800 dark:text-gray-200 group-hover:text-brand-500 uppercase tracking-wider">Formulir</span>
                   </Link>
-                  <Link href="/narasumber-hukum" className="flex flex-col items-center justify-center p-2 text-center border border-gray-100 dark:border-gray-850 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] group h-12">
-                    <span className="text-[9px] font-black text-gray-800 dark:text-gray-200 group-hover:text-brand-500 uppercase tracking-wider">Unggah</span>
+                  <Link href="/dokumentasi" className="flex flex-col items-center justify-center p-2 text-center border border-gray-100 dark:border-gray-850 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] group h-12">
+                    <span className="text-[9px] font-black text-gray-800 dark:text-gray-200 group-hover:text-brand-500 uppercase tracking-wider">Pedoman</span>
                   </Link>
-                  <Link href="/karyawan" className="flex flex-col items-center justify-center p-2 text-center border border-gray-100 dark:border-gray-850 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] group h-12">
-                    <span className="text-[9px] font-black text-gray-800 dark:text-gray-200 group-hover:text-brand-500 uppercase tracking-wider">Karyawan</span>
+                  <Link href="/skala-prioritas" className="flex flex-col items-center justify-center p-2 text-center border border-gray-100 dark:border-gray-850 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] group h-12">
+                    <span className="text-[9px] font-black text-gray-800 dark:text-gray-200 group-hover:text-brand-500 uppercase tracking-wider">P3</span>
                   </Link>
                 </div>
               </div>
