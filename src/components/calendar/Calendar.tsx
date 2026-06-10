@@ -244,7 +244,24 @@ const Calendar: React.FC = () => {
     handleEventClick({ event: fakeEvent } as any);
   };
 
-  const filteredEvents = events.filter((ev) => {
+  const visibleEvents = events.filter((ev) => {
+    const userObj = session?.user as any;
+    const userName = userObj?.name || "";
+    const isAdminUser = userObj?.role === "admin";
+    
+    if (isAdminUser && showAllAgenda) {
+      return true;
+    }
+
+    const isOwner = ev.extendedProps?.userId === userObj?.id;
+    const picList = (ev.extendedProps?.pic || "").split(", ").map((p: string) => p.trim());
+    const isPIC = picList.includes(userName);
+    const isWFO = ev.extendedProps?.type === "Tim WFO";
+    
+    return isOwner || isPIC || isWFO;
+  });
+
+  const filteredEvents = visibleEvents.filter((ev) => {
     if (!selectedDate) return true;
     const dateStr = getEventDateString(ev.start);
     return dateStr === selectedDate;
@@ -272,7 +289,7 @@ const Calendar: React.FC = () => {
     const tomorrowEvents: AgendaEvent[] = [];
     const thisWeekEvents: AgendaEvent[] = [];
 
-    events.forEach((ev) => {
+    visibleEvents.forEach((ev) => {
       const dateStr = getEventDateString(ev.start);
       if (!dateStr) return;
 
@@ -632,6 +649,7 @@ const Calendar: React.FC = () => {
     const isGoogle = event.extendedProps.type === "Tim WFO";
     setIsGoogleEvent(isGoogle);
 
+    setViewMode("view");
     setSelectedEventId(event.id);
     setTitle(event.title);
     setStartDate(event.start?.toISOString().split("T")[0] || "");
@@ -979,7 +997,7 @@ const Calendar: React.FC = () => {
     let monthCount = 0;
     let deadlineCount = 0;
     
-    events.forEach(ev => {
+    visibleEvents.forEach(ev => {
       const dateStr = getEventDateString(ev.start);
       if (!dateStr) return;
       
@@ -1194,7 +1212,12 @@ const Calendar: React.FC = () => {
 
   return (
     <div>
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4" style={{ height: 'calc(100vh - 130px)', minHeight: '600px' }}>
+      <style dangerouslySetInnerHTML={{__html: `
+        .custom-calendar .fc-daygrid-day-frame {
+          min-height: 80px !important;
+        }
+      `}} />
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4" style={{ height: 'calc(100vh - 130px)', minHeight: '500px' }}>
         {/* Left Side: Calendar Area */}
         <div className="xl:col-span-9 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-2xl p-4 md:p-5 flex flex-col overflow-hidden">
           
@@ -1287,7 +1310,7 @@ const Calendar: React.FC = () => {
           {activeView === "year" ? (
             <YearView
               year={currentYear}
-              events={events}
+              events={visibleEvents}
               onMonthClick={handleMonthSelect}
               getEventDateString={getEventDateString}
             />
@@ -1298,15 +1321,32 @@ const Calendar: React.FC = () => {
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView="dayGridMonth"
                 headerToolbar={false}
-                events={events}
+                events={visibleEvents}
                 selectable={false}
                 dateClick={handleDateClick}
                 eventClick={handleEventClick}
                 eventContent={renderEventContent}
                 dayCellContent={renderDayCellContent}
                 datesSet={handleDatesSet}
-                height="100%"
+                height="auto"
+                aspectRatio={1.8}
               />
+            </div>
+          )}
+
+          {/* Admin Show All Checkbox at bottom */}
+          {((session?.user as any)?.role === "admin") && (
+            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-end gap-2">
+              <input
+                type="checkbox"
+                id="showAllAgenda"
+                checked={showAllAgenda}
+                onChange={(e) => setShowAllAgenda(e.target.checked)}
+                className="w-4 h-4 text-brand-500 rounded border-gray-300 focus:ring-brand-500 cursor-pointer"
+              />
+              <label htmlFor="showAllAgenda" className="text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+                Bisa Dilihat Semua (Mode Admin)
+              </label>
             </div>
           )}
         </div>
