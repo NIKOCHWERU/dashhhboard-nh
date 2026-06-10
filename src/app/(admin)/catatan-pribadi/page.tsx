@@ -2,6 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import * as XLSX from 'xlsx';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -471,6 +472,63 @@ export default function DaftarCalonKlienPage() {
     fetchKonten();
     fetchSI();
   }, [fetchCalon, fetchKlien, fetchKonten, fetchSI]);
+
+  const handleExportExcel = (type: string) => {
+    let dataToExport: any[] = [];
+    let filename = '';
+    if (type === 'calon') {
+      dataToExport = calonData.map((c: any) => {
+        const { id, ...rest } = c;
+        return rest;
+      });
+      filename = 'Daftar_Calon_Klien.xlsx';
+    } else if (type === 'klien') {
+      dataToExport = klienData.map((k: any) => {
+        const { id, ...rest } = k;
+        return rest;
+      });
+      filename = 'Daftar_Klien.xlsx';
+    }
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
+    XLSX.writeFile(workbook, filename);
+  };
+
+  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setSubmitting(true);
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const data = evt.target?.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+        const endpoint = type === 'calon' ? '/api/calon-klien' : '/api/klien';
+        for (const row of rows as any[]) {
+          await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(row),
+          });
+        }
+        if (type === 'calon') fetchCalon();
+        if (type === 'klien') fetchKlien();
+        alert('Impor Selesai. (Pastikan database sudah di-upgrade jika data tidak muncul)');
+      } catch (err) {
+        console.error(err);
+        alert('Gagal mengimpor data. Pastikan file valid.');
+      } finally {
+        setSubmitting(false);
+        e.target.value = '';
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
 
   // ── Sort handlers
   const handleSort = (
@@ -989,8 +1047,32 @@ export default function DaftarCalonKlienPage() {
             </button>
           ))}
         </div>
-        {/* Add Button */}
-        <AddButton onClick={handleAdd} label={addLabels[activeTab]} />
+        {/* Add Button & Import/Export */}
+        <div className="flex items-center gap-2">
+          {activeTab === 'calon' && (
+            <>
+              <input type="file" accept=".xlsx,.xls,.csv" className="hidden" id="import-calon" onChange={(e) => handleImportExcel(e, 'calon')} />
+              <label htmlFor="import-calon" className="px-3 py-2.5 text-sm font-semibold text-brand-700 bg-brand-50 border border-brand-200 dark:border-white/[0.1] rounded-xl cursor-pointer hover:bg-brand-100 transition-colors flex items-center gap-1 shadow-sm">
+                Import CSV/Excel
+              </label>
+              <button onClick={() => handleExportExcel('calon')} className="px-3 py-2.5 text-sm font-semibold text-brand-700 bg-brand-50 border border-brand-200 dark:border-white/[0.1] rounded-xl hover:bg-brand-100 transition-colors flex items-center gap-1 shadow-sm">
+                Export CSV/Excel
+              </button>
+            </>
+          )}
+          {activeTab === 'klien' && (
+            <>
+              <input type="file" accept=".xlsx,.xls,.csv" className="hidden" id="import-klien" onChange={(e) => handleImportExcel(e, 'klien')} />
+              <label htmlFor="import-klien" className="px-3 py-2.5 text-sm font-semibold text-brand-700 bg-brand-50 border border-brand-200 dark:border-white/[0.1] rounded-xl cursor-pointer hover:bg-brand-100 transition-colors flex items-center gap-1 shadow-sm">
+                Import CSV/Excel
+              </label>
+              <button onClick={() => handleExportExcel('klien')} className="px-3 py-2.5 text-sm font-semibold text-brand-700 bg-brand-50 border border-brand-200 dark:border-white/[0.1] rounded-xl hover:bg-brand-100 transition-colors flex items-center gap-1 shadow-sm">
+                Export CSV/Excel
+              </button>
+            </>
+          )}
+          <AddButton onClick={handleAdd} label={addLabels[activeTab]} />
+        </div>
       </div>
     );
   };
@@ -1046,7 +1128,16 @@ export default function DaftarCalonKlienPage() {
               <td className={tdClass}>{row.domisili || '—'}</td>
               <td className={tdClass}>{row.email || '—'}</td>
               <td className={tdClass}>{row.mediaSosial || '—'}</td>
-              <td className={tdClass}>{row.telephone || '—'}</td>
+              <td className={tdClass}>
+                <div className="flex items-center gap-2">
+                  <span>{row.telephone || '—'}</span>
+                  {row.telephone && (
+                    <a href={`https://wa.me/${row.telephone.replace(/\D/g, '').replace(/^0/, '62')}`} target="_blank" rel="noopener noreferrer" className="text-green-500 hover:text-green-600 transition-colors" title="Chat WhatsApp">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+                    </a>
+                  )}
+                </div>
+              </td>
               <td className={`${tdClass}`}><KategoriManitBadge value={row.kategoriManit} /></td>
               <td className={`${tdClass} max-w-[200px]`}>{row.kegiatanDilakukan || '—'}</td>
               <td className={tdClass}>{row.tantangan || '—'}</td>
@@ -1110,7 +1201,16 @@ export default function DaftarCalonKlienPage() {
               <td className={tdClass}>{row.sumber || '—'}</td>
               <td className={tdClass}>{row.nomorInvoice || '—'}</td>
               <td className={tdClass}>{row.jenisPekerjaan || '—'}</td>
-              <td className={tdClass}>{row.telephone || '—'}</td>
+              <td className={tdClass}>
+                <div className="flex items-center gap-2">
+                  <span>{row.telephone || '—'}</span>
+                  {row.telephone && (
+                    <a href={`https://wa.me/${row.telephone.replace(/\D/g, '').replace(/^0/, '62')}`} target="_blank" rel="noopener noreferrer" className="text-green-500 hover:text-green-600 transition-colors" title="Chat WhatsApp">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+                    </a>
+                  )}
+                </div>
+              </td>
               <td className={tdClass}>
                 <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
                   row.statusPembayaran?.toLowerCase().includes('lunas')
