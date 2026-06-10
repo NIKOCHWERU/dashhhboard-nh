@@ -391,22 +391,6 @@ const Calendar: React.FC = () => {
     fetchAllEvents();
   }, []);
 
-  if (!mounted) return <div className="h-screen animate-pulse bg-white dark:bg-gray-900 rounded-3xl"></div>;
-
-
-  const userObj = session?.user as any;
-  const isAdminUser = userObj?.role === "admin";
-  const isRegularUser = userObj?.role?.toLowerCase() === "user";
-  const canManage = !isRegularUser && (isAdminUser || userObj?.canCreateAgenda);
-
-  const handleDateSelect = (selectInfo: DateSelectArg) => {
-    if (!canManage) return;
-    resetForm();
-    setStartDate(selectInfo.startStr.split("T")[0]);
-    setEndDate(selectInfo.endStr.split("T")[0]);
-    openModal();
-  };
-
   useEffect(() => {
     if (!mounted || events.length === 0) return;
     const searchParams = new URLSearchParams(window.location.search);
@@ -429,6 +413,22 @@ const Calendar: React.FC = () => {
       }
     }
   }, [mounted, events]);
+
+  if (!mounted) return <div className="h-screen animate-pulse bg-white dark:bg-gray-900 rounded-3xl"></div>;
+
+
+  const userObj = session?.user as any;
+  const isAdminUser = userObj?.role === "admin";
+  const isRegularUser = userObj?.role?.toLowerCase() === "user";
+  const canManage = !isRegularUser && (isAdminUser || userObj?.canCreateAgenda);
+
+  const handleDateSelect = (selectInfo: DateSelectArg) => {
+    if (!canManage) return;
+    resetForm();
+    setStartDate(selectInfo.startStr.split("T")[0]);
+    setEndDate(selectInfo.endStr.split("T")[0]);
+    openModal();
+  };
 
   const handleEventClick = (clickInfo: EventClickArg) => {
     const event = clickInfo.event;
