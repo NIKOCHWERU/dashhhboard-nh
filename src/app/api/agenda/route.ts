@@ -3,6 +3,55 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+function buildGoogleCalendarDescription(pic: string, description: string, notes: string) {
+  let displayNotes = notes;
+  let displayKategori = "";
+  let displayLokasi = "";
+  let displayReminder = "";
+  let displayFileLink = "";
+
+  try {
+    if (notes && notes.startsWith("{") && notes.endsWith("}")) {
+      const parsed = JSON.parse(notes);
+      displayNotes = parsed.realNotes || "";
+      displayKategori = parsed.kategori === "Lainnya" ? parsed.kategoriLainnya : parsed.kategori;
+      displayLokasi = parsed.lokasi || "";
+      if (parsed.reminderEnabled) {
+        let reminderText = `Waktu: ${parsed.pengingatWaktu || "09:00"}`;
+        
+        let hariLabel = "Hari H";
+        if (parsed.pengingatHari === "1") hariLabel = "1 Hari Sebelumnya";
+        else if (parsed.pengingatHari === "2") hariLabel = "2 Hari Sebelumnya";
+        else if (parsed.pengingatHari === "3") hariLabel = "3 Hari Sebelumnya";
+        else if (parsed.pengingatHari === "7") hariLabel = "1 Minggu Sebelumnya";
+
+        let pengulanganLabel = "Tidak Ada Pengulangan";
+        if (parsed.pengingatPengulangan === "tanggal7") pengulanganLabel = "Per Tanggal 7";
+        else if (parsed.pengingatPengulangan === "weekly") pengulanganLabel = "1 Minggu Sekali";
+        else if (parsed.pengingatPengulangan === "monthly") pengulanganLabel = "1 Bulan Sekali";
+        else if (parsed.pengingatPengulangan === "yearly") pengulanganLabel = "1 Tahun Sekali";
+
+        reminderText += ` (Hari: ${hariLabel}, Ulang: ${pengulanganLabel})`;
+        displayReminder = reminderText;
+      }
+      displayFileLink = parsed.fileLink || "";
+    }
+  } catch (e) {
+    // Fail-safe
+  }
+
+  let desc = `Peserta: ${pic || "-"}\n`;
+  if (displayKategori) desc += `Kategori: ${displayKategori}\n`;
+  if (displayLokasi) desc += `Lokasi: ${displayLokasi}\n`;
+  if (displayReminder) desc += `Pengingat: ${displayReminder}\n`;
+  if (displayFileLink) desc += `Berkas/Tautan: ${displayFileLink}\n`;
+  desc += `\nKeterangan: ${description || "-"}\n`;
+  desc += `Catatan: ${displayNotes || "-"}`;
+
+  return desc;
+}
+
+
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -28,7 +77,7 @@ export async function POST(req: Request) {
           headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             summary: `[${scale}] ${title}`,
-            description: `PIC: ${pic}\n\nKeterangan: ${description || "-"}\n\nCatatan: ${notes || "-"}`,
+            description: buildGoogleCalendarDescription(pic, description, notes),
             start: { dateTime: new Date(startDate).toISOString() },
             end: { dateTime: new Date(endDate).toISOString() },
             reminders: {
@@ -105,7 +154,7 @@ export async function PUT(req: Request) {
           headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             summary: `[${scale}] ${title}`,
-            description: `PIC: ${pic}\n\nKeterangan: ${description || "-"}\n\nCatatan: ${notes || "-"}`,
+            description: buildGoogleCalendarDescription(pic, description, notes),
             start: { dateTime: new Date(startDate).toISOString() },
             end: { dateTime: new Date(endDate).toISOString() },
             reminders: {

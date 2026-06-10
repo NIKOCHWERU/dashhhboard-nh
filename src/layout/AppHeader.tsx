@@ -7,11 +7,94 @@ import { useSidebar } from "@/context/SidebarContext";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { APP_LABELS } from "../config/app-labels";
+
+const STATIC_MENUS = [
+  { name: "Dashboard Utama", category: "Menu", path: "/", description: "Ringkasan aktivitas operasional kantor hari ini" },
+  { name: "Kalender", category: "Menu", path: "/calendar", description: "Atur dan lihat kegiatan atau agenda kerja anda" },
+  { name: "Catatan Pribadi & Tugas", category: "Menu", path: "/catatan-pribadi", description: "Tugas pribadi, prioritas harian, dan draf kerja" },
+  { name: "Berkas / Dokumen", category: "Menu", path: "/dokumen", description: "Arsip berkas, template, dan link Google Drive" },
+  { name: "Dokumentasi", category: "Menu", path: "/dokumentasi", description: "Panduan operasional dan dokumentasi sistem" },
+  { name: "Pengumuman", category: "Menu", path: "/pengumuman", description: "Daftar pengumuman internal kantor hukum" },
+  { name: "Arsip Dokumen", category: "Manajemen Arsip", path: "/narasumber-hukum", description: "Manajemen folder dan arsip dokumen Google Drive" },
+  { name: "Laporan Operasional", category: "Manajemen Arsip", path: "/laporan-operasional", description: "Tabel monitoring Retainer, Non-Retainer, dan Internal" },
+  { name: "Pekerjaan Retainer", category: "Pekerjaan", path: "/retainer", description: "Daftar pekerjaan berstatus Retainer" },
+  { name: "Pekerjaan Perorangan", category: "Pekerjaan", path: "/perorangan", description: "Daftar pekerjaan perorangan (Non-Retainer)" },
+  { name: "Daftar Karyawan", category: "Karyawan", path: "/karyawan", description: "Daftar karyawan dan tim resmi Narasumber Hukum" },
+  { name: "Skala Prioritas", category: "Karyawan", path: "/skala-prioritas", description: "Status skala prioritas kerja tim" },
+  { name: "Surat Internal", category: "Karyawan", path: "/internal", description: "Arsip surat keluar masuk internal kantor" },
+  { name: "Dashboard HRM", category: "HRM", path: "/hrm", description: "Overview rekrutmen dan data pelamar kerja" },
+  { name: "HRM: Data Pelamar", category: "HRM", path: "/hrm/pelamar", description: "Daftar pelamar rekrutmen staff baru" },
+  { name: "HRM: Dokumen Pelamar", category: "HRM", path: "/hrm/dokumen", description: "Berkas dan CV pelamar kerja" },
+  { name: "HRM: Daftar Karyawan", category: "HRM", path: "/hrm/karyawan", description: "Data administrasi karyawan HRM" },
+  { name: "HRM: Daftar Retainer", category: "HRM", path: "/hrm/retainer", description: "Monitoring status retainer klien" },
+  { name: "Dashboard Legal", category: "Legal & Compliance", path: "/legal/overview", description: "Overview layanan hukum dan kepatuhan" },
+  { name: "Buat Surat Otomatis", category: "Legal & Compliance", path: "/legal/generate-surat", description: "Layanan automasi pembuatan surat legal" },
+  { name: "Manajemen Template", category: "Legal & Compliance", path: "/legal/template-management", description: "Pengelolaan draf template surat otomatis" },
+  { name: "Kadaluwarsa Kontrak", category: "Legal & Compliance", path: "/legal/expiry-monitoring", description: "Monitoring masa aktif kontrak dan retainer" },
+  { name: "Manajemen Akses", category: "Admin", path: "/admin-control", description: "Konfigurasi role permission dan hak akses user" }
+];
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [agendas, setAgendas] = useState<any[]>([]);
+  const [karyawan, setKaryawan] = useState<any[]>([]);
+  const [hasLoadedDynamic, setHasLoadedDynamic] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setIsSearchFocused(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const loadDynamicSearchData = async () => {
+    if (hasLoadedDynamic) return;
+    try {
+      const [agendaRes, karyawanRes] = await Promise.all([
+        fetch("/api/agenda"),
+        fetch("/api/karyawan")
+      ]);
+      if (agendaRes.ok) {
+        const agendaData = await agendaRes.json();
+        setAgendas(agendaData);
+      }
+      if (karyawanRes.ok) {
+        const karyawanData = await karyawanRes.json();
+        setKaryawan(karyawanData);
+      }
+      setHasLoadedDynamic(true);
+    } catch (err) {
+      console.error("Failed to load search dynamic data:", err);
+    }
+  };
+
+  const filteredMenus = STATIC_MENUS.filter(menu =>
+    menu.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    menu.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredAgendas = agendas.filter(evt =>
+    evt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (evt.description && evt.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const filteredKaryawan = karyawan.filter(k =>
+    k.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (k.position && k.position.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const hasResults = filteredMenus.length > 0 || filteredAgendas.length > 0 || filteredKaryawan.length > 0;
+
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
 
@@ -134,6 +217,130 @@ const AppHeader: React.FC = () => {
             isApplicationMenuOpen ? "flex" : "hidden"
           } items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
         >
+          {/* Global Search Bar */}
+          <div ref={searchContainerRef} className="relative w-full max-w-[320px] hidden sm:block">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Cari menu, fitur, atau isi..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => {
+                  setIsSearchFocused(true);
+                  loadDynamicSearchData();
+                }}
+                className="w-full pl-10 pr-4 py-2.5 text-xs font-semibold text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all placeholder-gray-400 dark:placeholder-gray-500"
+              />
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </span>
+            </div>
+            
+            {/* Search Results Dropdown Overlay */}
+            {isSearchFocused && (
+              <div className="absolute right-0 mt-2 w-[450px] bg-white dark:bg-gray-900 border border-stroke dark:border-strokedark rounded-2xl shadow-2xl p-4 z-99999 max-h-[450px] overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-top-2 duration-200">
+                {!searchQuery ? (
+                  <div className="space-y-3">
+                    <h6 className="text-[10px] font-black uppercase tracking-wider text-gray-400">Pencarian Populer</h6>
+                    <div className="grid grid-cols-2 gap-2">
+                      {STATIC_MENUS.slice(0, 6).map((menu) => (
+                        <Link
+                          key={menu.path}
+                          href={menu.path}
+                          onClick={() => setIsSearchFocused(false)}
+                          className="flex items-center gap-2.5 p-2.5 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+                          <span className="text-xs font-bold text-gray-800 dark:text-gray-200">{menu.name}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Menus Section */}
+                    {filteredMenus.length > 0 && (
+                      <div>
+                        <h6 className="text-[10px] font-black uppercase tracking-wider text-gray-400 mb-2">Menu & Fitur ({filteredMenus.length})</h6>
+                        <div className="space-y-1">
+                          {filteredMenus.map((menu) => (
+                            <Link
+                              key={menu.path}
+                              href={menu.path}
+                              onClick={() => setIsSearchFocused(false)}
+                              className="flex flex-col p-2 hover:bg-brand-50 dark:hover:bg-brand-500/10 rounded-xl transition-all"
+                            >
+                              <span className="text-xs font-bold text-black dark:text-white">{menu.name}</span>
+                              <span className="text-[10px] text-gray-400 dark:text-gray-500">{menu.description}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Agendas Section */}
+                    {filteredAgendas.length > 0 && (
+                      <div>
+                        <h6 className="text-[10px] font-black uppercase tracking-wider text-gray-400 mb-2">Agenda & Kegiatan ({filteredAgendas.length})</h6>
+                        <div className="space-y-1">
+                          {filteredAgendas.map((evt) => (
+                            <Link
+                              key={evt.id}
+                              href={`/calendar?eventId=${evt.id}`}
+                              onClick={() => setIsSearchFocused(false)}
+                              className="flex flex-col p-2 hover:bg-brand-50 dark:hover:bg-brand-500/10 rounded-xl transition-all"
+                            >
+                              <span className="text-xs font-bold text-black dark:text-white flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                {evt.title}
+                              </span>
+                              <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                                PIC: {evt.pic || "-"} &bull; {new Date(evt.startDate).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+                              </span>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Karyawan Section */}
+                    {filteredKaryawan.length > 0 && (
+                      <div>
+                        <h6 className="text-[10px] font-black uppercase tracking-wider text-gray-400 mb-2">Karyawan & Staff ({filteredKaryawan.length})</h6>
+                        <div className="space-y-1">
+                          {filteredKaryawan.map((k) => (
+                            <Link
+                              key={k.id}
+                              href={`/karyawan?search=${encodeURIComponent(k.name)}`}
+                              onClick={() => setIsSearchFocused(false)}
+                              className="flex flex-col p-2 hover:bg-brand-50 dark:hover:bg-brand-500/10 rounded-xl transition-all"
+                            >
+                              <span className="text-xs font-bold text-black dark:text-white flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                {k.name}
+                              </span>
+                              <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                                {k.position} &bull; {k.email || "-"}
+                              </span>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {!hasResults && (
+                      <div className="py-6 text-center text-xs text-gray-400 dark:text-gray-500 italic">
+                        Tidak menemukan hasil pencarian untuk "{searchQuery}"
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center gap-2 2xsm:gap-3">
             {/* <!-- Dark Mode Toggler --> */}
             <ThemeToggleButton />

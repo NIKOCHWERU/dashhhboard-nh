@@ -45,6 +45,32 @@ const Calendar: React.FC = () => {
   const [scale, setScale] = useState("Q1");
   const [description, setDescription] = useState("");
   const [notes, setNotes] = useState("");
+  const [kategori, setKategori] = useState("Retainer");
+  const [kategoriLainnya, setKategoriLainnya] = useState("");
+  const [lokasi, setLokasi] = useState("");
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [pengingatWaktu, setPengingatWaktu] = useState("09:00");
+  const [pengingatHari, setPengingatHari] = useState("0");
+  const [pengingatPengulangan, setPengingatPengulangan] = useState("none");
+  const [selectedPeserta, setSelectedPeserta] = useState<string[]>([]);
+  const [fileLink, setFileLink] = useState("");
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [pesertaSearchQuery, setPesertaSearchQuery] = useState("");
+  const [isPesertaDropdownOpen, setIsPesertaDropdownOpen] = useState(false);
+  const pesertaDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (pesertaDropdownRef.current && !pesertaDropdownRef.current.contains(event.target as Node)) {
+        setIsPesertaDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isGoogleEvent, setIsGoogleEvent] = useState(false);
   const [karyawanList, setKaryawanList] = useState<any[]>([]);
@@ -381,6 +407,29 @@ const Calendar: React.FC = () => {
     openModal();
   };
 
+  useEffect(() => {
+    if (!mounted || events.length === 0) return;
+    const searchParams = new URLSearchParams(window.location.search);
+    const eventId = searchParams.get("eventId");
+    if (eventId) {
+      const foundEvent = events.find(ev => ev.id === eventId);
+      if (foundEvent) {
+        const fakeClickInfo = {
+          event: {
+            id: foundEvent.id,
+            title: foundEvent.title,
+            start: foundEvent.start ? new Date(foundEvent.start as any) : null,
+            end: foundEvent.end ? new Date(foundEvent.end as any) : null,
+            extendedProps: foundEvent.extendedProps
+          }
+        };
+        handleEventClick(fakeClickInfo as any);
+        // Clear query parameter so it doesn't reopen
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, [mounted, events]);
+
   const handleEventClick = (clickInfo: EventClickArg) => {
     const event = clickInfo.event;
     const isGoogle = event.extendedProps.type === "Tim WFO";
@@ -398,21 +447,99 @@ const Calendar: React.FC = () => {
       setScale("Google Sync");
       setDescription(event.extendedProps.description || "");
       setNotes(event.extendedProps.location || "");
+      setKategori("Internal");
+      setKategoriLainnya("");
+      setLokasi(event.extendedProps.location || "");
+      setReminderEnabled(false);
+      setPengingatWaktu("09:00");
+      setPengingatHari("0");
+      setPengingatPengulangan("none");
+      setSelectedPeserta([]);
+      setFileLink("");
     } else {
-      setPic(event.extendedProps.pic);
-      setScale(event.extendedProps.scale);
-      setDescription(event.extendedProps.description);
-      setNotes(event.extendedProps.notes);
+      setPic(event.extendedProps.pic || "");
+      setScale(event.extendedProps.scale || "Q1");
+      setDescription(event.extendedProps.description || "");
+      
+      const rawNotes = event.extendedProps.notes || "";
+      let parsedNotes = {
+        kategori: "Retainer",
+        kategoriLainnya: "",
+        lokasi: "",
+        reminderEnabled: false,
+        pengingatWaktu: "09:00",
+        pengingatHari: "0",
+        pengingatPengulangan: "none",
+        fileLink: "",
+        realNotes: rawNotes
+      };
+      
+      if (rawNotes.startsWith("{") && rawNotes.endsWith("}")) {
+        try {
+          const parsed = JSON.parse(rawNotes);
+          parsedNotes = { ...parsedNotes, ...parsed };
+        } catch (e) {
+          console.error("Failed to parse notes JSON:", e);
+        }
+      }
+      
+      setKategori(parsedNotes.kategori);
+      setKategoriLainnya(parsedNotes.kategoriLainnya);
+      setLokasi(parsedNotes.lokasi);
+      setReminderEnabled(parsedNotes.reminderEnabled);
+      setPengingatWaktu(parsedNotes.pengingatWaktu);
+      setPengingatHari(parsedNotes.pengingatHari);
+      setPengingatPengulangan(parsedNotes.pengingatPengulangan);
+      setFileLink(parsedNotes.fileLink);
+      setNotes(parsedNotes.realNotes);
+      
+      const picStr = event.extendedProps.pic || "";
+      setSelectedPeserta(picStr ? picStr.split(", ").filter(Boolean) : []);
     }
     openModal();
   };
 
-  const handleSubmit = async () => {
-    if (!canManage) return;
-    if (!title || !startDate || !startTime || !pic) {
-      alert("Harap isi Judul, Tanggal, Jam, dan PIC.");
-      return;
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingFile(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.url) {
+        setFileLink(window.location.origin + data.url);
+      } else {
+        alert("Gagal mengunggah berkas");
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("Terjadi kesalahan saat mengunggah berkas");
+    } finally {
+      setUploadingFile(false);
     }
+  };
+
+  const handleSubmit = async (picValue: string) => {
+    if (!canManage) return;
+
+    const notesJson = JSON.stringify({
+      kategori,
+      kategoriLainnya,
+      lokasi,
+      reminderEnabled,
+      pengingatWaktu,
+      pengingatHari,
+      pengingatPengulangan,
+      fileLink,
+      realNotes: notes,
+    });
 
     const startDateTime = `${startDate}T${startTime}:00`;
     const endDateTime = `${endDate || startDate}T${endTime}:00`;
@@ -428,13 +555,12 @@ const Calendar: React.FC = () => {
           title,
           startDate: startDateTime,
           endDate: endDateTime,
-          pic,
+          pic: picValue,
           scale,
           description,
-          notes,
+          notes: notesJson,
         }),
       });
-
 
       if (response.ok) {
         closeModal();
@@ -448,8 +574,9 @@ const Calendar: React.FC = () => {
 
   const validateAndSubmit = () => {
     if (!canManage) return;
-    if (!title || !startDate || !startTime || !pic) {
-      alert("Harap isi Judul, Tanggal, Jam, dan PIC.");
+    const picValue = selectedPeserta.join(", ");
+    if (!title || !startDate || !startTime || !picValue) {
+      alert("Harap isi Judul, Tanggal, Jam, dan Peserta.");
       return;
     }
 
@@ -461,7 +588,7 @@ const Calendar: React.FC = () => {
       setEndTime(end.toTimeString().slice(0, 5));
     }
 
-    handleSubmit();
+    handleSubmit(picValue);
   };
 
   const handleDelete = async () => {
@@ -486,7 +613,6 @@ const Calendar: React.FC = () => {
   };
 
   const resetForm = () => {
-
     setTitle("");
     setStartDate("");
     setStartTime("09:00");
@@ -496,6 +622,18 @@ const Calendar: React.FC = () => {
     setScale("Q1");
     setDescription("");
     setNotes("");
+    setKategori("Retainer");
+    setKategoriLainnya("");
+    setLokasi("");
+    setReminderEnabled(false);
+    setPengingatWaktu("09:00");
+    setPengingatHari("0");
+    setPengingatPengulangan("none");
+    setSelectedPeserta([]);
+    setFileLink("");
+    setUploadingFile(false);
+    setPesertaSearchQuery("");
+    setIsPesertaDropdownOpen(false);
     setSelectedEventId(null);
     setIsGoogleEvent(false);
   };
@@ -534,7 +672,7 @@ const Calendar: React.FC = () => {
               <div className="flex justify-between items-center">
                 <h3 className="text-sm font-black text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-brand-500"></span>
-                  {selectedDate ? "Agenda Terpilih" : "Agenda Kerja Tim"}
+                  {selectedDate ? "Agenda Terpilih" : "Agenda"}
                 </h3>
                 {canManage && (
                   <button
@@ -701,96 +839,291 @@ const Calendar: React.FC = () => {
             </button>
           </div>
 
-          <div className="p-8 max-h-[70vh] overflow-y-auto no-scrollbar">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="p-8 max-h-[70vh] overflow-y-auto no-scrollbar">            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Title */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-black dark:text-white mb-3">Judul Agenda</label>
+                <label className="block text-sm font-bold text-black dark:text-white mb-3">Judul</label>
                 <input
                   type="text"
                   disabled={!canManage}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Contoh: Sidang Perdata PT. Maju Jaya"
-                  className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500"
+                  placeholder="Meeting PT. A"
+                  className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
                 />
+              </div>
+
+              {/* Kategori */}
+              <div>
+                <label className="block text-sm font-bold text-black dark:text-white mb-3">Kategori</label>
+                <select
+                  disabled={!canManage}
+                  value={kategori}
+                  onChange={(e) => setKategori(e.target.value)}
+                  className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3.5 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-semibold text-sm"
+                >
+                  <option value="Retainer">Retainer</option>
+                  <option value="Non Retainer">Non Retainer</option>
+                  <option value="Internal">Internal</option>
+                  <option value="Lainnya">Lainnya (Input Manual)</option>
+                </select>
+                {kategori === "Lainnya" && (
+                  <input
+                    type="text"
+                    disabled={!canManage}
+                    value={kategoriLainnya}
+                    onChange={(e) => setKategoriLainnya(e.target.value)}
+                    placeholder="Masukkan Kategori Lainnya..."
+                    className="w-full mt-3 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
+                  />
+                )}
+              </div>
+
+              {/* Lokasi */}
+              <div>
+                <label className="block text-sm font-bold text-black dark:text-white mb-3">Lokasi</label>
+                <input
+                  type="text"
+                  list="locations"
+                  disabled={!canManage}
+                  value={lokasi}
+                  onChange={(e) => setLokasi(e.target.value)}
+                  placeholder="Pilih atau ketik lokasi..."
+                  className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
+                />
+                <datalist id="locations">
+                  <option value="Kantor Pusat Narasumber Hukum" />
+                  <option value="Pengadilan Negeri Jakarta Pusat" />
+                  <option value="Ruang Rapat Utama" />
+                  <option value="Ruang Rapat Direksi" />
+                  <option value="Online via Zoom" />
+                </datalist>
               </div>
 
               {/* Start Date & Time */}
               <div className="space-y-3">
-                <label className="block text-sm font-medium text-black dark:text-white">Waktu Mulai</label>
+                <label className="block text-sm font-bold text-black dark:text-white">Waktu Mulai</label>
                 <div className="flex gap-3">
                   <input
                     type="date"
                     disabled={!canManage}
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="flex-1 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500"
+                    className="flex-1 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
                   />
                   <input
                     type="time"
                     disabled={!canManage}
                     value={startTime}
                     onChange={(e) => setStartTime(e.target.value)}
-                    className="w-32 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500"
+                    className="w-32 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-semibold text-sm"
                   />
                 </div>
               </div>
 
               {/* End Date & Time */}
               <div className="space-y-3">
-                <label className="block text-sm font-medium text-black dark:text-white">Waktu Selesai</label>
+                <label className="block text-sm font-bold text-black dark:text-white">Waktu Selesai</label>
                 <div className="flex gap-3">
                   <input
                     type="date"
                     disabled={!canManage}
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="flex-1 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500"
+                    className="flex-1 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
                   />
                   <input
                     type="time"
                     disabled={!canManage}
                     value={endTime}
                     onChange={(e) => setEndTime(e.target.value)}
-                    className="w-32 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500"
+                    className="w-32 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-semibold text-sm"
                   />
                 </div>
               </div>
 
-              {/* PIC Selection */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-black dark:text-white mb-3 flex justify-between items-center">
-                  <span>Pilih PIC Karyawan</span>
-                  {pic && <span className="text-xs font-black text-brand-500 uppercase">Terpilih: {pic}</span>}
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[200px] overflow-y-auto no-scrollbar p-1">
-                  {karyawanList.map((k) => (
-                    <button
-                      key={k.id}
-                      type="button"
-                      disabled={!canManage}
-                      onClick={() => setPic(k.name)}
-                      className={`p-3 rounded-none border-2 transition-all flex flex-col items-start gap-1 text-left ${
-                        pic === k.name
-                          ? "border-brand-500 bg-brand-500/10 shadow-md"
-                          : "border-stroke bg-transparent hover:border-brand-500/50 dark:border-form-strokedark"
-                      } disabled:opacity-80`}
-                    >
-                      <span className={`text-sm font-bold ${pic === k.name ? "text-brand-500" : "text-black dark:text-white"}`}>
-                        {k.name}
+              {/* Tambah Pengingat */}
+              <div className="md:col-span-2 border border-gray-100 dark:border-gray-800 p-4 rounded-xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-bold text-black dark:text-white">Tambah Pengingat</label>
+                  <input
+                    type="checkbox"
+                    disabled={!canManage}
+                    checked={reminderEnabled}
+                    onChange={(e) => setReminderEnabled(e.target.checked)}
+                    className="w-4 h-4 text-brand-500 rounded border-gray-300 focus:ring-brand-500 cursor-pointer"
+                  />
+                </div>
+                {reminderEnabled && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in slide-in-from-top-1 duration-200">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 mb-2">Waktu Pengingat</label>
+                      <input
+                        type="time"
+                        disabled={!canManage}
+                        value={pengingatWaktu}
+                        onChange={(e) => setPengingatWaktu(e.target.value)}
+                        className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-3 py-2 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white font-semibold text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 mb-2">Hari Pengingat</label>
+                      <select
+                        disabled={!canManage}
+                        value={pengingatHari}
+                        onChange={(e) => setPengingatHari(e.target.value)}
+                        className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-3 py-2.5 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white font-semibold text-sm"
+                      >
+                        <option value="0">Hari H</option>
+                        <option value="1">1 Hari Sebelumnya</option>
+                        <option value="2">2 Hari Sebelumnya</option>
+                        <option value="3">3 Hari Sebelumnya</option>
+                        <option value="7">1 Minggu Sebelumnya</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 mb-2">Pengulangan</label>
+                      <select
+                        disabled={!canManage}
+                        value={pengingatPengulangan}
+                        onChange={(e) => setPengingatPengulangan(e.target.value)}
+                        className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-3 py-2.5 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white font-semibold text-sm"
+                      >
+                        <option value="none">Tidak Ada Pengulangan</option>
+                        <option value="tanggal7">Per Tanggal 7</option>
+                        <option value="weekly">1 Minggu Sekali</option>
+                        <option value="monthly">1 Bulan Sekali</option>
+                        <option value="yearly">1 Tahun Sekali</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Peserta (Multi-select) */}
+              <div ref={pesertaDropdownRef} className="md:col-span-2 relative">
+                <label className="block text-sm font-bold text-black dark:text-white mb-2">Peserta</label>
+                <button
+                  type="button"
+                  disabled={!canManage}
+                  onClick={() => setIsPesertaDropdownOpen(!isPesertaDropdownOpen)}
+                  className="w-full text-left flex justify-between items-center rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white"
+                >
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                    {selectedPeserta.length > 0
+                      ? `${selectedPeserta.length} Peserta Terpilih`
+                      : "Pilih Peserta..."}
+                  </span>
+                  <span className="text-gray-400">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </span>
+                </button>
+                
+                {isPesertaDropdownOpen && (
+                  <div className="absolute left-0 mt-1 w-full bg-white dark:bg-gray-800 border border-stroke dark:border-strokedark shadow-2xl z-999 p-3 max-h-[250px] overflow-y-auto rounded-none animate-in fade-in zoom-in-95 duration-200">
+                    <input
+                      type="text"
+                      placeholder="Cari karyawan..."
+                      value={pesertaSearchQuery}
+                      onChange={(e) => setPesertaSearchQuery(e.target.value)}
+                      className="w-full mb-3 px-3 py-1.5 text-xs rounded border border-stroke dark:border-form-strokedark bg-transparent text-black dark:text-white outline-none focus:border-brand-500"
+                    />
+                    <div className="space-y-1">
+                      {karyawanList
+                        .filter((k) =>
+                          k.name.toLowerCase().includes(pesertaSearchQuery.toLowerCase()) ||
+                          (k.position && k.position.toLowerCase().includes(pesertaSearchQuery.toLowerCase()))
+                        )
+                        .map((k) => {
+                          const isChecked = selectedPeserta.includes(k.name);
+                          return (
+                            <label
+                              key={k.id}
+                              className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer rounded transition-colors text-xs font-semibold"
+                            >
+                              <input
+                                type="checkbox"
+                                disabled={!canManage}
+                                checked={isChecked}
+                                onChange={() => {
+                                  if (isChecked) {
+                                    setSelectedPeserta(selectedPeserta.filter((name) => name !== k.name));
+                                  } else {
+                                    setSelectedPeserta([...selectedPeserta, k.name]);
+                                  }
+                                }}
+                                className="w-3.5 h-3.5 text-brand-500 rounded border-gray-300 focus:ring-brand-500"
+                              />
+                              <div className="flex flex-col">
+                                <span className="text-black dark:text-white">{k.name}</span>
+                                <span className="text-[9px] text-gray-400 font-medium uppercase">{k.position}</span>
+                              </div>
+                            </label>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+                {selectedPeserta.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {selectedPeserta.map((name) => (
+                      <span
+                        key={name}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[10px] font-black uppercase tracking-wide rounded border border-brand-500/20"
+                      >
+                        {name}
+                        {canManage && (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedPeserta(selectedPeserta.filter((n) => n !== name))}
+                            className="text-gray-400 hover:text-red-500 ml-1 font-bold text-xs"
+                          >
+                            &times;
+                          </button>
+                        )}
                       </span>
-                      <span className="text-[10px] font-black uppercase text-gray-500">
-                        {k.position}
-                      </span>
-                    </button>
-                  ))}
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Upload File & Link File */}
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-100 dark:border-gray-800 pt-4 mt-2">
+                <div>
+                  <label className="block text-sm font-bold text-black dark:text-white mb-3">Unggah File (Opsional)</label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      disabled={!canManage || uploadingFile}
+                      onChange={handleFileUpload}
+                      className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-3 file:border-0 file:text-xs file:font-bold file:bg-brand-500/10 file:text-brand-600 hover:file:bg-brand-500/20 cursor-pointer"
+                    />
+                    {uploadingFile && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                        <span className="w-3.5 h-3.5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></span>
+                        <span className="text-[10px] text-brand-500 font-bold">Mengunggah...</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-black dark:text-white mb-3">Link File / Tautan</label>
+                  <input
+                    type="text"
+                    disabled={!canManage}
+                    value={fileLink}
+                    onChange={(e) => setFileLink(e.target.value)}
+                    placeholder="https://drive.google.com/..."
+                    className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
+                  />
                 </div>
               </div>
 
               {/* Scale */}
               <div>
-                <label className="block text-sm font-medium text-black dark:text-white mb-3">Skala Prioritas</label>
+                <label className="block text-sm font-bold text-black dark:text-white mb-3">Skala Prioritas</label>
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     { key: "Q1", label: "Q1 (Tinggi)" },
@@ -820,28 +1153,27 @@ const Calendar: React.FC = () => {
 
               {/* Description */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-black dark:text-white mb-3">Keterangan</label>
+                <label className="block text-sm font-bold text-black dark:text-white mb-3">Keterangan</label>
                 <textarea
                   rows={3}
                   disabled={!canManage}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500"
+                  className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
                 ></textarea>
               </div>
 
               {/* Notes */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-black dark:text-white mb-3">Catatan Internal</label>
+                <label className="block text-sm font-bold text-black dark:text-white mb-3">Catatan</label>
                 <textarea
                   rows={2}
                   disabled={!canManage}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500"
+                  className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
                 ></textarea>
               </div>
-
             </div>
           </div>
 
