@@ -23,8 +23,127 @@ interface AgendaEvent extends EventInput {
     description: string;
     notes: string;
     type: "google" | "local" | "Tim WFO";
+    status?: string;
+    kategori?: string;
+    lokasi?: string;
+    fileLink?: string;
   };
 }
+
+const MONTHS = [
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+];
+
+const MONTHS_SHORT = [
+  "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+  "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
+];
+
+const YEARS = Array.from({ length: 21 }, (_, i) => 2020 + i);
+
+const YearView: React.FC<{
+  year: number;
+  events: AgendaEvent[];
+  onMonthClick: (monthIndex: number) => void;
+  getEventDateString: (start: any) => string;
+}> = ({ year, events, onMonthClick, getEventDateString }) => {
+  const daysOfWeek = ["M", "S", "S", "R", "K", "J", "S"];
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-1">
+      {MONTHS.map((monthName, monthIdx) => {
+        const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
+        const firstDayIndex = new Date(year, monthIdx, 1).getDay();
+        
+        const monthEventsCount = events.filter(ev => {
+          const dateStr = getEventDateString(ev.start);
+          if (!dateStr) return false;
+          const evDate = new Date(dateStr);
+          return evDate.getFullYear() === year && evDate.getMonth() === monthIdx;
+        }).length;
+
+        return (
+          <div
+            key={monthIdx}
+            onClick={() => onMonthClick(monthIdx)}
+            className="border border-gray-200 dark:border-gray-800 bg-gray-50/20 dark:bg-white/[0.01] hover:border-brand-500/50 dark:hover:border-brand-500/30 rounded-2xl p-4 transition-all duration-200 cursor-pointer hover:shadow-lg group flex flex-col"
+          >
+            <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-100 dark:border-gray-800/50">
+              <span className="text-xs font-black text-black dark:text-white uppercase tracking-wider group-hover:text-brand-500 transition-colors">
+                {MONTHS_SHORT[monthIdx]}
+              </span>
+              {monthEventsCount > 0 && (
+                <span className="px-2 py-0.5 bg-brand-500 text-white text-[9px] font-black uppercase rounded">
+                  {monthEventsCount} Agenda
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold">
+              {daysOfWeek.map((dayLabel, idx) => (
+                <span key={idx} className="text-gray-400 dark:text-gray-600 mb-1">
+                  {dayLabel}
+                </span>
+              ))}
+
+              {Array.from({ length: firstDayIndex }).map((_, idx) => (
+                <span key={`blank-${idx}`}></span>
+              ))}
+
+              {Array.from({ length: daysInMonth }).map((_, idx) => {
+                const day = idx + 1;
+                const dateStr = `${year}-${String(monthIdx + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                
+                const dayEvents = events.filter(ev => {
+                  const evDateStr = getEventDateString(ev.start);
+                  return evDateStr === dateStr;
+                });
+                
+                const hasEvents = dayEvents.length > 0;
+                const isToday = new Date().toDateString() === new Date(year, monthIdx, day).toDateString();
+
+                let indicatorColor = "bg-brand-500";
+                if (hasEvents) {
+                  const containsDeadline = dayEvents.some(ev => ev.extendedProps?.scale === "Q3" && ev.extendedProps?.status !== "Selesai");
+                  const containsHigh = dayEvents.some(ev => ev.extendedProps?.scale === "Q1" && ev.extendedProps?.status !== "Selesai");
+                  const containsNormal = dayEvents.some(ev => ev.extendedProps?.scale === "Q2" && ev.extendedProps?.status !== "Selesai");
+                  const allSelesai = dayEvents.every(ev => ev.extendedProps?.status === "Selesai");
+
+                  if (containsDeadline) {
+                    indicatorColor = "bg-red-500";
+                  } else if (containsHigh) {
+                    indicatorColor = "bg-[#B88A16]";
+                  } else if (containsNormal) {
+                    indicatorColor = "bg-blue-500";
+                  } else if (allSelesai) {
+                    indicatorColor = "bg-green-500";
+                  }
+                }
+
+                return (
+                  <div
+                    key={`day-${day}`}
+                    className={`relative flex flex-col items-center justify-center h-6 w-full rounded transition-all ${
+                      isToday
+                        ? "bg-brand-500 text-white font-black"
+                        : "text-gray-700 dark:text-gray-300"
+                    }`}
+                  >
+                    <span>{day}</span>
+                    {hasEvents && !isToday && (
+                      <span className={`absolute bottom-0.5 w-1 h-1 rounded-full ${indicatorColor}`}></span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 const Calendar: React.FC = () => {
   const { data: session } = useSession();
@@ -58,6 +177,16 @@ const Calendar: React.FC = () => {
   const [pesertaSearchQuery, setPesertaSearchQuery] = useState("");
   const [isPesertaDropdownOpen, setIsPesertaDropdownOpen] = useState(false);
   const pesertaDropdownRef = useRef<HTMLDivElement>(null);
+
+  const [status, setStatus] = useState("Aktif");
+  const [searchAgendaQuery, setSearchAgendaQuery] = useState("");
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [activeView, setActiveView] = useState("dayGridMonth");
+  const [viewTitle, setViewTitle] = useState("");
+  const [hoveredEvent, setHoveredEvent] = useState<any | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -180,105 +309,75 @@ const Calendar: React.FC = () => {
     const startStr = ev.start ? new Date(ev.start as any).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "";
     const endStr = ev.end ? new Date(ev.end as any).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "";
     const timeRange = endStr ? `${startStr} - ${endStr}` : startStr;
+    
+    const scale = ev.extendedProps?.scale || "Q2";
+    const statusVal = ev.extendedProps?.status || "Aktif";
+    const isSelesai = statusVal === "Selesai";
+
+    let priorityText = "Normal";
+    let priorityColorClass = "bg-blue-500/10 text-blue-600 border border-blue-200/30 dark:border-blue-800/30";
+    
+    if (isSelesai) {
+      priorityText = "Selesai";
+      priorityColorClass = "bg-green-500/10 text-green-600 border border-green-200/30 dark:border-green-800/30";
+    } else if (scale === "Q1") {
+      priorityText = "High Priority";
+      priorityColorClass = "bg-[#B88A16]/10 text-[#B88A16] border border-[#B88A16]/20 dark:border-[#B88A16]/30";
+    } else if (scale === "Q2") {
+      priorityText = "Normal";
+      priorityColorClass = "bg-blue-500/10 text-blue-600 border border-blue-200/30 dark:border-blue-800/30";
+    } else if (scale === "Q3") {
+      priorityText = "Deadline";
+      priorityColorClass = "bg-red-500/10 text-red-600 border border-red-200/30 dark:border-red-800/30";
+    }
+
+    if (isGoogle) {
+      priorityText = "WFO";
+      priorityColorClass = "bg-blue-500/10 text-blue-600 border border-blue-200/30 dark:border-blue-800/30";
+    }
 
     return (
       <div
         key={ev.id}
-        className="p-3.5 border border-gray-100 dark:border-gray-800/50 bg-gray-50/30 dark:bg-white/[0.02] hover:bg-gray-100/60 dark:hover:bg-white/[0.05] rounded-xl flex flex-col gap-2 transition-all group relative cursor-pointer"
+        className="p-3 border border-gray-150 dark:border-gray-800 bg-white dark:bg-white/[0.01] hover:border-brand-500/50 dark:hover:border-brand-500/30 rounded-xl flex flex-col gap-1.5 transition-all duration-200 group relative cursor-pointer shadow-sm hover:shadow"
         onClick={() => handleEventClickFromList(ev)}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span
-              className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                ev.extendedProps?.scale === "Q1"
-                  ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200/30 dark:border-red-800/30"
-                  : ev.extendedProps?.scale === "Q2"
-                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200/30 dark:border-amber-800/30"
-                  : ev.extendedProps?.scale === "Q3"
-                  ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-200/30 dark:border-green-800/30"
-                  : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200/30 dark:border-blue-800/30"
-              }`}
-            >
-              {ev.extendedProps?.scale || "Tim WFO"}
-            </span>
-            {timeRange && (
-              <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                <svg className="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {timeRange}
-              </span>
-            )}
-          </div>
-          <span className="text-[10px] text-gray-400 font-medium">
-            {ev.start ? new Date(ev.start as any).toLocaleDateString("id-ID", {
-              day: "numeric",
-              month: "short",
-            }) : ""}
+        <div className="flex items-center justify-between gap-2">
+          {/* Jam / Time Range */}
+          <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1">
+            <svg className="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {timeRange || "All Day"}
+          </span>
+
+          {/* Status Indicator */}
+          <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${priorityColorClass}`}>
+            {priorityText}
           </span>
         </div>
-        
-        <h4 className="text-sm font-semibold text-black dark:text-white leading-snug group-hover:text-brand-500 transition-colors truncate">
+
+        {/* Judul */}
+        <h4 className="text-xs font-bold text-gray-800 dark:text-gray-200 leading-snug group-hover:text-brand-500 transition-colors truncate">
           {ev.title}
         </h4>
-        
-        {ev.extendedProps?.description && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
-            {ev.extendedProps.description}
-          </p>
-        )}
-        
-        <div className="flex items-center justify-between pt-1 mt-1 border-t border-gray-100/50 dark:border-gray-800/30">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide flex items-center gap-1">
-            <svg className="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-            </svg>
-            PIC: {ev.extendedProps?.pic || "WFO"}
+
+        {/* PIC & Action Row */}
+        <div className="flex items-center justify-between pt-1 border-t border-gray-100 dark:border-gray-800/50 text-[10px]">
+          <span className="text-gray-400 truncate max-w-[150px] font-medium" title={ev.extendedProps?.pic}>
+            PIC: <span className="font-bold text-gray-600 dark:text-gray-300">{ev.extendedProps?.pic || "WFO"}</span>
           </span>
-          <div className="flex gap-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
+
+          <div className="flex gap-2">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 handleEventClickFromList(ev);
               }}
-              className="text-[10px] font-bold uppercase text-brand-500 hover:text-brand-600 transition"
+              className="text-[9px] font-black uppercase text-brand-500 hover:text-brand-600 transition"
             >
-              View
+              Detail
             </button>
-            {canManage && (
-              <>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEventClickFromList(ev);
-                  }}
-                  className="text-[10px] font-bold uppercase text-blue-500 hover:text-blue-600 transition"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    if (confirm("Apakah Anda yakin ingin menghapus agenda ini? Agenda di Google Calendar juga akan dihapus.")) {
-                      try {
-                        const isGoogle = (ev.extendedProps?.type as any) === "Tim WFO";
-                        const url = isGoogle ? `/api/calendar/events?id=${ev.id}` : `/api/agenda?id=${ev.id}`;
-                        const response = await fetch(url, { method: "DELETE" });
-                        if (response.ok) {
-                          fetchAllEvents();
-                        }
-                      } catch (err) {
-                        console.error(err);
-                      }
-                    }
-                  }}
-                  className="text-[10px] font-bold uppercase text-red-500 hover:text-red-600 transition"
-                >
-                  Delete
-                </button>
-              </>
-            )}
           </div>
         </div>
       </div>
@@ -352,21 +451,49 @@ const Calendar: React.FC = () => {
 
       const localGoogleIds = new Set(localData.map((a: any) => a.googleEventId).filter(Boolean));
 
-      const formattedLocal = localData.map((a: any) => ({
-        id: a.id,
-        title: a.title,
-        start: a.startDate,
-        end: a.endDate,
-        extendedProps: {
-          pic: a.pic,
-          scale: a.scale,
-          description: a.description,
-          notes: a.notes,
-          type: "local",
-        },
-        backgroundColor: a.scale === "Q1" ? "#D4AF37" : a.scale === "Q2" ? "#B8860B" : "#8B6508",
-        borderColor: "transparent",
-      }));
+      const formattedLocal = localData.map((a: any) => {
+        let isSelesai = false;
+        let parsedNotes = {} as any;
+        if (a.notes && a.notes.startsWith("{") && a.notes.endsWith("}")) {
+          try {
+            parsedNotes = JSON.parse(a.notes);
+            if (parsedNotes.status === "Selesai") {
+              isSelesai = true;
+            }
+          } catch (e) {}
+        }
+        
+        let color = "#3B82F6"; // default Blue (Normal)
+        if (isSelesai) {
+          color = "#10B981"; // Green (Selesai)
+        } else if (a.scale === "Q1") {
+          color = "#B88A16"; // Gold (High Priority)
+        } else if (a.scale === "Q2") {
+          color = "#3B82F6"; // Blue (Normal)
+        } else if (a.scale === "Q3") {
+          color = "#EF4444"; // Red (Deadline)
+        }
+
+        return {
+          id: a.id,
+          title: a.title,
+          start: a.startDate,
+          end: a.endDate,
+          extendedProps: {
+            pic: a.pic,
+            scale: a.scale,
+            description: a.description,
+            notes: a.notes,
+            type: "local",
+            status: parsedNotes.status || "Aktif",
+            kategori: parsedNotes.kategori || "Retainer",
+            lokasi: parsedNotes.lokasi || "",
+            fileLink: parsedNotes.fileLink || "",
+          },
+          backgroundColor: color,
+          borderColor: "transparent",
+        };
+      });
 
       const formattedGoogle = (Array.isArray(googleData) ? googleData : [])
         .filter((g: any) => !localGoogleIds.has(g.id)) // Hapus jika sudah ada di lokal
@@ -492,6 +619,7 @@ const Calendar: React.FC = () => {
       setPengingatPengulangan(parsedNotes.pengingatPengulangan);
       setFileLink(parsedNotes.fileLink);
       setNotes(parsedNotes.realNotes);
+      setStatus((parsedNotes as any).status || event.extendedProps.status || "Aktif");
       
       const picStr = event.extendedProps.pic || "";
       setSelectedPeserta(picStr ? picStr.split(", ").filter(Boolean) : []);
@@ -539,6 +667,7 @@ const Calendar: React.FC = () => {
       pengingatPengulangan,
       fileLink,
       realNotes: notes,
+      status,
     });
 
     const startDateTime = `${startDate}T${startTime}:00`;
@@ -636,180 +765,534 @@ const Calendar: React.FC = () => {
     setIsPesertaDropdownOpen(false);
     setSelectedEventId(null);
     setIsGoogleEvent(false);
+    setStatus("Aktif");
   };
 
-  return (
-    <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-      {/* Left Side: FullCalendar */}
-      <div className="xl:col-span-8 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-2xl p-4 md:p-6">
-        <div className="custom-calendar">
-          <FullCalendar
-            ref={calendarRef}
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            initialView="dayGridMonth"
-            headerToolbar={{
-              left: "prev,next today",
-              center: "title",
-              right: "dayGridMonth,timeGridWeek,timeGridDay",
-            }}
-            events={events}
-            selectable={false}
-            dateClick={handleDateClick}
-            eventClick={handleEventClick}
-            eventContent={renderEventContent}
-            dayCellContent={renderDayCellContent}
-            height="auto"
-          />
-        </div>
-      </div>
+  const handlePrev = () => {
+    if (activeView === "year") {
+      const newYear = currentYear - 1;
+      setCurrentYear(newYear);
+      setViewTitle(`${newYear}`);
+    } else {
+      const api = calendarRef.current?.getApi();
+      if (api) {
+        api.prev();
+        const date = api.getDate();
+        setCurrentMonth(date.getMonth());
+        setCurrentYear(date.getFullYear());
+      }
+    }
+  };
 
-      {/* Right Side: Agenda List Panel */}
-      <div className="xl:col-span-4 flex flex-col space-y-6">
-        <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-2xl p-4 md:p-6 flex flex-col h-[650px] overflow-hidden">
-          {/* Header Panel */}
-          <div className="border-b border-gray-100 dark:border-gray-800 pb-4">
-            <div className="flex flex-col space-y-2">
-              <div className="flex justify-between items-center">
-                <h3 className="text-sm font-black text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-brand-500"></span>
-                  {selectedDate ? "Agenda Terpilih" : "Agenda"}
-                </h3>
-                {canManage && (
-                  <button
-                    onClick={() => {
-                      resetForm();
-                      setStartDate(selectedDate || new Date().toISOString().split("T")[0]);
-                      setEndDate(selectedDate || new Date().toISOString().split("T")[0]);
-                      openModal();
-                    }}
-                    className="px-3 py-1.5 bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 font-bold text-[10px] uppercase tracking-widest cursor-pointer shadow active:scale-95 transition-transform rounded-lg flex items-center gap-1.5"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                    Agenda
-                  </button>
-                )}
-              </div>
-              {selectedDate ? (
-                <div className="flex justify-between items-center bg-brand-500/5 dark:bg-brand-500/10 border border-brand-500/20 px-3 py-2 rounded-lg">
-                  <span className="text-[11px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wide truncate">
-                    Tanggal: {formatDateIndo(selectedDate)}
-                  </span>
-                  <button
-                    onClick={() => setSelectedDate(null)}
-                    className="text-gray-400 hover:text-red-500 font-bold text-sm leading-none ml-2 cursor-pointer transition-colors"
-                    title="Reset Filter"
-                  >
-                    ×
-                  </button>
-                </div>
-              ) : null}
+  const handleNext = () => {
+    if (activeView === "year") {
+      const newYear = currentYear + 1;
+      setCurrentYear(newYear);
+      setViewTitle(`${newYear}`);
+    } else {
+      const api = calendarRef.current?.getApi();
+      if (api) {
+        api.next();
+        const date = api.getDate();
+        setCurrentMonth(date.getMonth());
+        setCurrentYear(date.getFullYear());
+      }
+    }
+  };
+
+  const handleToday = () => {
+    const todayDate = new Date();
+    if (activeView === "year") {
+      setCurrentYear(todayDate.getFullYear());
+      setViewTitle(`${todayDate.getFullYear()}`);
+    } else {
+      const api = calendarRef.current?.getApi();
+      if (api) {
+        api.today();
+        const date = api.getDate();
+        setCurrentMonth(date.getMonth());
+        setCurrentYear(date.getFullYear());
+      }
+    }
+  };
+
+  const handleMonthSelect = (monthIndex: number) => {
+    setCurrentMonth(monthIndex);
+    if (activeView === "year") {
+      setActiveView("dayGridMonth");
+      setTimeout(() => {
+        const api = calendarRef.current?.getApi();
+        if (api) {
+          const targetDate = new Date(currentYear, monthIndex, 1);
+          api.gotoDate(targetDate);
+          api.changeView("dayGridMonth");
+        }
+      }, 50);
+    } else {
+      const api = calendarRef.current?.getApi();
+      if (api) {
+        const targetDate = new Date(currentYear, monthIndex, 1);
+        api.gotoDate(targetDate);
+      }
+    }
+  };
+
+  const handleYearSelect = (year: number) => {
+    setCurrentYear(year);
+    if (activeView === "year") {
+      setViewTitle(`${year}`);
+    } else {
+      const api = calendarRef.current?.getApi();
+      if (api) {
+        const targetDate = new Date(year, currentMonth, 1);
+        api.gotoDate(targetDate);
+      }
+    }
+  };
+
+  const handleViewChange = (viewKey: string) => {
+    setActiveView(viewKey);
+    if (viewKey === "year") {
+      setViewTitle(`${currentYear}`);
+    } else {
+      setTimeout(() => {
+        const api = calendarRef.current?.getApi();
+        if (api) {
+          const targetDate = new Date(currentYear, currentMonth, 1);
+          api.gotoDate(targetDate);
+          api.changeView(viewKey);
+          setViewTitle(api.view.title);
+        }
+      }, 50);
+    }
+  };
+
+  const handleDatesSet = (arg: any) => {
+    const api = arg.view.calendar;
+    const date = api.getDate();
+    setCurrentMonth(date.getMonth());
+    setCurrentYear(date.getFullYear());
+    setViewTitle(arg.view.title);
+  };
+
+  // Statistics Calculations
+  const getStats = () => {
+    const now = new Date();
+    const todayStr = now.toISOString().split("T")[0];
+    
+    // Start and end of this week
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    
+    let todayCount = 0;
+    let weekCount = 0;
+    let monthCount = 0;
+    let deadlineCount = 0;
+    
+    events.forEach(ev => {
+      const dateStr = getEventDateString(ev.start);
+      if (!dateStr) return;
+      
+      const evDate = new Date(dateStr);
+      
+      // Today
+      if (dateStr === todayStr) {
+        todayCount++;
+      }
+      
+      // This week
+      if (evDate >= startOfWeek && evDate <= endOfWeek) {
+        weekCount++;
+      }
+      
+      // This month
+      if (evDate.getFullYear() === now.getFullYear() && evDate.getMonth() === now.getMonth()) {
+        monthCount++;
+      }
+      
+      // Deadline Dekat: Q3 or Q1 occurring in the next 7 days, and not Selesai
+      const diffTime = evDate.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const isUpcoming = diffDays >= 0 && diffDays <= 7;
+      const isPriority = ev.extendedProps?.scale === "Q1" || ev.extendedProps?.scale === "Q3";
+      const isCompleted = ev.extendedProps?.status === "Selesai";
+      if (isUpcoming && isPriority && !isCompleted) {
+        deadlineCount++;
+      }
+    });
+    
+    return { todayCount, weekCount, monthCount, deadlineCount };
+  };
+
+  const { todayCount, weekCount, monthCount, deadlineCount } = getStats();
+
+  const filterBySearch = (list: AgendaEvent[]) => {
+    if (!searchAgendaQuery) return list;
+    const q = searchAgendaQuery.toLowerCase();
+    return list.filter(ev =>
+      (ev.title ?? "").toLowerCase().includes(q) ||
+      (ev.extendedProps?.pic && ev.extendedProps.pic.toLowerCase().includes(q)) ||
+      (ev.extendedProps?.description && ev.extendedProps.description.toLowerCase().includes(q))
+    );
+  };
+
+  const getHoveredEventTimeRange = (event: any) => {
+    if (!event) return "";
+    const start = event.start;
+    const end = event.end;
+    if (!start) return "All Day";
+    const startStr = new Date(start).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+    const endStr = end ? new Date(end).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "";
+    return endStr ? `${startStr} - ${endStr}` : startStr;
+  };
+
+  const renderAgendaPanelContent = () => {
+    return (
+      <>
+        {/* Header Panel */}
+        <div className="border-b border-gray-100 dark:border-gray-800 pb-3">
+          <div className="flex flex-col space-y-2">
+            <div className="flex justify-between items-center">
+              <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+                {selectedDate ? "Agenda Terpilih" : "Agenda"}
+              </h3>
+              {canManage && (
+                <button
+                  onClick={() => {
+                    setIsMobilePanelOpen(false);
+                    resetForm();
+                    setStartDate(selectedDate || new Date().toISOString().split("T")[0]);
+                    setEndDate(selectedDate || new Date().toISOString().split("T")[0]);
+                    openModal();
+                  }}
+                  className="px-2.5 py-1.5 bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 font-bold text-[9px] uppercase tracking-widest cursor-pointer shadow active:scale-95 transition-transform rounded-lg flex items-center gap-1"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                  Agenda
+                </button>
+              )}
             </div>
-          </div>
-
-          {/* Agenda Scroll Area */}
-          <div className="flex-1 overflow-y-auto no-scrollbar py-4 space-y-5">
             {selectedDate ? (
-              filteredEvents.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center space-y-3">
-                  <svg className="w-10 h-10 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+              <div className="flex justify-between items-center bg-brand-500/5 dark:bg-brand-500/10 border border-brand-500/20 px-2.5 py-1.5 rounded-lg">
+                <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wide truncate">
+                  Tanggal: {formatDateIndo(selectedDate)}
+                </span>
+                <button
+                  onClick={() => setSelectedDate(null)}
+                  className="text-gray-400 hover:text-red-500 font-bold text-sm leading-none ml-2 cursor-pointer transition-colors"
+                  title="Reset Filter"
+                >
+                  ×
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Search Box */}
+        <div className="relative mt-3">
+          <input
+            type="text"
+            placeholder="Cari agenda..."
+            value={searchAgendaQuery}
+            onChange={(e) => setSearchAgendaQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-white/[0.02] text-gray-700 dark:text-white outline-none focus:border-brand-500 transition-colors text-xs font-semibold"
+          />
+          <svg className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+
+        {/* Ringkasan */}
+        <div className="mt-3 p-3 bg-gray-50/50 dark:bg-white/[0.02] border border-gray-100 dark:border-gray-800 rounded-xl grid grid-cols-2 gap-2 text-center">
+          <div>
+            <span className="block text-[8px] font-black uppercase text-gray-400 tracking-wider">Hari Ini</span>
+            <span className="text-xs font-black text-black dark:text-white">{todayCount} Agenda</span>
+          </div>
+          <div className="border-l border-gray-100 dark:border-gray-800">
+            <span className="block text-[8px] font-black uppercase text-gray-400 tracking-wider">Minggu Ini</span>
+            <span className="text-xs font-black text-black dark:text-white">{weekCount} Agenda</span>
+          </div>
+        </div>
+
+        {/* Agenda Scroll Area */}
+        <div className="flex-1 overflow-y-auto no-scrollbar py-4 space-y-4">
+          {selectedDate ? (
+            filterBySearch(filteredEvents).length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center space-y-2 py-8">
+                <svg className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
+                </svg>
+                <p className="text-[10px] font-semibold text-gray-400">Tidak ada hasil cocok.</p>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {filterBySearch(filteredEvents).map(renderAgendaItem)}
+              </div>
+            )
+          ) : (() => {
+            const grouped = getGroupedEvents();
+            const filteredToday = filterBySearch(grouped.today);
+            const filteredTomorrow = filterBySearch(grouped.tomorrow);
+            const filteredThisWeek = filterBySearch(grouped.thisWeek);
+
+            if (filteredToday.length === 0 && filteredTomorrow.length === 0 && filteredThisWeek.length === 0) {
+              return (
+                <div className="h-full flex flex-col items-center justify-center text-center space-y-2 py-8">
+                  <svg className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
                   </svg>
-                  <p className="text-xs font-semibold text-gray-400">Tidak ada agenda pada tanggal ini.</p>
+                  <p className="text-[10px] font-semibold text-gray-400">Tidak ada hasil cocok.</p>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {filteredEvents.map(renderAgendaItem)}
-                </div>
-              )
-            ) : (() => {
-              const grouped = getGroupedEvents();
-              const hasToday = grouped.today.length > 0;
-              const hasTomorrow = grouped.tomorrow.length > 0;
-              const hasThisWeek = grouped.thisWeek.length > 0;
+              );
+            }
 
-              if (!hasToday && !hasTomorrow && !hasThisWeek) {
-                return (
-                  <div className="h-full flex flex-col items-center justify-center text-center space-y-3">
-                    <svg className="w-10 h-10 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
-                    </svg>
-                    <p className="text-xs font-semibold text-gray-400">Tidak ada agenda mendatang.</p>
-                  </div>
-                );
-              }
-
-              return (
-                <div className="space-y-6">
-                  {/* Group 1: Hari Ini */}
+            return (
+              <div className="space-y-5">
+                {/* Group 1: Hari Ini */}
+                {filteredToday.length > 0 && (
                   <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-black text-red-500 uppercase tracking-widest flex items-center gap-1.5">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
                         Hari Ini
                       </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 bg-red-500/10 text-red-500 rounded-full">
-                        {grouped.today.length}
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 bg-red-500/10 text-red-500 rounded-full">
+                        {filteredToday.length}
                       </span>
                     </div>
-                    {grouped.today.length === 0 ? (
-                      <p className="text-xs text-gray-400 italic pl-3 border-l-2 border-gray-100 dark:border-gray-800">
-                        Tidak ada agenda untuk hari ini.
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {grouped.today.map(renderAgendaItem)}
-                      </div>
-                    )}
+                    <div className="space-y-2">
+                      {filteredToday.map(renderAgendaItem)}
+                    </div>
                   </div>
+                )}
 
-                  {/* Group 2: Besok */}
+                {/* Group 2: Besok */}
+                {filteredTomorrow.length > 0 && (
                   <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-black text-amber-500 uppercase tracking-widest flex items-center gap-1.5">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                         Besok
                       </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-500/10 text-amber-500 rounded-full">
-                        {grouped.tomorrow.length}
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 bg-amber-500/10 text-amber-500 rounded-full">
+                        {filteredTomorrow.length}
                       </span>
                     </div>
-                    {grouped.tomorrow.length === 0 ? (
-                      <p className="text-xs text-gray-400 italic pl-3 border-l-2 border-gray-100 dark:border-gray-800">
-                        Tidak ada agenda untuk besok.
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {grouped.tomorrow.map(renderAgendaItem)}
-                      </div>
-                    )}
+                    <div className="space-y-2">
+                      {filteredTomorrow.map(renderAgendaItem)}
+                    </div>
                   </div>
+                )}
 
-                  {/* Group 3: Minggu Ini */}
+                {/* Group 3: Minggu Ini */}
+                {filteredThisWeek.length > 0 && (
                   <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-black text-brand-500 uppercase tracking-widest flex items-center gap-1.5">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-black text-brand-500 uppercase tracking-widest flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
-                        Minggu Ini (Mendatang)
+                        Minggu Ini
                       </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 bg-brand-500/10 text-brand-500 rounded-full">
-                        {grouped.thisWeek.length}
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 bg-brand-500/10 text-brand-500 rounded-full">
+                        {filteredThisWeek.length}
                       </span>
                     </div>
-                    {grouped.thisWeek.length === 0 ? (
-                      <p className="text-xs text-gray-400 italic pl-3 border-l-2 border-gray-100 dark:border-gray-800">
-                        Tidak ada agenda mendatang dalam 7 hari ini.
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {grouped.thisWeek.map(renderAgendaItem)}
-                      </div>
-                    )}
+                    <div className="space-y-2">
+                      {filteredThisWeek.map(renderAgendaItem)}
+                    </div>
                   </div>
-                </div>
-              );
-            })()}
+                )}
+              </div>
+            );
+          })()}
+        </div>
+      </>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* 4 Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Agenda Hari Ini */}
+        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-brand-500 flex-shrink-0">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Hari Ini</span>
+            <h4 className="text-xl font-black text-black dark:text-white leading-none mt-1">{todayCount}</h4>
+          </div>
+        </div>
+
+        {/* Card 2: Agenda Minggu Ini */}
+        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 flex-shrink-0">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+            </svg>
+          </div>
+          <div>
+            <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Minggu Ini</span>
+            <h4 className="text-lg font-black text-black dark:text-white leading-none mt-1">{weekCount}</h4>
+          </div>
+        </div>
+
+        {/* Card 3: Agenda Bulan Ini */}
+        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500 flex-shrink-0">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" />
+            </svg>
+          </div>
+          <div>
+            <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Bulan Ini</span>
+            <h4 className="text-lg font-black text-black dark:text-white leading-none mt-1">{monthCount}</h4>
+          </div>
+        </div>
+
+        {/* Card 4: Deadline Dekat */}
+        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500 flex-shrink-0">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z" />
+            </svg>
+          </div>
+          <div>
+            <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Deadline Dekat</span>
+            <h4 className="text-lg font-black text-black dark:text-white leading-none mt-1">{deadlineCount}</h4>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        {/* Left Side: Calendar Area (75% / xl:col-span-9) */}
+        <div className="xl:col-span-9 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-2xl p-4 md:p-6 flex flex-col">
+          
+          {/* Custom Header Toolbar */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-4 border-b border-gray-100 dark:border-gray-800">
+            {/* Navigation and Dropdowns */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              {/* Prev / Next buttons */}
+              <div className="flex items-center rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden bg-gray-50/50 dark:bg-white/[0.02]">
+                <button
+                  onClick={handlePrev}
+                  className="p-2 text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                  </svg>
+                </button>
+                <button
+                  onClick={handleNext}
+                  className="p-2 text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition border-l border-gray-200 dark:border-gray-800 cursor-pointer"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* TODAY button */}
+              <button
+                onClick={handleToday}
+                className="px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-xl text-[10px] font-black text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition uppercase tracking-widest cursor-pointer"
+              >
+                TODAY
+              </button>
+
+              {/* June Dropdown */}
+              <select
+                value={currentMonth}
+                onChange={(e) => handleMonthSelect(parseInt(e.target.value))}
+                className="px-2.5 py-2 border border-gray-200 dark:border-gray-800 rounded-xl text-[11px] font-black text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 outline-none focus:border-brand-500 transition cursor-pointer uppercase tracking-wider"
+              >
+                {MONTHS.map((m, idx) => (
+                  <option key={m} value={idx}>{m}</option>
+                ))}
+              </select>
+
+              {/* 2026 Dropdown */}
+              <select
+                value={currentYear}
+                onChange={(e) => handleYearSelect(parseInt(e.target.value))}
+                className="px-2.5 py-2 border border-gray-200 dark:border-gray-800 rounded-xl text-[11px] font-black text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 outline-none focus:border-brand-500 transition cursor-pointer"
+              >
+                {YEARS.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Title (June 2026 / 2026) */}
+            <div className="flex items-center">
+              <h2 className="text-sm md:text-base font-black text-black dark:text-white uppercase tracking-widest flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+                {viewTitle || `${MONTHS[currentMonth]} ${currentYear}`}
+              </h2>
+            </div>
+
+            {/* View selectors */}
+            <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
+              {[
+                { key: "year", label: "YEAR" },
+                { key: "dayGridMonth", label: "MONTH" },
+                { key: "timeGridWeek", label: "WEEK" },
+                { key: "timeGridDay", label: "DAY" }
+              ].map((v) => (
+                <button
+                  key={v.key}
+                  onClick={() => handleViewChange(v.key)}
+                  className={`px-3 py-1.5 rounded-lg text-[9px] font-black tracking-widest transition cursor-pointer ${
+                    activeView === v.key
+                      ? "bg-brand-500 text-white shadow-sm"
+                      : "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white"
+                  }`}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {activeView === "year" ? (
+            <YearView
+              year={currentYear}
+              events={events}
+              onMonthClick={handleMonthSelect}
+              getEventDateString={getEventDateString}
+            />
+          ) : (
+            <div className="custom-calendar">
+              <FullCalendar
+                ref={calendarRef}
+                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                initialView="dayGridMonth"
+                headerToolbar={false}
+                events={events}
+                selectable={false}
+                dateClick={handleDateClick}
+                eventClick={handleEventClick}
+                eventContent={renderEventContent}
+                dayCellContent={renderDayCellContent}
+                datesSet={handleDatesSet}
+                height="auto"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Right Side: Agenda List Panel (25% / xl:col-span-3) */}
+        <div className="xl:col-span-3 flex flex-col space-y-4">
+          <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-2xl p-4 md:p-5 flex flex-col h-[650px] overflow-hidden">
+            {renderAgendaPanelContent()}
           </div>
         </div>
       </div>
@@ -1146,6 +1629,33 @@ const Calendar: React.FC = () => {
                       }`}
                     >
                       {q.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Status */}
+              <div>
+                <label className="block text-sm font-bold text-black dark:text-white mb-3">Status</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { key: "Aktif", label: "Aktif", color: "border-blue-500 bg-blue-500" },
+                    { key: "Selesai", label: "Selesai", color: "border-green-500 bg-green-500" },
+                    { key: "Ditunda", label: "Ditunda", color: "border-amber-500 bg-amber-500" },
+                    { key: "Dibatalkan", label: "Dibatalkan", color: "border-red-500 bg-red-500" }
+                  ].map((s) => (
+                    <button
+                      key={s.key}
+                      type="button"
+                      disabled={!canManage}
+                      onClick={() => setStatus(s.key)}
+                      className={`py-2.5 rounded-none border-2 transition-all font-bold text-xs ${
+                        status === s.key
+                          ? `${s.color} text-white shadow-md`
+                          : "border-stroke bg-transparent text-gray-400 hover:border-brand-500/50 dark:border-form-strokedark"
+                      }`}
+                    >
+                      {s.label}
                     </button>
                   ))}
                 </div>
