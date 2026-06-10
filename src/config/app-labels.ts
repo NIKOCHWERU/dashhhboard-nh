@@ -97,9 +97,9 @@ export const APP_LABELS = {
     }
   },
   dashboard: {
-    title: "Dashboard Utama",
+    title: "Papan Informasi",
     welcome: "Selamat Datang,",
-    welcomeSub: "Ringkasan aktivitas operasional kantor hukum hari ini.",
+    welcomeSub: "Berikut Ringkasan kegiatan hari ini",
     cards: {
       activeProjects: "Pekerjaan Aktif",
       priorityTasks: "Tugas Prioritas",

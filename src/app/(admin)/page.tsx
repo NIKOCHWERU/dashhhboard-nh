@@ -255,7 +255,7 @@ export default function Dashboard() {
             {APP_LABELS.dashboard.title}
           </h1>
           <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-            {APP_LABELS.dashboard.welcome} <span className="font-bold text-brand-500">{session?.user?.name || "User"}</span>. {APP_LABELS.dashboard.welcomeSub}
+            {APP_LABELS.dashboard.welcome} <span className="font-bold text-brand-500">{session?.user?.name || "User"}</span>, {APP_LABELS.dashboard.welcomeSub}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -441,202 +441,113 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* SECTION 3: Deadlines & Tabbed widget */}
+      {/* SECTION 3: Dilo (Skala Prioritas) & Split widget (Pengumuman | Akses Cepat) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5" suppressHydrationWarning>
         
-        {/* Left Column: Tenggat Waktu Mendekat */}
+        {/* Left Column: Dilo (Skala Prioritas) */}
         <div className="lg:col-span-5">
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[210px] max-h-[210px] flex flex-col">
             <div className="flex items-center gap-2 mb-3 border-b border-gray-100 pb-2 dark:border-gray-800">
               <span className="w-1.5 h-3.5 bg-red-500 rounded-full"></span>
-              <h2 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">{APP_LABELS.dashboard.sections.upcomingDeadlines}</h2>
+              <h2 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">Dilo : Skala Prioritas</h2>
             </div>
             
             <div className="space-y-2 overflow-y-auto pr-1 flex-1 no-scrollbar">
-              {loading ? (
-                [1, 2].map(i => <div key={i} className="h-10 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
-              ) : upcomingDeadlines.length > 0 ? (
-                upcomingDeadlines.map((dl, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-2 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/20 dark:bg-white/[0.002]">
-                    <div className="overflow-hidden mr-2">
-                      <h4 className="text-[11px] font-bold text-gray-900 dark:text-white leading-tight truncate">{dl.title}</h4>
-                      <p className="text-[9px] text-gray-450 mt-0.5 font-semibold uppercase tracking-wider truncate">Klien: {dl.client}</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
-                        dl.remainingDays <= 7 ? "bg-red-50 text-red-500 dark:bg-red-950/20" : "bg-amber-50 text-amber-600 dark:bg-amber-950/20"
-                      }`}>
-                        {dl.remainingDays} Hari
-                      </span>
-                    </div>
+              {[
+                { id: "dummy-1", taskName: "Analisis Dokumen Perkara PT. Mahardika", level: 1, levelLabel: "Level 1 - Urgent", deadline: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000) },
+                { id: "dummy-2", taskName: "Penyusunan Kontrak Kerja Jangka Panjang Vendor", level: 2, levelLabel: "Level 2 - High", deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) },
+                { id: "dummy-3", taskName: "Audit Legal & Kepatuhan Perizinan INTERNAL", level: 3, levelLabel: "Level 3 - Medium", deadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000) }
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between p-2 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/20 dark:bg-white/[0.002]">
+                  <div className="overflow-hidden mr-2">
+                    <h4 className="text-[11px] font-bold text-gray-900 dark:text-white leading-tight truncate">{item.taskName}</h4>
+                    <p className="text-[9px] text-gray-400 mt-0.5 font-semibold uppercase tracking-wider">{item.levelLabel}</p>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider italic">{APP_LABELS.dashboard.empty.deadlines}</p>
+                  <div className="text-right flex-shrink-0">
+                    <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
+                      item.level === 1 ? "bg-red-50 text-red-700 dark:bg-red-950/20" :
+                      item.level === 2 ? "bg-orange-50 text-orange-700 dark:bg-orange-950/20" :
+                      "bg-blue-50 text-blue-700 dark:bg-blue-950/20"
+                    }`}>
+                      {item.deadline.toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
+                    </span>
+                  </div>
                 </div>
-              )}
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Right Column: Tabbed Panel for Pengumuman, Dokumen, Aktivitas */}
+        {/* Right Column: Split widget (Pengumuman | Akses Cepat) */}
         <div className="lg:col-span-7">
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[210px] max-h-[210px] flex flex-col">
-            
-            {/* Tab Headers */}
-            <div className="flex items-center justify-between border-b border-gray-150 pb-2 dark:border-gray-800 mb-3">
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => setActiveBottomTab("announcements")}
-                  className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
-                    activeBottomTab === "announcements"
-                      ? "bg-brand-500 text-white shadow-sm"
-                      : "text-gray-450 hover:text-gray-900 dark:hover:text-white hover:bg-gray-105/50 dark:hover:bg-gray-800/40"
-                  }`}
-                >
-                  Pengumuman
-                </button>
-                <button
-                  onClick={() => setActiveBottomTab("docs")}
-                  className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
-                    activeBottomTab === "docs"
-                      ? "bg-violet-500 text-white shadow-sm"
-                      : "text-gray-450 hover:text-gray-900 dark:hover:text-white hover:bg-gray-105/50 dark:hover:bg-gray-800/40"
-                  }`}
-                >
-                  Dokumen
-                </button>
-                {isAdmin && (
-                  <button
-                    onClick={() => setActiveBottomTab("logs")}
-                    className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
-                      activeBottomTab === "logs"
-                        ? "bg-blue-500 text-white shadow-sm"
-                        : "text-gray-450 hover:text-gray-900 dark:hover:text-white hover:bg-gray-105/50 dark:hover:bg-gray-800/40"
-                    }`}
-                  >
-                    Aktivitas
-                  </button>
-                )}
-              </div>
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[210px] max-h-[210px] flex flex-col justify-between">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full overflow-hidden">
               
-              <div>
-                {activeBottomTab === "announcements" && (
+              {/* Pengumuman */}
+              <div className="flex flex-col h-full overflow-hidden">
+                <div className="flex items-center justify-between mb-3 border-b border-gray-100 pb-2 dark:border-gray-800">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-3.5 bg-emerald-500 rounded-full"></span>
+                    <h2 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">
+                      Pengumuman
+                    </h2>
+                  </div>
                   <Link href="/pengumuman" className="text-brand-500 font-black hover:underline text-[9px] uppercase tracking-wider">Semua</Link>
-                )}
-                {activeBottomTab === "docs" && (
-                  <Link href="/narasumber-hukum" className="text-brand-500 font-black hover:underline text-[9px] uppercase tracking-wider">Eksplor</Link>
-                )}
-                {activeBottomTab === "logs" && isAdmin && (
-                  <Link href="/admin-control" className="text-blue-500 font-black hover:underline text-[9px] uppercase tracking-wider">Log</Link>
-                )}
-              </div>
-            </div>
-
-            {/* Tab Contents */}
-            <div className="flex-1 overflow-y-auto pr-1 no-scrollbar">
-              
-              {/* Announcements */}
-              {activeBottomTab === "announcements" && (
-                <div className="space-y-2">
+                </div>
+                
+                <div className="space-y-2 overflow-y-auto pr-1 flex-1 no-scrollbar">
                   {loading ? (
-                    [1, 2].map(i => <div key={i} className="h-12 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
+                    [1, 2].map(i => <div key={i} className="h-10 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
                   ) : announcements.length > 0 ? (
                     announcements.map((ann) => (
-                      <div key={ann.id} className="p-2.5 rounded-xl border border-gray-150 dark:border-gray-800 bg-gray-50/20 dark:bg-white/[0.002] flex justify-between items-start gap-4">
+                      <div key={ann.id} className="p-2.5 rounded-xl border border-gray-150 dark:border-gray-800 bg-gray-50/20 dark:bg-white/[0.002] flex justify-between items-start gap-3">
                         <div className="overflow-hidden">
                           <h4 className="text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-wide truncate">{ann.title}</h4>
-                          <p className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-1 leading-relaxed mt-0.5">{ann.content}</p>
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">{ann.content}</p>
                         </div>
-                        <div className="flex flex-col items-end flex-shrink-0 gap-1">
-                          <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${
+                        <div className="flex flex-col items-end flex-shrink-0">
+                          <span className={`text-[8px] font-black uppercase px-1 py-0.5 rounded ${
                             ann.priority === "High" ? "bg-red-50 text-red-500 dark:bg-red-950/20" : "bg-gray-100 text-gray-500 dark:bg-gray-800"
                           }`}>
                             {ann.priority}
                           </span>
-                          <span className="text-[8px] text-gray-450 font-bold uppercase">
-                            {new Date(ann.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                          </span>
                         </div>
                       </div>
                     ))
                   ) : (
                     <div className="text-center py-8">
-                      <p className="text-[9px] text-gray-450 font-bold uppercase italic">{APP_LABELS.dashboard.empty.announcements}</p>
+                      <p className="text-[9px] text-gray-400 font-bold uppercase italic">{APP_LABELS.dashboard.empty.announcements}</p>
                     </div>
                   )}
                 </div>
-              )}
+              </div>
 
-              {/* Documents */}
-              {activeBottomTab === "docs" && (
-                <div className="space-y-2">
-                  {loading ? (
-                    [1, 2, 3].map(i => <div key={i} className="h-10 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
-                  ) : gdriveError ? (
-                    <div className="text-center py-8 px-4">
-                      <p className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">{gdriveError}</p>
-                    </div>
-                  ) : recentDocs.length > 0 ? (
-                    recentDocs.slice(0, 3).map((doc) => (
-                      <div key={doc.id} className="flex items-center justify-between p-2 rounded-xl border border-gray-150 dark:border-gray-800 bg-gray-50/20 dark:bg-white/[0.002] hover:border-brand-500/30 transition-colors">
-                        <div className="flex items-center gap-2 overflow-hidden mr-2">
-                          <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                          </svg>
-                          <span className="text-[11px] font-bold text-gray-900 dark:text-white truncate">{doc.name}</span>
-                        </div>
-                        <div>
-                          {doc.webViewLink ? (
-                            <a 
-                              href={doc.webViewLink} 
-                              target="_blank" 
-                              rel="noreferrer"
-                              className="text-[8px] font-black uppercase tracking-widest text-brand-500 hover:underline"
-                            >
-                              Buka
-                            </a>
-                          ) : (
-                            <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Folder</span>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8">
-                      <p className="text-[9px] text-gray-450 font-bold uppercase italic">{APP_LABELS.dashboard.empty.recentDocs}</p>
-                    </div>
-                  )}
+              {/* Akses Cepat */}
+              <div className="flex flex-col h-full overflow-hidden border-t md:border-t-0 md:border-l border-gray-150 dark:border-gray-800 md:pl-4 pt-3 md:pt-0">
+                <div className="flex items-center justify-between mb-3 border-b border-gray-100 pb-2 dark:border-gray-800">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-3.5 bg-violet-500 rounded-full"></span>
+                    <h2 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">
+                      Akses Cepat
+                    </h2>
+                  </div>
                 </div>
-              )}
-
-              {/* Logs */}
-              {activeBottomTab === "logs" && isAdmin && (
-                <div className="space-y-2">
-                  {loading ? (
-                    [1, 2, 3].map(i => <div key={i} className="h-10 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
-                  ) : activityLogs.length > 0 ? (
-                    activityLogs.slice(0, 3).map((log) => (
-                      <div key={log.id} className="flex items-start justify-between p-2 border border-gray-150 dark:border-gray-800 rounded-xl bg-gray-50/20 dark:bg-white/[0.002]">
-                        <div className="space-y-0.5 overflow-hidden mr-2">
-                          <p className="text-[11px] font-bold text-gray-900 dark:text-white truncate">
-                            {log.userName || "Sistem"} <span className="font-normal text-gray-500 text-[10px]">{log.action}</span>
-                          </p>
-                          <p className="text-[9px] text-gray-450 font-medium truncate">{log.details}</p>
-                        </div>
-                        <span className="text-[8px] text-gray-400 font-bold font-mono flex-shrink-0">
-                          {new Date(log.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8">
-                      <p className="text-[9px] text-gray-400 font-bold uppercase italic">{APP_LABELS.dashboard.empty.activityLogs}</p>
-                    </div>
-                  )}
+                
+                <div className="grid grid-cols-2 gap-2 flex-1 items-center">
+                  <Link href="/catatan-pribadi" className="flex flex-col items-center justify-center p-2 text-center border border-gray-100 dark:border-gray-850 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] group h-12">
+                    <span className="text-[9px] font-black text-gray-800 dark:text-gray-200 group-hover:text-brand-500 uppercase tracking-wider">Catatan</span>
+                  </Link>
+                  <Link href="/retainer" className="flex flex-col items-center justify-center p-2 text-center border border-gray-100 dark:border-gray-850 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] group h-12">
+                    <span className="text-[9px] font-black text-gray-800 dark:text-gray-200 group-hover:text-brand-500 uppercase tracking-wider">Pekerjaan</span>
+                  </Link>
+                  <Link href="/narasumber-hukum" className="flex flex-col items-center justify-center p-2 text-center border border-gray-100 dark:border-gray-850 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] group h-12">
+                    <span className="text-[9px] font-black text-gray-800 dark:text-gray-200 group-hover:text-brand-500 uppercase tracking-wider">Unggah</span>
+                  </Link>
+                  <Link href="/karyawan" className="flex flex-col items-center justify-center p-2 text-center border border-gray-100 dark:border-gray-850 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] group h-12">
+                    <span className="text-[9px] font-black text-gray-800 dark:text-gray-200 group-hover:text-brand-500 uppercase tracking-wider">Karyawan</span>
+                  </Link>
                 </div>
-              )}
+              </div>
 
             </div>
           </div>
