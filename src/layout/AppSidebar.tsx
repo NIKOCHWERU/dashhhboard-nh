@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import { useSession } from "next-auth/react";
+import { APP_LABELS } from "../config/app-labels";
 import {
   GridIcon,
   CalenderIcon,
@@ -39,7 +40,7 @@ const staticMenuGroups: MenuGroups[] = [
     title: "Menu",
     items: [
       { name: "Dashboard Utama", icon: <GridIcon />, path: "/" },
-      { name: "Jadwal Sidang & Rapat", icon: <CalenderIcon />, path: "/calendar" },
+      { name: "Kalender", icon: <CalenderIcon />, path: "/calendar" },
       { name: "Berkas", icon: <DokumenIcon />, path: "/dokumen" },
       { name: "Dokumentasi", icon: <DokumentasiIcon />, path: "/dokumentasi" },
       { name: "Pengumuman", icon: <PengumumanIcon />, path: "/pengumuman" },
@@ -53,7 +54,7 @@ const staticMenuGroups: MenuGroups[] = [
     ],
   },
   {
-    title: "Project",
+    title: "Pekerjaan",
     items: [
       { name: "Retainer", icon: <RetainerIcon />, path: "/retainer" },
       { name: "Perorangan", icon: <PeroranganIcon />, path: "/perorangan" },
@@ -108,53 +109,53 @@ const AppSidebar: React.FC = () => {
 
     // 1. Menu Group
     const menuItems = [
-      { name: "Dashboard Utama", icon: <GridIcon />, path: "/" },
-      { name: "Jadwal Sidang & Rapat", icon: <CalenderIcon />, path: "/calendar" },
-      { name: "Daftar Prioritas Kerja", icon: <CatatanIcon />, path: "/catatan-pribadi" },
-      { name: "Berkas", icon: <DokumenIcon />, path: "/dokumen" },
-      { name: "Dokumentasi", icon: <DokumentasiIcon />, path: "/dokumentasi" },
-      { name: "Pengumuman", icon: <PengumumanIcon />, path: "/pengumuman" }
+      { name: APP_LABELS.sidebar.items.dashboard, icon: <GridIcon />, path: "/" },
+      { name: APP_LABELS.sidebar.items.calendar, icon: <CalenderIcon />, path: "/calendar" },
+      { name: APP_LABELS.sidebar.items.tasks, icon: <CatatanIcon />, path: "/catatan-pribadi" },
+      { name: APP_LABELS.sidebar.items.berkas, icon: <DokumenIcon />, path: "/dokumen" },
+      { name: APP_LABELS.sidebar.items.dokumentasi, icon: <DokumentasiIcon />, path: "/dokumentasi" },
+      { name: APP_LABELS.sidebar.items.pengumuman, icon: <PengumumanIcon />, path: "/pengumuman" }
     ];
-    groups.push({ title: "Menu", items: menuItems });
+    groups.push({ title: APP_LABELS.sidebar.groups.menu, items: menuItems });
 
     // 2. NARASUMBER HUKUM Group
     groups.push({
-      title: "Manajemen Arsip",
+      title: APP_LABELS.sidebar.groups.archiveManagement,
       items: [
-        { name: "Arsip Dokumen", icon: <DokumenIcon />, path: "/narasumber-hukum" },
-        { name: "Laporan Operasional", icon: <SkalaPrioritasIcon />, path: "/laporan-operasional" }
+        { name: APP_LABELS.sidebar.items.arsipDokumen, icon: <DokumenIcon />, path: "/narasumber-hukum" },
+        { name: APP_LABELS.sidebar.items.laporanOperasional, icon: <SkalaPrioritasIcon />, path: "/laporan-operasional" }
       ]
     });
 
     // 3. Project Group
     groups.push({
-      title: "Project",
+      title: APP_LABELS.sidebar.groups.project,
       items: [
-        { name: "Retainer", icon: <RetainerIcon />, path: "/retainer" },
-        { name: "Perorangan", icon: <PeroranganIcon />, path: "/perorangan" },
+        { name: APP_LABELS.sidebar.items.retainer, icon: <RetainerIcon />, path: "/retainer" },
+        { name: APP_LABELS.sidebar.items.perorangan, icon: <PeroranganIcon />, path: "/perorangan" },
       ]
     });
 
     // 4. Karyawan Group
     groups.push({
-      title: "Karyawan",
+      title: APP_LABELS.sidebar.groups.employee,
       items: [
-        { name: "Daftar Karyawan", icon: <KaryawanIcon />, path: "/karyawan" },
-        { name: "Skala Prioritas", icon: <SkalaPrioritasIcon />, path: "/skala-prioritas" },
-        { name: "Surat Internal", icon: <DokumenIcon />, path: "/internal" }
+        { name: APP_LABELS.sidebar.items.daftarKaryawan, icon: <KaryawanIcon />, path: "/karyawan" },
+        { name: APP_LABELS.sidebar.items.skalaPrioritas, icon: <SkalaPrioritasIcon />, path: "/skala-prioritas" },
+        { name: APP_LABELS.sidebar.items.suratInternal, icon: <DokumenIcon />, path: "/internal" }
       ]
     });
 
     // 5. HRM Group
     if (isAdminUser || userObj.canManageHRM) {
       groups.push({
-        title: "HRM",
+        title: APP_LABELS.sidebar.groups.hrm,
         items: [
-          { name: "Dashboard HRM", icon: <GridIcon />, path: "/hrm" },
-          { name: "Daftar Karyawan", icon: <KaryawanIcon />, path: "/hrm/karyawan" },
-          { name: "Daftar Retainer", icon: <RetainerIcon />, path: "/hrm/retainer" },
-          { name: "Data Pelamar", icon: <KaryawanIcon />, path: "/hrm/pelamar" },
-          { name: "Dokumen Pelamar", icon: <DokumenIcon />, path: "/hrm/dokumen" }
+          { name: APP_LABELS.sidebar.items.dashboardHrm, icon: <GridIcon />, path: "/hrm" },
+          { name: APP_LABELS.sidebar.items.daftarKaryawan, icon: <KaryawanIcon />, path: "/hrm/karyawan" },
+          { name: APP_LABELS.sidebar.items.daftarRetainer, icon: <RetainerIcon />, path: "/hrm/retainer" },
+          { name: APP_LABELS.sidebar.items.dataPelamar, icon: <KaryawanIcon />, path: "/hrm/pelamar" },
+          { name: APP_LABELS.sidebar.items.dokumenPelamar, icon: <DokumenIcon />, path: "/hrm/dokumen" }
         ]
       });
     }
@@ -162,32 +163,32 @@ const AppSidebar: React.FC = () => {
     // 6. Dashboard Legal Group
     if (isAdminUser || userObj.canManageLegal) {
       groups.push({
-        title: "Dashboard Legal",
+        title: APP_LABELS.sidebar.groups.legal,
         items: [
-          { name: "Dashboard Legal", icon: <GridIcon />, path: "/legal/overview" },
+          { name: APP_LABELS.sidebar.items.dashboardLegal, icon: <GridIcon />, path: "/legal/overview" },
           {
-            name: "Otomatisasi Dokumen",
+            name: APP_LABELS.sidebar.items.documentAutomation,
             icon: <DokumenIcon />,
             subItems: [
-              { name: "Buat Surat", path: "/legal/generate-surat" },
-              { name: "Manajemen Templat", path: "/legal/template-management" }
+              { name: APP_LABELS.sidebar.items.createLetter, path: "/legal/generate-surat" },
+              { name: APP_LABELS.sidebar.items.templateManagement, path: "/legal/template-management" }
             ]
           },
           {
-            name: "Manajemen Kontrak",
+            name: APP_LABELS.sidebar.items.contractManagement,
             icon: <CatatanIcon />,
             subItems: [
-              { name: "Semua Kontrak", path: "/legal/contracts" },
-              { name: "Pemantauan Kedaluwarsa", path: "/legal/expiry-monitoring" }
+              { name: APP_LABELS.sidebar.items.allContracts, path: "/legal/contracts" },
+              { name: APP_LABELS.sidebar.items.expiryMonitoring, path: "/legal/expiry-monitoring" }
             ]
           },
-          { name: "Legal Karyawan", icon: <KaryawanIcon />, path: "/legal/employee-legal" },
-          { name: "Alur Persetujuan", icon: <SkalaPrioritasIcon />, path: "/legal/approvals" },
-          { name: "Arsip Hukum", icon: <DokumentasiIcon />, path: "/legal/archive" },
-          { name: "Kepatuhan", icon: <GridIcon />, path: "/legal/compliance" },
-          { name: "Permintaan Legal", icon: <PengumumanIcon />, path: "/legal/requests" },
-          { name: "Laporan", icon: <DokumenIcon />, path: "/legal/reports" },
-          { name: "Pengaturan", icon: <HorizontaLDots />, path: "/legal/settings" }
+          { name: APP_LABELS.sidebar.items.employeeLegal, icon: <KaryawanIcon />, path: "/legal/employee-legal" },
+          { name: APP_LABELS.sidebar.items.approvals, icon: <SkalaPrioritasIcon />, path: "/legal/approvals" },
+          { name: APP_LABELS.sidebar.items.archiveLegal, icon: <DokumentasiIcon />, path: "/legal/archive" },
+          { name: APP_LABELS.sidebar.items.compliance, icon: <GridIcon />, path: "/legal/compliance" },
+          { name: APP_LABELS.sidebar.items.legalRequests, icon: <PengumumanIcon />, path: "/legal/requests" },
+          { name: APP_LABELS.sidebar.items.reports, icon: <DokumenIcon />, path: "/legal/reports" },
+          { name: APP_LABELS.sidebar.items.settings, icon: <HorizontaLDots />, path: "/legal/settings" }
         ]
       });
     }
@@ -195,9 +196,9 @@ const AppSidebar: React.FC = () => {
     // 7. Admin Control Group
     if (isAdminUser) {
       groups.push({
-        title: "Admin",
+        title: APP_LABELS.sidebar.groups.admin,
         items: [
-          { name: "Manajemen Akses", icon: <CatatanIcon />, path: "/admin-control" }
+          { name: APP_LABELS.sidebar.items.accessManagement, icon: <CatatanIcon />, path: "/admin-control" }
         ]
       });
     }

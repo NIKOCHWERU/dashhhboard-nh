@@ -216,7 +216,7 @@ export default function RetainerPage() {
     <div className="p-4 md:p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">Project Retainer (PT)</h1>
+          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">Pekerjaan Retainer (PT)</h1>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Kelola dan pantau kontrak kerja sama jangka panjang secara detail dan teratur.
           </p>
@@ -253,7 +253,7 @@ export default function RetainerPage() {
           <div className="relative flex-1">
             <input
               type="text"
-              placeholder="Cari nama klien / proyek..."
+              placeholder="Cari nama klien / pekerjaan..."
               className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl bg-transparent text-gray-700 dark:text-white outline-none focus:border-brand-500 transition-colors text-xs font-semibold"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -354,7 +354,7 @@ export default function RetainerPage() {
                     {item.clientName}
                   </h3>
                   <p className="text-[11px] text-gray-455 dark:text-gray-400 font-semibold line-clamp-1 mt-0.5">
-                    Proyek: {item.projectName}
+                    Pekerjaan: {item.projectName}
                   </p>
 
                   {/* Expiration warning badge inside card */}
@@ -459,7 +459,7 @@ export default function RetainerPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Nama Proyek / Kontrak</label>
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Nama Pekerjaan / Kontrak</label>
             <input
               required
               placeholder="Contoh: Corporate Restructuring"
@@ -561,7 +561,7 @@ export default function RetainerPage() {
       <FeatureModal
         isOpen={isViewOpen}
         onClose={() => setIsViewOpen(false)}
-        title="Detail Proyek Retainer"
+        title="Detail Pekerjaan Retainer"
         subtitle="Rincian kontrak kerja sama jangka panjang klien secara lengkap"
         icon={<BoxIconLine />}
       >
@@ -600,7 +600,7 @@ export default function RetainerPage() {
               </div>
 
               <div className="bg-gray-50 dark:bg-gray-800/40 p-4 border border-stroke dark:border-strokedark rounded-none">
-                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Nama Proyek / Kategori Pekerjaan</span>
+                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Nama Pekerjaan / Kategori Pekerjaan</span>
                 <span className="text-sm font-bold text-black dark:text-white uppercase">{viewItem.projectName}</span>
               </div>
 

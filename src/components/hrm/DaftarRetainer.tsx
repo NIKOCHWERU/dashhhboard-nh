@@ -115,7 +115,7 @@ export default function DaftarRetainer() {
             <thead className="bg-gray-50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 font-semibold border-b border-stroke dark:border-strokedark uppercase tracking-wider text-[10px]">
               <tr>
                 <th className="px-5 py-3">Klien</th>
-                <th className="px-5 py-3">Nama Project</th>
+                <th className="px-5 py-3">Nama Pekerjaan</th>
                 <th className="px-5 py-3">Masa Berlaku</th>
                 <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3">Nilai Kontrak</th>
@@ -166,7 +166,7 @@ export default function DaftarRetainer() {
               <input type="text" value={formData.clientName} onChange={e => setFormData({...formData, clientName: e.target.value})} className="w-full p-2.5 border border-stroke rounded-xl dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 font-medium" />
             </div>
             <div className="col-span-2">
-              <label className="block text-[11px] font-bold text-gray-400 uppercase mb-1">Nama Project</label>
+              <label className="block text-[11px] font-bold text-gray-400 uppercase mb-1">Nama Pekerjaan</label>
               <input type="text" value={formData.projectName} onChange={e => setFormData({...formData, projectName: e.target.value})} className="w-full p-2.5 border border-stroke rounded-xl dark:bg-gray-900 dark:border-strokedark dark:text-white text-xs outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 font-medium" />
             </div>
             <div>
@@ -218,7 +218,7 @@ export default function DaftarRetainer() {
 
             <div className="p-6 space-y-4 text-xs">
               <div className="bg-gray-50 dark:bg-gray-800/40 p-4 border border-stroke dark:border-strokedark rounded-xl">
-                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Nama Proyek / Kontrak Kerja</span>
+                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Nama Pekerjaan / Kontrak Kerja</span>
                 <span className="text-sm font-bold text-black dark:text-white uppercase">{selectedItem.projectName}</span>
               </div>
 

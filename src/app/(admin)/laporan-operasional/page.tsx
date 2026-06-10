@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import * as xlsx from "xlsx";
+import { APP_LABELS } from "@/config/app-labels";
 
 interface ExcelRow {
   no: string;
@@ -44,6 +45,20 @@ export default function LaporanOperasionalPage() {
   const limit = 10;
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (tabParam) {
+        const upper = tabParam.toUpperCase();
+        if (upper === "RETAINER" || upper === "NON_RETAINER" || upper === "INTERNAL" || upper === "LAPORAN_BERKALA") {
+          setActiveTab(upper as TabType);
+        }
+      }
+      const statusParam = params.get("status");
+      if (statusParam) {
+        setStatusFilter(statusParam);
+      }
+    }
     fetchSummary();
   }, []);
 
@@ -88,7 +103,7 @@ export default function LaporanOperasionalPage() {
       setTotal(result.total || 0);
     } catch (error) {
       console.error(error);
-      alert("Data tidak dapat dimuat saat ini. Silakan coba kembali beberapa saat lagi.");
+      alert(APP_LABELS.common.errorGeneric);
     } finally {
       setLoading(false);
     }
@@ -133,7 +148,7 @@ export default function LaporanOperasionalPage() {
       const exportList: ExcelRow[] = result.data || [];
 
       if (exportList.length === 0) {
-        alert("Tidak ada data untuk diekspor.");
+        alert(APP_LABELS.laporanOperasional.alerts.noExportData);
         return;
       }
 
@@ -162,7 +177,7 @@ export default function LaporanOperasionalPage() {
       xlsx.utils.book_append_sheet(workbook, worksheet, activeTab.substring(0, 30));
       xlsx.writeFile(workbook, `Laporan_${activeTab}_${new Date().toISOString().split("T")[0]}.xlsx`);
     } catch (e) {
-      alert("Gagal mengekspor data ke Excel.");
+      alert(APP_LABELS.laporanOperasional.alerts.exportFailed);
     }
   };
 
@@ -180,7 +195,7 @@ export default function LaporanOperasionalPage() {
         {/* Retainer Card */}
         <div className="p-5 border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] rounded-2xl shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pekerjaan Retainer</span>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{APP_LABELS.laporanOperasional.summary.retainer}</span>
             <h2 className="text-2xl font-black text-black dark:text-white mt-1">{summary.retainer}</h2>
           </div>
           <div className="w-12 h-12 bg-brand-500/10 text-brand-500 rounded-xl flex items-center justify-center font-bold">
@@ -191,7 +206,7 @@ export default function LaporanOperasionalPage() {
         {/* Non Retainer Card */}
         <div className="p-5 border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] rounded-2xl shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pekerjaan Non-Retainer</span>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{APP_LABELS.laporanOperasional.summary.nonRetainer}</span>
             <h2 className="text-2xl font-black text-black dark:text-white mt-1">{summary.nonRetainer}</h2>
           </div>
           <div className="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-xl flex items-center justify-center font-bold">
@@ -202,7 +217,7 @@ export default function LaporanOperasionalPage() {
         {/* Internal Card */}
         <div className="p-5 border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] rounded-2xl shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pekerjaan Internal</span>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{APP_LABELS.laporanOperasional.summary.internal}</span>
             <h2 className="text-2xl font-black text-black dark:text-white mt-1">{summary.internal}</h2>
           </div>
           <div className="w-12 h-12 bg-purple-500/10 text-purple-500 rounded-xl flex items-center justify-center font-bold">
@@ -213,7 +228,7 @@ export default function LaporanOperasionalPage() {
         {/* Laporan Berkala Card */}
         <div className="p-5 border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] rounded-2xl shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Laporan Berkala Retainer</span>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{APP_LABELS.laporanOperasional.summary.laporanBerkala}</span>
             <h2 className="text-2xl font-black text-black dark:text-white mt-1">{summary.laporanBerkala}</h2>
           </div>
           <div className="w-12 h-12 bg-green-500/10 text-green-500 rounded-xl flex items-center justify-center font-bold">
@@ -224,8 +239,8 @@ export default function LaporanOperasionalPage() {
 
       {/* HEADER SECTION FOR PRINT */}
       <div className="hidden print:block pb-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold uppercase tracking-wider text-black">Laporan Operasional Kantor Hukum Narasumber Hukum</h1>
-        <p className="text-xs text-gray-500 mt-1">Jenis Data: {activeTab} | Tanggal Cetak: {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
+        <h1 className="text-xl font-bold uppercase tracking-wider text-black">{APP_LABELS.laporanOperasional.printHeader}</h1>
+        <p className="text-xs text-gray-500 mt-1">{APP_LABELS.laporanOperasional.printSubtext}{activeTab}{APP_LABELS.laporanOperasional.printSubtextDate}{new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
       </div>
 
       {/* TAB SELECTOR */}
@@ -235,16 +250,16 @@ export default function LaporanOperasionalPage() {
           let label = "";
           switch (tab) {
             case "RETAINER":
-              label = "Skala Prioritas Retainer";
+              label = APP_LABELS.laporanOperasional.tabs.retainer;
               break;
             case "NON_RETAINER":
-              label = "Non-Retainer";
+              label = APP_LABELS.laporanOperasional.tabs.nonRetainer;
               break;
             case "INTERNAL":
-              label = "Pekerjaan Internal";
+              label = APP_LABELS.laporanOperasional.tabs.internal;
               break;
             case "LAPORAN_BERKALA":
-              label = "Laporan Berkala";
+              label = APP_LABELS.laporanOperasional.tabs.laporanBerkala;
               break;
           }
           return (
@@ -277,7 +292,7 @@ export default function LaporanOperasionalPage() {
           <div className="relative w-full sm:w-64">
             <input
               type="text"
-              placeholder="Cari tugas, deskripsi, klien..."
+              placeholder={APP_LABELS.laporanOperasional.searchPlaceholder}
               className="w-full pl-9 pr-8 py-2 border border-gray-200 dark:border-gray-800 rounded-xl bg-transparent text-gray-700 dark:text-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/50 transition-colors text-xs font-semibold"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -289,7 +304,7 @@ export default function LaporanOperasionalPage() {
               <button
                 type="button"
                 onClick={handleClearSearch}
-                className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600 font-black cursor-pointer text-xs"
+                className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-605 font-black cursor-pointer text-xs"
               >
                 ×
               </button>
@@ -305,10 +320,10 @@ export default function LaporanOperasionalPage() {
               setPage(1);
             }}
           >
-            <option value="">-- Semua Status --</option>
-            <option value="Selesai">Selesai</option>
-            <option value="Aktif">Aktif</option>
-            <option value="Pending">Tertunda</option>
+            <option value="">{APP_LABELS.laporanOperasional.filters.allStatus}</option>
+            <option value="Selesai">{APP_LABELS.laporanOperasional.filters.completed}</option>
+            <option value="Aktif">{APP_LABELS.laporanOperasional.filters.active}</option>
+            <option value="Pending">{APP_LABELS.laporanOperasional.filters.pending}</option>
           </select>
 
           {/* Quadrant Filter (Only if activeTab !== LAPORAN_BERKALA) */}
@@ -321,10 +336,10 @@ export default function LaporanOperasionalPage() {
                 setPage(1);
               }}
             >
-              <option value="">-- Semua Kuadran --</option>
-              <option value="Q1">Q1 (Penting & Mendesak)</option>
-              <option value="Q2">Q2 (Penting tapi Tidak Mendesak)</option>
-              <option value="Q3">Q3 (Rutin / Lainnya)</option>
+              <option value="">{APP_LABELS.laporanOperasional.filters.allQuadrants}</option>
+              <option value="Q1">{APP_LABELS.laporanOperasional.filters.q1Label}</option>
+              <option value="Q2">{APP_LABELS.laporanOperasional.filters.q2Label}</option>
+              <option value="Q3">{APP_LABELS.laporanOperasional.filters.q3Label}</option>
             </select>
           )}
 
@@ -332,7 +347,7 @@ export default function LaporanOperasionalPage() {
             type="submit"
             className="px-4 py-2 bg-brand-500 text-white text-xs font-black uppercase tracking-wider rounded-xl hover:bg-brand-600 transition-colors cursor-pointer"
           >
-            Terapkan
+            {APP_LABELS.common.apply}
           </button>
         </form>
 
@@ -345,7 +360,7 @@ export default function LaporanOperasionalPage() {
             <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            Ekspor Excel
+            {APP_LABELS.common.exportExcel}
           </button>
           <button
             onClick={handleExportPDF}
@@ -354,7 +369,7 @@ export default function LaporanOperasionalPage() {
             <svg className="w-4 h-4 text-red-650" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
             </svg>
-            Cetak PDF
+            {APP_LABELS.common.printPDF}
           </button>
         </div>
       </div>
@@ -375,7 +390,7 @@ export default function LaporanOperasionalPage() {
           </div>
         ) : data.length === 0 ? (
           <div className="text-center py-20 text-xs text-gray-400 italic">
-            Tidak ada data yang ditemukan.
+            {APP_LABELS.laporanOperasional.alerts.noData}
           </div>
         ) : (
           <div className="overflow-x-auto text-[13px]">
@@ -383,28 +398,28 @@ export default function LaporanOperasionalPage() {
               <thead>
                 <tr className="border-b border-gray-100 dark:border-gray-800 text-[10px] font-bold text-gray-405 uppercase tracking-widest bg-gray-50/20 dark:bg-white/[0.01]">
                   <th onClick={() => handleSort("no")} className="p-4 pl-6 cursor-pointer hover:text-brand-500 transition-colors w-16">
-                    No {sortField === "no" && (sortOrder === "asc" ? "↑" : "↓")}
+                    {APP_LABELS.laporanOperasional.table.no} {sortField === "no" && (sortOrder === "asc" ? "↑" : "↓")}
                   </th>
                   <th onClick={() => handleSort("tanggal")} className="p-4 cursor-pointer hover:text-brand-500 transition-colors w-28">
-                    Tanggal {sortField === "tanggal" && (sortOrder === "asc" ? "↑" : "↓")}
+                    {APP_LABELS.laporanOperasional.table.tanggal} {sortField === "tanggal" && (sortOrder === "asc" ? "↑" : "↓")}
                   </th>
                   {data[0]?.namaKlien !== undefined && (
                     <th onClick={() => handleSort("namaKlien")} className="p-4 cursor-pointer hover:text-brand-500 transition-colors">
-                      Klien/Perusahaan {sortField === "namaKlien" && (sortOrder === "asc" ? "↑" : "↓")}
+                      {APP_LABELS.laporanOperasional.table.klien} {sortField === "namaKlien" && (sortOrder === "asc" ? "↑" : "↓")}
                     </th>
                   )}
                   {data[0]?.quadran !== undefined && (
-                    <th className="p-4 w-20">Kuadran</th>
+                    <th className="p-4 w-20">{APP_LABELS.laporanOperasional.table.kuadran}</th>
                   )}
                   {data[0]?.kategori !== undefined && (
-                    <th className="p-4 w-28">Kategori</th>
+                    <th className="p-4 w-28">{APP_LABELS.laporanOperasional.table.kategori}</th>
                   )}
-                  <th className="p-4">Deskripsi Pekerjaan</th>
-                  <th className="p-4">Tugas / Rincian</th>
-                  <th className="p-4 w-24">Area</th>
-                  <th className="p-4 w-24">Status</th>
-                  <th className="p-4">Keterangan</th>
-                  <th className="p-4">Penanggung Jawab</th>
+                  <th className="p-4">{APP_LABELS.laporanOperasional.table.deskripsi}</th>
+                  <th className="p-4">{APP_LABELS.laporanOperasional.table.tugas}</th>
+                  <th className="p-4 w-24">{APP_LABELS.laporanOperasional.table.area}</th>
+                  <th className="p-4 w-24">{APP_LABELS.laporanOperasional.table.status}</th>
+                  <th className="p-4">{APP_LABELS.laporanOperasional.table.keterangan}</th>
+                  <th className="p-4">{APP_LABELS.laporanOperasional.table.pic}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-xs text-gray-700 dark:text-gray-300">
@@ -482,7 +497,7 @@ export default function LaporanOperasionalPage() {
                 onClick={() => setPage(prev => Math.max(1, prev - 1))}
                 className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-xl text-xs font-black uppercase tracking-wider text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:pointer-events-none cursor-pointer transition-colors"
               >
-                Sebelumnya
+                {APP_LABELS.common.back}
               </button>
               {[...Array(totalPages)].map((_, i) => {
                 const p = i + 1;
@@ -512,7 +527,7 @@ export default function LaporanOperasionalPage() {
                 onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
                 className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-xl text-xs font-black uppercase tracking-wider text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:pointer-events-none cursor-pointer transition-colors"
               >
-                Selanjutnya
+                {APP_LABELS.common.next}
               </button>
             </div>
           </div>

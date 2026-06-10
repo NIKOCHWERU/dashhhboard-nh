@@ -277,13 +277,26 @@ export class ExcelDataService {
     nonRetainer: number;
     internal: number;
     laporanBerkala: number;
+    activeCount: number;
   }> {
     const allData = await this.loadExcelData();
+    const retainerActive = (allData["RETAINER"] || []).filter(
+      (r) => r.status.toLowerCase() !== "selesai"
+    ).length;
+    const nonRetainerActive = (allData["NON_RETAINER"] || []).filter(
+      (r) => r.status.toLowerCase() !== "selesai"
+    ).length;
+    const internalActive = (allData["INTERNAL"] || []).filter(
+      (r) => r.status.toLowerCase() !== "selesai"
+    ).length;
+    const activeCount = retainerActive + nonRetainerActive + internalActive;
+
     return {
       retainer: (allData["RETAINER"] || []).length,
       nonRetainer: (allData["NON_RETAINER"] || []).length,
       internal: (allData["INTERNAL"] || []).length,
       laporanBerkala: (allData["LAPORAN_BERKALA"] || []).length,
+      activeCount,
     };
   }
 

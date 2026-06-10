@@ -8,6 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
+import { APP_LABELS } from "../config/app-labels";
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
@@ -28,24 +29,24 @@ const AppHeader: React.FC = () => {
   const pathname = usePathname();
 
   const getPageTitle = () => {
-    if (pathname.startsWith("/hrm/pelamar")) return "Data Pelamar";
-    if (pathname.startsWith("/hrm/dokumen")) return "Dokumen Pelamar";
-    if (pathname.startsWith("/hrm/retainer")) return "Daftar Retainer";
-    if (pathname.startsWith("/hrm")) return "Dashboard HRM";
+    if (pathname.startsWith("/hrm/pelamar")) return APP_LABELS.header.titles.dataPelamar;
+    if (pathname.startsWith("/hrm/dokumen")) return APP_LABELS.header.titles.dokumenPelamar;
+    if (pathname.startsWith("/hrm/retainer")) return APP_LABELS.header.titles.daftarRetainerHrm;
+    if (pathname.startsWith("/hrm")) return APP_LABELS.header.titles.dashboardHrm;
     
     switch (pathname) {
-      case "/": return "Dashboard";
-      case "/calendar": return "Jadwal";
-      case "/dokumen": return "Berkas";
-      case "/dokumentasi": return "Dokumentasi";
-      case "/pengumuman": return "Pengumuman";
-      case "/retainer": return "Retainer";
-      case "/perorangan": return "Perorangan";
-      case "/karyawan": return "Daftar Karyawan";
-      case "/skala-prioritas": return "Skala Prioritas";
-      case "/internal": return "Surat Internal";
-      case "/laporan-operasional": return "Laporan Operasional";
-      default: return "Sistem Manajemen";
+      case "/": return APP_LABELS.header.titles.dashboard;
+      case "/calendar": return APP_LABELS.header.titles.calendar;
+      case "/dokumen": return APP_LABELS.header.titles.berkas;
+      case "/dokumentasi": return APP_LABELS.header.titles.dokumentasi;
+      case "/pengumuman": return APP_LABELS.header.titles.pengumuman;
+      case "/retainer": return APP_LABELS.header.titles.retainer;
+      case "/perorangan": return APP_LABELS.header.titles.perorangan;
+      case "/karyawan": return APP_LABELS.header.titles.daftarKaryawan;
+      case "/skala-prioritas": return APP_LABELS.header.titles.skalaPrioritas;
+      case "/internal": return APP_LABELS.header.titles.suratInternal;
+      case "/laporan-operasional": return APP_LABELS.header.titles.laporanOperasional;
+      default: return APP_LABELS.header.titles.default;
     }
   };
 

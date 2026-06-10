@@ -362,7 +362,7 @@ export default function DokumenPage() {
                       <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-wide group-hover:text-brand-500 transition-colors line-clamp-1">
                         {client.clientName}
                       </h3>
-                      <p className="text-[10px] text-gray-400 line-clamp-1 mt-1">Project: {client.projectName || "-"}</p>
+                      <p className="text-[10px] text-gray-400 line-clamp-1 mt-1">Pekerjaan: {client.projectName || "-"}</p>
                     </div>
                     <div className="text-[10px] font-bold text-brand-500 flex items-center gap-1 mt-2">
                       Lihat Berkas 

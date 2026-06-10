@@ -279,9 +279,9 @@ export default function DokumentasiPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-stroke dark:border-strokedark">
         <div>
-          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">Dokumentasi Proyek</h1>
+          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">Dokumentasi Pekerjaan</h1>
           <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
-            Unggah dan kelola foto & video dokumentasi kegiatan proyek klien ke Google Drive dengan sistem folder interaktif.
+            Unggah dan kelola foto & video dokumentasi kegiatan pekerjaan klien ke Google Drive dengan sistem folder interaktif.
           </p>
         </div>
       </div>
@@ -314,7 +314,7 @@ export default function DokumentasiPage() {
                       <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-wide group-hover:text-brand-500 transition-colors line-clamp-1">
                         {client.clientName}
                       </h3>
-                      <p className="text-[10px] text-gray-400 line-clamp-1 mt-1">Project: {client.projectName || "-"}</p>
+                      <p className="text-[10px] text-gray-400 line-clamp-1 mt-1">Pekerjaan: {client.projectName || "-"}</p>
                     </div>
                     <div className="text-[10px] font-bold text-brand-500 flex items-center gap-1 mt-2">
                       Lihat Dokumentasi →

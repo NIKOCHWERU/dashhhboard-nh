@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { DokumenIcon } from "@/icons/MenuIcons";
 import { FeatureModal } from "@/components/common/FeatureModal";
+import { APP_LABELS } from "@/config/app-labels";
 
 interface GDriveItem {
   id: string;
@@ -36,7 +37,7 @@ export default function NarasumberHukumPage() {
 
   const [loading, setLoading] = useState(true);
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
-  const [activeFolderName, setActiveFolderName] = useState<string>("NARASUMBER HUKUM");
+  const [activeFolderName, setActiveFolderName] = useState<string>(APP_LABELS.narasumberHukum.narasumberHukumUpper);
   const [folderHistory, setFolderHistory] = useState<{ id: string; name: string }[]>([]);
   
   const [items, setItems] = useState<GDriveItem[]>([]);
@@ -89,7 +90,7 @@ export default function NarasumberHukumPage() {
   useEffect(() => {
     fetchPTs();
     fetchEmployees();
-    browseFolder(null, "Arsip Utama", true);
+    browseFolder(null, APP_LABELS.narasumberHukum.archiveMain, true);
     fetchRecentFiles();
   }, []);
 
@@ -165,14 +166,14 @@ export default function NarasumberHukumPage() {
 
       if (pushHistory) {
         if (folderId === null) {
-          setFolderHistory([{ id: data.folderId, name: "Arsip Utama" }]);
+          setFolderHistory([{ id: data.folderId, name: APP_LABELS.narasumberHukum.archiveMain }]);
         } else {
           setFolderHistory((prev) => [...prev, { id: folderId, name: folderName }]);
         }
       }
     } catch (error) {
       console.error(error);
-      alert("Sistem gagal terhubung ke Google Drive. Pastikan konfigurasi jaringan atau izin akses Anda telah aktif.");
+      alert(APP_LABELS.narasumberHukum.alerts.gdriveConnectFailed);
     } finally {
       setLoading(false);
     }
@@ -192,7 +193,7 @@ export default function NarasumberHukumPage() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert("Tautan berhasil disalin ke papan klip!");
+    alert(APP_LABELS.narasumberHukum.alerts.clipboardSuccess);
   };
 
   const handleSearch = async (query: string) => {
@@ -223,7 +224,7 @@ export default function NarasumberHukumPage() {
     setFolderHistory(newHistory);
     // If going back to root
     if (newHistory.length === 1) {
-      browseFolder(null, "Arsip Utama", false);
+      browseFolder(null, APP_LABELS.narasumberHukum.archiveMain, false);
     } else {
       browseFolder(parentFolder.id, parentFolder.name, false);
     }
@@ -251,9 +252,9 @@ export default function NarasumberHukumPage() {
     const isExpanded = !!expandedFolders[folderId];
     const isActive = activeFolderId === folderId;
 
-    const folderName = folderId === rootFolderId ? "Root Drive" : 
+    const folderName = folderId === rootFolderId ? APP_LABELS.narasumberHukum.rootDrive : 
                        (Object.values(treeData).flat().find(f => f.id === folderId)?.name || 
-                        folderHistory.find(h => h.id === folderId)?.name || "Folder");
+                        folderHistory.find(h => h.id === folderId)?.name || APP_LABELS.common.folder);
 
     return (
       <div key={folderId} className="select-none">
@@ -306,7 +307,7 @@ export default function NarasumberHukumPage() {
           <div className="mt-1 border-l border-gray-150/60 dark:border-gray-800/60 ml-4.5 pl-1.5 space-y-0.5">
             {subfolders.length === 0 ? (
               <div className="pl-6 py-1 text-[10px] text-gray-450 dark:text-gray-500 italic">
-                Kosong
+                {APP_LABELS.common.empty}
               </div>
             ) : (
               subfolders.map(sub => renderFolderTree(sub.id, depth + 1))
@@ -340,7 +341,7 @@ export default function NarasumberHukumPage() {
       setNewFolderName("");
       await browseFolder(activeFolderId, activeFolderName, false);
     } catch (error) {
-      alert("Gagal membuat folder baru.");
+      alert(APP_LABELS.narasumberHukum.alerts.createFolderFailed);
     } finally {
       setFolderSubmitting(false);
     }
@@ -378,7 +379,7 @@ export default function NarasumberHukumPage() {
       setSelectedPT("");
       await browseFolder(activeFolderId, activeFolderName, false);
     } catch (error) {
-      alert("Gagal mengunggah berkas.");
+      alert(APP_LABELS.narasumberHukum.alerts.uploadFailed);
     } finally {
       setUploadSubmitting(false);
     }
@@ -386,7 +387,7 @@ export default function NarasumberHukumPage() {
 
   // Delete folder from Google Drive
   const handleDeleteFolder = async (folderId: string) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus folder ini beserta seluruh isinya secara permanen dari Google Drive?")) return;
+    if (!confirm(APP_LABELS.narasumberHukum.alerts.deleteFolderConfirm)) return;
 
     try {
       setLoading(true);
@@ -397,7 +398,7 @@ export default function NarasumberHukumPage() {
       if (!res.ok) throw new Error("Delete failed");
       await browseFolder(activeFolderId, activeFolderName, false);
     } catch (error) {
-      alert("Gagal menghapus folder.");
+      alert(APP_LABELS.narasumberHukum.alerts.deleteFolderFailed);
     } finally {
       setLoading(false);
     }
@@ -405,7 +406,7 @@ export default function NarasumberHukumPage() {
 
   // Delete file action
   const handleDeleteFile = async (fileId: string) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus berkas ini secara permanen dari database dan Google Drive?")) return;
+    if (!confirm(APP_LABELS.narasumberHukum.alerts.deleteFileConfirm)) return;
 
     try {
       setLoading(true);
@@ -416,7 +417,7 @@ export default function NarasumberHukumPage() {
       if (!res.ok) throw new Error("Delete failed");
       await browseFolder(activeFolderId, activeFolderName, false);
     } catch (error) {
-      alert("Gagal menghapus berkas.");
+      alert(APP_LABELS.narasumberHukum.alerts.deleteFileFailed);
     } finally {
       setLoading(false);
     }
@@ -445,7 +446,7 @@ export default function NarasumberHukumPage() {
       setEditFolderName("");
       await browseFolder(activeFolderId, activeFolderName, false);
     } catch (error) {
-      alert("Gagal mengubah nama folder.");
+      alert(APP_LABELS.narasumberHukum.alerts.editFolderFailed);
     } finally {
       setEditFolderSubmitting(false);
     }
@@ -480,7 +481,7 @@ export default function NarasumberHukumPage() {
       setEditPT("");
       await browseFolder(activeFolderId, activeFolderName, false);
     } catch (error) {
-      alert("Gagal mengubah berkas.");
+      alert(APP_LABELS.narasumberHukum.alerts.editFileFailed);
     } finally {
       setEditFileSubmitting(false);
     }
@@ -567,9 +568,9 @@ export default function NarasumberHukumPage() {
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-stroke dark:border-strokedark">
         <div>
-          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">Manajemen Arsip</h1>
+          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">{APP_LABELS.narasumberHukum.title}</h1>
           <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
-            Dokumentasi berkas hukum, legal opinion, somasi, dan surat kontrak diatur secara dinamis per perusahaan.
+            {APP_LABELS.narasumberHukum.subtitle}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -577,7 +578,7 @@ export default function NarasumberHukumPage() {
             onClick={() => setFolderModalOpen(true)}
             className="px-4 py-2 border border-stroke rounded-lg bg-white text-gray-700 hover:border-brand-500 outline-none dark:bg-gray-900 dark:border-strokedark dark:text-white transition-colors cursor-pointer text-xs font-black uppercase tracking-wider"
           >
-            + Buat Folder
+            {APP_LABELS.narasumberHukum.createFolderBtn}
           </button>
           <button
             onClick={() => {
@@ -586,7 +587,7 @@ export default function NarasumberHukumPage() {
             }}
             className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 outline-none transition-colors cursor-pointer text-xs font-black uppercase tracking-wider"
           >
-            + Unggah Berkas
+            {APP_LABELS.narasumberHukum.uploadFileBtn}
           </button>
         </div>
       </div>
@@ -602,7 +603,7 @@ export default function NarasumberHukumPage() {
               <svg className="w-4 h-4 text-brand-500 fill-brand-500" viewBox="0 0 24 24">
                 <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
               </svg>
-              Navigasi Folder
+              {APP_LABELS.narasumberHukum.folderNav}
             </h3>
             <div className="flex-1 overflow-y-auto no-scrollbar py-3 space-y-1">
               {rootFolderId ? (
@@ -621,12 +622,12 @@ export default function NarasumberHukumPage() {
               <svg className="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Dokumen Terbaru
+              {APP_LABELS.dashboard.sections.recentDocs}
             </h3>
             <div className="flex-1 overflow-y-auto no-scrollbar py-3 space-y-2.5">
               {recentFilesList.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-center text-gray-450 dark:text-gray-500 text-[10px] italic">
-                  Belum ada dokumen terbaru.
+                  {APP_LABELS.narasumberHukum.empty.recent}
                 </div>
               ) : (
                 recentFilesList.map(file => (
@@ -675,9 +676,9 @@ export default function NarasumberHukumPage() {
               )}
               <span
                 className="cursor-pointer hover:text-brand-500 text-gray-500"
-                onClick={() => browseFolder(null, "Arsip Utama", true)}
+                onClick={() => browseFolder(null, APP_LABELS.narasumberHukum.archiveMain, true)}
               >
-                DRIVE
+                {APP_LABELS.narasumberHukum.drive}
               </span>
               {folderHistory.map((hist, idx) => {
                 if (idx === 0) return null; // Skip HOME
@@ -704,7 +705,7 @@ export default function NarasumberHukumPage() {
             <div className="relative w-full md:w-80">
               <input
                 type="text"
-                placeholder="Cari Folder atau Dokumen..."
+                placeholder={APP_LABELS.narasumberHukum.searchPlaceholder}
                 className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl bg-transparent text-gray-700 dark:text-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/50 transition-colors text-xs font-semibold"
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}
@@ -725,7 +726,7 @@ export default function NarasumberHukumPage() {
                 {activeFolderName}
               </h3>
               <span className="text-[10px] bg-brand-500/10 text-brand-600 dark:text-brand-400 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
-                {filteredItems.length} Item
+                {filteredItems.length} {APP_LABELS.common.item}
               </span>
             </div>
 
@@ -743,21 +744,21 @@ export default function NarasumberHukumPage() {
               </div>
             ) : filteredItems.length === 0 ? (
               <div className="text-center py-20 text-xs text-gray-400 italic bg-white dark:bg-transparent">
-                Belum ada berkas atau subfolder di sini. Gunakan tombol diatas untuk mengisi.
+                {APP_LABELS.narasumberHukum.empty.files}
               </div>
             ) : (
               <div className="overflow-x-auto text-[13px]">
                 <table className="w-full text-left border-collapse min-w-[800px]">
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-gray-800 text-[10px] font-bold text-gray-405 uppercase tracking-widest bg-gray-50/20 dark:bg-white/[0.01]">
-                      <th className="p-4 pl-6">Nama</th>
-                      <th className="p-4">PT Asosiasi</th>
-                      <th className="p-4">Akses PIC</th>
-                      <th className="p-4">Ukuran</th>
-                      <th className="p-4">Diunggah</th>
-                      <th className="p-4">Terakhir Diubah</th>
-                      <th className="p-4">Pemilik</th>
-                      <th className="p-4 pr-6 text-right">Aksi</th>
+                      <th className="p-4 pl-6">{APP_LABELS.narasumberHukum.table.name}</th>
+                      <th className="p-4">{APP_LABELS.narasumberHukum.table.pt}</th>
+                      <th className="p-4">{APP_LABELS.narasumberHukum.table.pic}</th>
+                      <th className="p-4">{APP_LABELS.narasumberHukum.table.size}</th>
+                      <th className="p-4">{APP_LABELS.narasumberHukum.table.uploadDate}</th>
+                      <th className="p-4">{APP_LABELS.narasumberHukum.table.modifiedDate}</th>
+                      <th className="p-4">{APP_LABELS.narasumberHukum.table.owner}</th>
+                      <th className="p-4 pr-6 text-right">{APP_LABELS.narasumberHukum.table.actions}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-xs text-gray-700 dark:text-gray-300">
@@ -802,21 +803,21 @@ export default function NarasumberHukumPage() {
                                 <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                 </svg>
-                                Dibatasi
+                                {APP_LABELS.narasumberHukum.table.restricted}
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400 font-bold uppercase text-[9px] tracking-wider rounded-md border border-green-200/20 dark:border-green-800/20">
                                 <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                                 </svg>
-                                Publik
+                                {APP_LABELS.narasumberHukum.table.public}
                               </span>
                             )}
                           </td>
 
                           {/* Size Col */}
                           <td className="p-4 font-semibold text-gray-400">
-                            {item.isFolder ? "Folder" : formatSize(item.size)}
+                            {item.isFolder ? APP_LABELS.common.folder : formatSize(item.size)}
                           </td>
 
                           {/* Created At Col */}
@@ -849,7 +850,7 @@ export default function NarasumberHukumPage() {
                                     onClick={() => browseFolder(item.id, item.name)}
                                     className="px-2.5 py-1 bg-brand-500/10 text-brand-600 dark:text-brand-400 hover:bg-brand-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
                                   >
-                                    Buka
+                                    {APP_LABELS.narasumberHukum.actions.open}
                                   </button>
                                   {isAdmin && (
                                     <>
@@ -861,13 +862,13 @@ export default function NarasumberHukumPage() {
                                         }}
                                         className="px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
                                       >
-                                        Ubah
+                                        {APP_LABELS.narasumberHukum.actions.edit}
                                       </button>
                                       <button
                                         onClick={() => handleDeleteFolder(item.id)}
                                         className="px-2.5 py-1 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
                                       >
-                                        Hapus
+                                        {APP_LABELS.narasumberHukum.actions.delete}
                                       </button>
                                     </>
                                   )}
@@ -878,7 +879,7 @@ export default function NarasumberHukumPage() {
                                     onClick={() => setPreviewItem(item)}
                                     className="px-2.5 py-1 bg-brand-500/10 text-brand-600 dark:text-brand-400 hover:bg-brand-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
                                   >
-                                    Lihat
+                                    {APP_LABELS.narasumberHukum.actions.view}
                                   </button>
                                   {item.webContentLink && (
                                     <a
@@ -886,7 +887,7 @@ export default function NarasumberHukumPage() {
                                       download
                                       className="px-2.5 py-1 bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-500/20 text-[10px] font-black rounded-lg uppercase transition-colors inline-block text-center"
                                     >
-                                      Unduh
+                                      {APP_LABELS.narasumberHukum.actions.download}
                                     </a>
                                   )}
                                   {item.webViewLink && (
@@ -894,7 +895,7 @@ export default function NarasumberHukumPage() {
                                       onClick={() => copyToClipboard(item.webViewLink!)}
                                       className="px-2.5 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
                                     >
-                                      Salin Link
+                                      {APP_LABELS.narasumberHukum.actions.copyLink}
                                     </button>
                                   )}
                                   {item.webViewLink && (
@@ -904,7 +905,7 @@ export default function NarasumberHukumPage() {
                                       rel="noreferrer"
                                       className="px-2.5 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 text-[10px] font-black rounded-lg uppercase transition-colors inline-block text-center"
                                     >
-                                      G-Drive
+                                      {APP_LABELS.narasumberHukum.actions.gdriveShort}
                                     </a>
                                   )}
                                   {isAdmin && (
@@ -920,13 +921,13 @@ export default function NarasumberHukumPage() {
                                         }}
                                         className="px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
                                       >
-                                        Edit
+                                        {APP_LABELS.narasumberHukum.actions.edit}
                                       </button>
                                       <button
                                         onClick={() => handleDeleteFile(item.id)}
                                         className="px-2.5 py-1 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
                                       >
-                                        Hapus
+                                        {APP_LABELS.narasumberHukum.actions.delete}
                                       </button>
                                     </>
                                   )}
@@ -949,15 +950,15 @@ export default function NarasumberHukumPage() {
       <FeatureModal
         isOpen={folderModalOpen}
         onClose={() => setFolderModalOpen(false)}
-        title="Buat Subfolder Baru"
+        title={APP_LABELS.narasumberHukum.modals.createFolderTitle}
       >
         <form onSubmit={handleCreateFolder} className="space-y-4 pt-2">
           <div>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Nama Folder</label>
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">{APP_LABELS.narasumberHukum.modals.folderNameLabel}</label>
             <input
               type="text"
               required
-              placeholder="Contoh: Legal Opinion PT A"
+              placeholder={APP_LABELS.narasumberHukum.modals.folderNamePlaceholder}
               className="w-full px-4 py-2 border border-stroke rounded-none bg-white text-gray-700 outline-none focus:border-brand-500 dark:bg-gray-900 dark:border-strokedark dark:text-white transition-colors cursor-pointer text-xs font-semibold"
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
@@ -969,14 +970,14 @@ export default function NarasumberHukumPage() {
               onClick={() => setFolderModalOpen(false)}
               className="px-4 py-2 border border-stroke rounded-none text-xs font-black uppercase text-gray-600 hover:bg-gray-50 dark:border-strokedark dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
             >
-              Batal
+              {APP_LABELS.common.cancel}
             </button>
             <button
               type="submit"
               disabled={folderSubmitting}
               className="px-4 py-2 bg-brand-500 text-white rounded-none hover:bg-brand-600 text-xs font-black uppercase transition-colors disabled:opacity-50"
             >
-              {folderSubmitting ? "Memproses..." : "Buat Folder"}
+              {folderSubmitting ? APP_LABELS.common.processing : APP_LABELS.narasumberHukum.modals.createFolderSubmit}
             </button>
           </div>
         </form>
@@ -986,15 +987,15 @@ export default function NarasumberHukumPage() {
       <FeatureModal
         isOpen={editFolderModalOpen}
         onClose={() => setEditFolderModalOpen(false)}
-        title="Ubah Nama Folder"
+        title={APP_LABELS.narasumberHukum.modals.editFolderTitle}
       >
         <form onSubmit={handleEditFolder} className="space-y-4 pt-2">
           <div>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Nama Folder Baru</label>
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">{APP_LABELS.narasumberHukum.modals.newFolderNameLabel}</label>
             <input
               type="text"
               required
-              placeholder="Masukkan nama folder baru..."
+              placeholder={APP_LABELS.narasumberHukum.modals.newFolderNamePlaceholder}
               className="w-full px-4 py-2 border border-stroke rounded-none bg-white text-gray-700 outline-none focus:border-brand-500 dark:bg-gray-900 dark:border-strokedark dark:text-white transition-colors cursor-pointer text-xs font-semibold"
               value={editFolderName}
               onChange={(e) => setEditFolderName(e.target.value)}
@@ -1006,14 +1007,14 @@ export default function NarasumberHukumPage() {
               onClick={() => setEditFolderModalOpen(false)}
               className="px-4 py-2 border border-stroke rounded-none text-xs font-black uppercase text-gray-600 hover:bg-gray-50 dark:border-strokedark dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
             >
-              Batal
+              {APP_LABELS.common.cancel}
             </button>
             <button
               type="submit"
               disabled={editFolderSubmitting}
               className="px-4 py-2 bg-brand-500 text-white rounded-none hover:bg-brand-600 text-xs font-black uppercase transition-colors disabled:opacity-50"
             >
-              {editFolderSubmitting ? "Menyimpan..." : "Simpan Nama"}
+              {editFolderSubmitting ? APP_LABELS.common.saving : APP_LABELS.narasumberHukum.actions.saveName}
             </button>
           </div>
         </form>
@@ -1023,12 +1024,12 @@ export default function NarasumberHukumPage() {
       <FeatureModal
         isOpen={uploadModalOpen}
         onClose={() => setUploadModalOpen(false)}
-        title="Unggah Berkas Baru ke Google Drive"
+        title={APP_LABELS.narasumberHukum.modals.uploadFileTitle}
       >
         <form onSubmit={handleUploadFiles} className="space-y-4 pt-2">
           {/* File input (multi-upload!) */}
           <div>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Pilih Berkas (Multi-upload didukung)</label>
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">{APP_LABELS.narasumberHukum.modals.selectFilesLabel}</label>
             <input
               type="file"
               required
@@ -1041,10 +1042,10 @@ export default function NarasumberHukumPage() {
           {/* Custom Name (only active if single file) */}
           {selectedFiles && selectedFiles.length === 1 && (
             <div>
-              <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Nama Berkas Kustom (Opsional)</label>
+              <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">{APP_LABELS.narasumberHukum.modals.customNameLabel}</label>
               <input
                 type="text"
-                placeholder="Kosongkan untuk menggunakan nama asli file"
+                placeholder={APP_LABELS.narasumberHukum.modals.customNamePlaceholder}
                 className="w-full px-4 py-2 border border-stroke rounded-none bg-white text-gray-700 outline-none focus:border-brand-500 dark:bg-gray-900 dark:border-strokedark dark:text-white transition-colors cursor-pointer text-xs font-semibold"
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
@@ -1054,9 +1055,9 @@ export default function NarasumberHukumPage() {
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Keterangan / Ringkasan</label>
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">{APP_LABELS.narasumberHukum.modals.descriptionLabel}</label>
             <textarea
-              placeholder="Deskripsi singkat mengenai isi dokumen"
+              placeholder={APP_LABELS.narasumberHukum.modals.descriptionPlaceholder}
               className="w-full px-4 py-2 border border-stroke rounded-none bg-white text-gray-700 outline-none focus:border-brand-500 dark:bg-gray-900 dark:border-strokedark dark:text-white transition-colors cursor-pointer text-xs font-semibold h-20 resize-none"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -1065,13 +1066,13 @@ export default function NarasumberHukumPage() {
 
           {/* PT/Company Selection */}
           <div>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">PT / Klien Asosiasi (Opsional)</label>
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">{APP_LABELS.narasumberHukum.modals.ptLabel}</label>
             <select
               className="w-full px-4 py-2 border border-stroke rounded-none bg-white text-gray-700 outline-none focus:border-brand-500 dark:bg-gray-900 dark:border-strokedark dark:text-white transition-colors cursor-pointer text-xs font-black uppercase"
               value={selectedPT}
               onChange={(e) => setSelectedPT(e.target.value)}
             >
-              <option value="">-- Pilih PT Asosiasi --</option>
+              <option value="">{APP_LABELS.narasumberHukum.modals.ptPlaceholder}</option>
               {ptList.map((pt) => (
                 <option key={pt} value={pt}>{pt}</option>
               ))}
@@ -1080,12 +1081,12 @@ export default function NarasumberHukumPage() {
 
           {/* Interactive Karyawan PIC Dropdown Selector */}
           <div className="relative" ref={picDropdownRef}>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Pilih PIC Keamanan Akses (Opsional)</label>
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">{APP_LABELS.narasumberHukum.modals.picLabel}</label>
             
             {/* selected tags list */}
             <div className="flex flex-wrap gap-1.5 mb-2">
               {selectedPICs.length === 0 ? (
-                <span className="text-[11px] text-gray-400 italic">Bersifat publik (dapat dilihat oleh semua staf)</span>
+                <span className="text-[11px] text-gray-400 italic">{APP_LABELS.narasumberHukum.modals.picPlaceholderPublic}</span>
               ) : (
                 selectedPICs.map((picEmail) => {
                   const empObj = employees.find((e) => e.email === picEmail || e.name === picEmail);
@@ -1110,7 +1111,7 @@ export default function NarasumberHukumPage() {
               onClick={() => setPicDropdownOpen(!picDropdownOpen)}
               className="w-full px-4 py-2 text-left border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 text-gray-700 dark:text-white hover:border-brand-500 outline-none transition-colors text-xs font-black uppercase tracking-wider flex justify-between items-center cursor-pointer"
             >
-              <span>{picDropdownOpen ? "Tutup Menu PIC" : "Pilih Karyawan PIC..."}</span>
+              <span>{picDropdownOpen ? APP_LABELS.narasumberHukum.modals.closePicMenu : APP_LABELS.narasumberHukum.modals.selectPicEmployee}</span>
               <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
@@ -1120,14 +1121,14 @@ export default function NarasumberHukumPage() {
               <div className="absolute z-[999] left-0 right-0 mt-1 bg-white dark:bg-gray-950 border border-stroke dark:border-strokedark shadow-xl max-h-56 overflow-y-auto p-2 space-y-2 rounded-none">
                 <input
                   type="text"
-                  placeholder="Cari karyawan..."
+                  placeholder={APP_LABELS.narasumberHukum.modals.searchEmployeePlaceholder}
                   className="w-full px-3 py-1.5 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 text-gray-700 dark:text-white outline-none focus:border-brand-500 text-xs font-semibold"
                   value={picSearch}
                   onChange={(e) => setPicSearch(e.target.value)}
                 />
                 <div className="divide-y divide-stroke dark:divide-strokedark max-h-40 overflow-y-auto">
                   {filteredEmployees.length === 0 ? (
-                    <div className="text-center py-4 text-[11px] text-gray-400 italic">Tidak ada karyawan ditemukan</div>
+                    <div className="text-center py-4 text-[11px] text-gray-400 italic">{APP_LABELS.narasumberHukum.modals.noEmployeeFound}</div>
                   ) : (
                     filteredEmployees.map((emp) => {
                       const identifier = emp.email || emp.name;
@@ -1140,7 +1141,7 @@ export default function NarasumberHukumPage() {
                         >
                           <div className="flex flex-col">
                             <span className="text-[11px] font-black text-black dark:text-white uppercase">{emp.name}</span>
-                            <span className="text-[10px] text-gray-400 font-medium">{emp.position} | {emp.email || "No Email"}</span>
+                            <span className="text-[10px] text-gray-400 font-medium">{emp.position} | {emp.email || APP_LABELS.common.noEmail}</span>
                           </div>
                           {isSelected && (
                             <svg className="w-4 h-4 text-brand-500 fill-brand-500" viewBox="0 0 24 24">
@@ -1155,7 +1156,7 @@ export default function NarasumberHukumPage() {
               </div>
             )}
             <p className="text-[10px] text-gray-400 mt-1.5 italic leading-tight">
-              * Jika dibatasi, hanya karyawan terpilih dan Administrator yang memiliki hak akses untuk membuka berkas ini.
+              {APP_LABELS.narasumberHukum.modals.picAccessNote}
             </p>
           </div>
 
@@ -1165,14 +1166,14 @@ export default function NarasumberHukumPage() {
               onClick={() => setUploadModalOpen(false)}
               className="px-4 py-2 border border-stroke rounded-none text-xs font-black uppercase text-gray-600 hover:bg-gray-50 dark:border-strokedark dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
             >
-              Batal
+              {APP_LABELS.common.cancel}
             </button>
             <button
               type="submit"
               disabled={uploadSubmitting}
               className="px-4 py-2 bg-brand-500 text-white rounded-none hover:bg-brand-600 text-xs font-black uppercase transition-colors disabled:opacity-50"
             >
-              {uploadSubmitting ? "Mengunggah..." : "Unggah Berkas"}
+              {uploadSubmitting ? APP_LABELS.common.uploading : APP_LABELS.narasumberHukum.modals.uploadFileSubmit}
             </button>
           </div>
         </form>
@@ -1182,16 +1183,16 @@ export default function NarasumberHukumPage() {
       <FeatureModal
         isOpen={editFileModalOpen}
         onClose={() => setEditFileModalOpen(false)}
-        title="Ubah Berkas Hukum & Akses Keamanan"
+        title={APP_LABELS.narasumberHukum.modals.editFileTitle}
       >
         <form onSubmit={handleEditFile} className="space-y-4 pt-2">
           {/* File Name */}
           <div>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Nama Berkas</label>
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">{APP_LABELS.narasumberHukum.modals.fileNameLabel}</label>
             <input
               type="text"
               required
-              placeholder="Masukkan nama berkas baru..."
+              placeholder={APP_LABELS.narasumberHukum.modals.newFileNamePlaceholder}
               className="w-full px-4 py-2 border border-stroke rounded-none bg-white text-gray-700 outline-none focus:border-brand-500 dark:bg-gray-900 dark:border-strokedark dark:text-white transition-colors cursor-pointer text-xs font-semibold"
               value={editFileName}
               onChange={(e) => setEditFileName(e.target.value)}
@@ -1200,9 +1201,9 @@ export default function NarasumberHukumPage() {
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Keterangan / Ringkasan</label>
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">{APP_LABELS.narasumberHukum.modals.descriptionLabel}</label>
             <textarea
-              placeholder="Deskripsi singkat mengenai isi dokumen..."
+              placeholder={APP_LABELS.narasumberHukum.modals.descriptionPlaceholder}
               className="w-full px-4 py-2 border border-stroke rounded-none bg-white text-gray-700 outline-none focus:border-brand-500 dark:bg-gray-900 dark:border-strokedark dark:text-white transition-colors cursor-pointer text-xs font-semibold h-20 resize-none"
               value={editDescription}
               onChange={(e) => setEditDescription(e.target.value)}
@@ -1211,13 +1212,13 @@ export default function NarasumberHukumPage() {
 
           {/* PT/Company Selection */}
           <div>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">PT / Klien Asosiasi (Opsional)</label>
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">{APP_LABELS.narasumberHukum.modals.ptLabel}</label>
             <select
               className="w-full px-4 py-2 border border-stroke rounded-none bg-white text-gray-700 outline-none focus:border-brand-500 dark:bg-gray-900 dark:border-strokedark dark:text-white transition-colors cursor-pointer text-xs font-black uppercase"
               value={editPT}
               onChange={(e) => setEditPT(e.target.value)}
             >
-              <option value="">-- Pilih PT Asosiasi --</option>
+              <option value="">{APP_LABELS.narasumberHukum.modals.ptPlaceholder}</option>
               {ptList.map((pt) => (
                 <option key={pt} value={pt}>{pt}</option>
               ))}
@@ -1226,12 +1227,12 @@ export default function NarasumberHukumPage() {
 
           {/* Interactive Karyawan PIC Dropdown Selector */}
           <div className="relative" ref={picDropdownRef}>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Pilih PIC Keamanan Akses (Opsional)</label>
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">{APP_LABELS.narasumberHukum.modals.picLabel}</label>
             
             {/* selected tags list */}
             <div className="flex flex-wrap gap-1.5 mb-2">
               {selectedPICs.length === 0 ? (
-                <span className="text-[11px] text-gray-400 italic">Bersifat publik (dapat dilihat oleh semua staf)</span>
+                <span className="text-[11px] text-gray-400 italic">{APP_LABELS.narasumberHukum.modals.picPlaceholderPublic}</span>
               ) : (
                 selectedPICs.map((picEmail) => {
                   const empObj = employees.find((e) => e.email === picEmail || e.name === picEmail);
@@ -1256,7 +1257,7 @@ export default function NarasumberHukumPage() {
               onClick={() => setPicDropdownOpen(!picDropdownOpen)}
               className="w-full px-4 py-2 text-left border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 text-gray-700 dark:text-white hover:border-brand-500 outline-none transition-colors text-xs font-black uppercase tracking-wider flex justify-between items-center cursor-pointer"
             >
-              <span>{picDropdownOpen ? "Tutup Menu PIC" : "Pilih Karyawan PIC..."}</span>
+              <span>{picDropdownOpen ? APP_LABELS.narasumberHukum.modals.closePicMenu : APP_LABELS.narasumberHukum.modals.selectPicEmployee}</span>
               <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
@@ -1266,14 +1267,14 @@ export default function NarasumberHukumPage() {
               <div className="absolute z-[999] left-0 right-0 mt-1 bg-white dark:bg-gray-955 border border-stroke dark:border-strokedark shadow-xl max-h-56 overflow-y-auto p-2 space-y-2 rounded-none">
                 <input
                   type="text"
-                  placeholder="Cari karyawan..."
+                  placeholder={APP_LABELS.narasumberHukum.modals.searchEmployeePlaceholder}
                   className="w-full px-3 py-1.5 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 text-gray-700 dark:text-white outline-none focus:border-brand-500 text-xs font-semibold"
                   value={picSearch}
                   onChange={(e) => setPicSearch(e.target.value)}
                 />
                 <div className="divide-y divide-stroke dark:divide-strokedark max-h-40 overflow-y-auto">
                   {filteredEmployees.length === 0 ? (
-                    <div className="text-center py-4 text-[11px] text-gray-400 italic">Tidak ada karyawan ditemukan</div>
+                    <div className="text-center py-4 text-[11px] text-gray-400 italic">{APP_LABELS.narasumberHukum.modals.noEmployeeFound}</div>
                   ) : (
                     filteredEmployees.map((emp) => {
                       const identifier = emp.email || emp.name;
@@ -1286,7 +1287,7 @@ export default function NarasumberHukumPage() {
                         >
                           <div className="flex flex-col">
                             <span className="text-[11px] font-black text-black dark:text-white uppercase">{emp.name}</span>
-                            <span className="text-[10px] text-gray-400 font-medium">{emp.position} | {emp.email || "No Email"}</span>
+                            <span className="text-[10px] text-gray-450 font-medium">{emp.position} | {emp.email || APP_LABELS.common.noEmail}</span>
                           </div>
                           {isSelected && (
                             <svg className="w-4 h-4 text-brand-500 fill-brand-500" viewBox="0 0 24 24">
@@ -1301,7 +1302,7 @@ export default function NarasumberHukumPage() {
               </div>
             )}
             <p className="text-[10px] text-gray-400 mt-1.5 italic leading-tight">
-              * Perubahan hak akses keamanan PIC akan langsung aktif untuk semua staf setelah disimpan.
+              {APP_LABELS.narasumberHukum.modals.picAccessNoteEdit}
             </p>
           </div>
 
@@ -1311,14 +1312,14 @@ export default function NarasumberHukumPage() {
               onClick={() => setEditFileModalOpen(false)}
               className="px-4 py-2 border border-stroke rounded-none text-xs font-black uppercase text-gray-600 hover:bg-gray-50 dark:border-strokedark dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
             >
-              Batal
+              {APP_LABELS.common.cancel}
             </button>
             <button
               type="submit"
               disabled={editFileSubmitting}
               className="px-4 py-2 bg-brand-500 text-white rounded-none hover:bg-brand-600 text-xs font-black uppercase transition-colors disabled:opacity-50"
             >
-              {editFileSubmitting ? "Menyimpan..." : "Simpan Berkas"}
+              {editFileSubmitting ? APP_LABELS.common.saving : APP_LABELS.narasumberHukum.modals.saveFileSubmit}
             </button>
           </div>
         </form>
@@ -1328,7 +1329,7 @@ export default function NarasumberHukumPage() {
       <FeatureModal
         isOpen={detailModalOpen}
         onClose={() => setDetailModalOpen(false)}
-        title="Rincian Berkas Hukum"
+        title={APP_LABELS.narasumberHukum.modals.detailFileTitle}
       >
         {selectedItem && (
           <div className="space-y-4 pt-2">
@@ -1339,27 +1340,27 @@ export default function NarasumberHukumPage() {
                   {selectedItem.customName || selectedItem.name}
                 </h3>
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">
-                  Format: {selectedItem.mimeType.split("/")[1] || "Berkas"} | Ukuran: {formatSize(selectedItem.size)}
+                  {APP_LABELS.narasumberHukum.modals.formatLabel}: {selectedItem.mimeType.split("/")[1] || APP_LABELS.common.file} | {APP_LABELS.narasumberHukum.modals.sizeLabel}: {formatSize(selectedItem.size)}
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 text-xs">
               <div>
-                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Keterangan / Deskripsi</span>
+                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">{APP_LABELS.narasumberHukum.modals.descriptionLabel}</span>
                 <span className="block font-semibold text-black dark:text-white mt-1">
-                  {selectedItem.description || "Tidak ada keterangan."}
+                  {selectedItem.description || APP_LABELS.narasumberHukum.empty.noDescription}
                 </span>
               </div>
               <div>
-                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">PT Klien Asosiasi</span>
+                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">{APP_LABELS.narasumberHukum.modals.associatedPtLabel}</span>
                 <span className="block font-semibold mt-1">
                   {selectedItem.pt ? (
                     <span className="px-2 py-0.5 bg-gray-150 dark:bg-gray-800 text-black dark:text-white font-black uppercase text-[9px] tracking-wider rounded-none">
                       {selectedItem.pt}
                     </span>
                   ) : (
-                    "Tidak terikat PT."
+                    APP_LABELS.narasumberHukum.empty.noPt
                   )}
                 </span>
               </div>
@@ -1367,7 +1368,7 @@ export default function NarasumberHukumPage() {
 
             <div className="grid grid-cols-2 gap-4 text-xs pt-2">
               <div>
-                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Hak Akses PIC</span>
+                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">{APP_LABELS.narasumberHukum.modals.picAccessLabel}</span>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {selectedItem.pic ? (
                     selectedItem.pic.split(",").map((pId) => {
@@ -1381,13 +1382,13 @@ export default function NarasumberHukumPage() {
                     })
                   ) : (
                     <span className="px-2 py-0.5 bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400 font-black uppercase text-[9px] tracking-wider rounded-none">
-                      Publik (Semua Staf)
+                      {APP_LABELS.narasumberHukum.modals.publicAccessLabel}
                     </span>
                   )}
                 </div>
               </div>
               <div>
-                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Tanggal Diunggah</span>
+                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">{APP_LABELS.narasumberHukum.table.uploadDate}</span>
                 <span className="block font-semibold text-black dark:text-white mt-1">
                   {selectedItem.createdTime ? new Date(selectedItem.createdTime).toLocaleDateString("id-ID", {
                     day: "numeric",
@@ -1406,7 +1407,7 @@ export default function NarasumberHukumPage() {
                 onClick={() => setDetailModalOpen(false)}
                 className="px-4 py-2 border border-stroke rounded-none text-xs font-black uppercase text-gray-600 hover:bg-gray-50 dark:border-strokedark dark:text-gray-300 dark:hover:bg-gray-800 transition-colors cursor-pointer"
               >
-                Tutup
+                {APP_LABELS.common.close}
               </button>
               {selectedItem.webViewLink && (
                 <a
@@ -1415,7 +1416,7 @@ export default function NarasumberHukumPage() {
                   rel="noreferrer"
                   className="px-4 py-2 bg-brand-500 text-white rounded-none hover:bg-brand-600 text-xs font-black uppercase transition-colors inline-block cursor-pointer text-center"
                 >
-                  Buka Berkas Google Drive
+                  {APP_LABELS.narasumberHukum.actions.openInGDrive}
                 </a>
               )}
             </div>
@@ -1428,7 +1429,7 @@ export default function NarasumberHukumPage() {
         <FeatureModal
           isOpen={!!previewItem}
           onClose={() => setPreviewItem(null)}
-          title={`Pratinjau Berkas: ${previewItem.customName || previewItem.name}`}
+          title={`${APP_LABELS.narasumberHukum.modals.previewFileTitle}: ${previewItem.customName || previewItem.name}`}
         >
           <div className="space-y-4 pt-2">
             <div className="border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-black/5 dark:bg-white/5 flex items-center justify-center min-h-[300px]">
@@ -1447,28 +1448,28 @@ export default function NarasumberHukumPage() {
                   </svg>
                   <div>
                     <h4 className="text-sm font-black text-black dark:text-white uppercase tracking-wider">{previewItem.customName || previewItem.name}</h4>
-                    <p className="text-xs text-gray-400 mt-1">Ekstensi/Jenis file ini memerlukan aplikasi eksternal untuk dibuka secara interaktif. Berikut rincian metadatanya:</p>
+                    <p className="text-xs text-gray-400 mt-1">{APP_LABELS.narasumberHukum.modals.previewNotSupportedNote}</p>
                   </div>
                   <div className="max-w-md mx-auto bg-gray-50 dark:bg-gray-900 border border-gray-150 dark:border-gray-800 rounded-xl p-4 text-left grid grid-cols-2 gap-3 text-xs">
                     <div>
-                      <span className="text-[10px] text-gray-450 font-bold uppercase tracking-widest">Ukuran</span>
+                      <span className="text-[10px] text-gray-450 font-bold uppercase tracking-widest">{APP_LABELS.narasumberHukum.table.size}</span>
                       <span className="block font-bold text-black dark:text-white mt-0.5">{formatSize(previewItem.size)}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-gray-455 font-bold uppercase tracking-widest">Jenis Berkas</span>
-                      <span className="block font-bold text-black dark:text-white mt-0.5 uppercase">{previewItem.mimeType.split("/")[1] || "Dokumen"}</span>
+                      <span className="text-[10px] text-gray-455 font-bold uppercase tracking-widest">{APP_LABELS.narasumberHukum.modals.fileTypeLabel}</span>
+                      <span className="block font-bold text-black dark:text-white mt-0.5 uppercase">{previewItem.mimeType.split("/")[1] || APP_LABELS.common.document}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-gray-450 font-bold uppercase tracking-widest">Dibuat Pada</span>
+                      <span className="text-[10px] text-gray-450 font-bold uppercase tracking-widest">{APP_LABELS.narasumberHukum.modals.createdDateLabel}</span>
                       <span className="block font-bold text-black dark:text-white mt-0.5">{previewItem.createdTime ? new Date(previewItem.createdTime).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "-"}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-gray-450 font-bold uppercase tracking-widest">Terakhir Diubah</span>
+                      <span className="text-[10px] text-gray-450 font-bold uppercase tracking-widest">{APP_LABELS.narasumberHukum.table.modifiedDate}</span>
                       <span className="block font-bold text-black dark:text-white mt-0.5">{previewItem.modifiedTime ? new Date(previewItem.modifiedTime).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "-"}</span>
                     </div>
                     {previewItem.owners && previewItem.owners[0] && (
                       <div className="col-span-2">
-                        <span className="text-[10px] text-gray-450 font-bold uppercase tracking-widest">Pemilik</span>
+                        <span className="text-[10px] text-gray-450 font-bold uppercase tracking-widest">{APP_LABELS.narasumberHukum.table.owner}</span>
                         <span className="block font-bold text-black dark:text-white mt-0.5">{previewItem.owners[0].displayName}</span>
                       </div>
                     )}
@@ -1483,7 +1484,7 @@ export default function NarasumberHukumPage() {
                 onClick={() => setPreviewItem(null)}
                 className="px-4 py-2 border border-stroke rounded-xl text-xs font-black uppercase text-gray-600 hover:bg-gray-50 dark:border-strokedark dark:text-gray-300 dark:hover:bg-gray-800 transition-colors cursor-pointer"
               >
-                Tutup
+                {APP_LABELS.common.close}
               </button>
               {previewItem.webViewLink && (
                 <a
@@ -1492,7 +1493,7 @@ export default function NarasumberHukumPage() {
                   rel="noreferrer"
                   className="px-4 py-2 bg-brand-500 text-white rounded-xl hover:bg-brand-600 text-xs font-black uppercase transition-colors inline-block cursor-pointer text-center"
                 >
-                  Buka di Google Drive
+                  {APP_LABELS.narasumberHukum.actions.openInGDrive}
                 </a>
               )}
             </div>

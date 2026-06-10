@@ -5,6 +5,7 @@ import { CalenderIcon, GroupIcon, PageIcon } from "@/icons";
 import { DigitalClock, MiniCalendar } from "@/components/dashboard/DashboardWidgets";
 import { RetainerIcon } from "@/icons/MenuIcons";
 import Link from "next/link";
+import { APP_LABELS } from "@/config/app-labels";
 
 interface Agenda {
   id: string;
@@ -74,6 +75,13 @@ export default function Dashboard() {
   const [announcements, setAnnouncements] = useState<Pengumuman[]>([]);
   const [recentDocs, setRecentDocs] = useState<GDriveItem[]>([]);
   const [gdriveError, setGdriveError] = useState<string | null>(null);
+  const [summaryCounts, setSummaryCounts] = useState({
+    activeCount: 0,
+    nonRetainer: 0,
+    retainer: 0,
+    internal: 0
+  });
+  const [activeBottomTab, setActiveBottomTab] = useState<"announcements" | "docs" | "logs">("announcements");
   
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -104,14 +112,16 @@ export default function Dashboard() {
           resPerorangan, 
           resPersonalTasks,
           resPengumuman,
-          resDocs
+          resDocs,
+          resSummary
         ] = await Promise.all([
           fetch("/api/karyawan"),
           fetch("/api/retainer"),
           fetch("/api/perorangan"),
           fetch("/api/personal-tasks"),
           fetch("/api/pengumuman"),
-          fetch("/api/gdrive/recent?limit=5")
+          fetch("/api/gdrive/recent?limit=5"),
+          fetch("/api/laporan-operasional?summary=true")
         ]);
 
         const team = resKaryawan.ok ? await resKaryawan.json() : [];
@@ -119,6 +129,7 @@ export default function Dashboard() {
         const peroranganData = resPerorangan.ok ? await resPerorangan.json() : [];
         const tasks = resPersonalTasks.ok ? await resPersonalTasks.json() : [];
         const ann = resPengumuman.ok ? await resPengumuman.json() : [];
+        const summaryObj = resSummary.ok ? await resSummary.json() : { activeCount: 0, nonRetainer: 0, retainer: 0, internal: 0 };
         
         let docs: GDriveItem[] = [];
         if (resDocs.ok) {
@@ -143,6 +154,7 @@ export default function Dashboard() {
         setPersonalTasks(tasks);
         setAnnouncements(ann.slice(0, 3));
         setRecentDocs(docs);
+        setSummaryCounts(summaryObj);
 
         // Fetch Activity Logs (Admin Only)
         if ((session?.user as any)?.role === "admin") {
@@ -234,364 +246,402 @@ export default function Dashboard() {
   const upcomingDeadlines = getUpcomingDeadlines();
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-1 md:px-3" suppressHydrationWarning>
+    <div className="space-y-4 max-w-7xl mx-auto px-1 md:px-3 pb-4" suppressHydrationWarning>
       
       {/* Header Ringkasan Operasional */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-4 border-b border-gray-200 dark:border-gray-800 gap-4" suppressHydrationWarning>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-3 border-b border-gray-200 dark:border-gray-800 gap-4" suppressHydrationWarning>
         <div>
-          <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-tight uppercase tracking-wider">
-            Ringkasan Operasional
+          <h1 className="text-xl font-black text-gray-900 dark:text-white leading-tight uppercase tracking-wider">
+            {APP_LABELS.dashboard.title}
           </h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Selamat Datang, <span className="font-bold text-brand-500">{session?.user?.name || "User"}</span>. Ringkasan aktivitas operasional kantor hukum hari ini.
+          <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+            {APP_LABELS.dashboard.welcome} <span className="font-bold text-brand-500">{session?.user?.name || "User"}</span>. {APP_LABELS.dashboard.welcomeSub}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-          </span>
-          <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Sistem Aktif</span>
+        <div className="flex items-center gap-3">
+          <Link href="/catatan-pribadi" className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-brand-500 text-[9px] font-black uppercase tracking-wider transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98]">
+            + Catatan
+          </Link>
+          <Link href="/retainer" className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-brand-500 text-[9px] font-black uppercase tracking-wider transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98]">
+            + Pekerjaan
+          </Link>
+          <Link href="/narasumber-hukum" className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-brand-500 text-[9px] font-black uppercase tracking-wider transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98]">
+            + Unggah
+          </Link>
+          <div className="flex items-center gap-2 border-l border-gray-200 dark:border-gray-800 pl-3">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">{APP_LABELS.common.systemActive}</span>
+          </div>
         </div>
       </div>
 
       {/* SECTION 1: Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" suppressHydrationWarning>
-        {/* Card 1: Proyek Aktif */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 flex items-center gap-3.5 transition-all hover:border-brand-500 hover:shadow group">
-          <div className="h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 transition-colors group-hover:bg-brand-500 group-hover:text-white">
+        {/* Card 1: Pekerjaan Aktif */}
+        <Link href="/laporan-operasional?status=Aktif" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-850 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer">
+          <div className="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 transition-colors group-hover:bg-brand-500 group-hover:text-white">
             <RetainerIcon />
           </div>
-          <div>
-            <h3 className="text-lg font-black text-gray-900 dark:text-white leading-none mb-1">{activeProjectsCount}</h3>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate">Proyek Aktif</p>
+          <div className="overflow-hidden">
+            <h3 className="text-base font-black text-gray-900 dark:text-white leading-none mb-0.5">{summaryCounts.activeCount}</h3>
+            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest truncate">Pekerjaan Aktif</p>
           </div>
-        </div>
+        </Link>
 
-        {/* Card 2: Tugas Prioritas */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 flex items-center gap-3.5 transition-all hover:border-brand-500 hover:shadow group">
-          <div className="h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 transition-colors group-hover:bg-red-500 group-hover:text-white">
-            <CalenderIcon />
-          </div>
-          <div>
-            <h3 className="text-lg font-black text-gray-900 dark:text-white leading-none mb-1">{priorityTasksCount}</h3>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate">Tugas Prioritas</p>
-          </div>
-        </div>
-
-        {/* Card 3: Arsip NH */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 flex items-center gap-3.5 transition-all hover:border-brand-500 hover:shadow group">
-          <div className="h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-blue-500/10 text-blue-500 transition-colors group-hover:bg-blue-500 group-hover:text-white">
+        {/* Card 2: Non Retainer */}
+        <Link href="/laporan-operasional?tab=NON_RETAINER" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-850 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer">
+          <div className="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-blue-500/10 text-blue-500 transition-colors group-hover:bg-blue-500 group-hover:text-white">
             <PageIcon />
           </div>
-          <div>
-            <h3 className="text-lg font-black text-gray-900 dark:text-white leading-none mb-1">{documentCount}</h3>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate">Folder Utama Arsip</p>
+          <div className="overflow-hidden">
+            <h3 className="text-base font-black text-gray-900 dark:text-white leading-none mb-0.5">{summaryCounts.nonRetainer}</h3>
+            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest truncate">Non Retainer</p>
           </div>
-        </div>
+        </Link>
 
-        {/* Card 4: Karyawan */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 flex items-center gap-3.5 transition-all hover:border-brand-500 hover:shadow group">
-          <div className="h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 transition-colors group-hover:bg-emerald-500 group-hover:text-white">
+        {/* Card 3: Retainer */}
+        <Link href="/laporan-operasional?tab=RETAINER" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-850 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer">
+          <div className="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-amber-500/10 text-amber-500 transition-colors group-hover:bg-amber-500 group-hover:text-white">
+            <RetainerIcon />
+          </div>
+          <div className="overflow-hidden">
+            <h3 className="text-base font-black text-gray-900 dark:text-white leading-none mb-0.5">{summaryCounts.retainer}</h3>
+            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest truncate">Retainer</p>
+          </div>
+        </Link>
+
+        {/* Card 4: INTERNAL */}
+        <Link href="/laporan-operasional?tab=INTERNAL" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-850 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer">
+          <div className="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 transition-colors group-hover:bg-emerald-500 group-hover:text-white">
             <GroupIcon />
           </div>
-          <div>
-            <h3 className="text-lg font-black text-gray-900 dark:text-white leading-none mb-1">{totalTeamCount}</h3>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate">Anggota Tim</p>
+          <div className="overflow-hidden">
+            <h3 className="text-base font-black text-gray-900 dark:text-white leading-none mb-0.5">{summaryCounts.internal}</h3>
+            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest truncate">INTERNAL</p>
           </div>
-        </div>
+        </Link>
       </div>
 
-      {/* SECTION 2: 70% / 30% Split Layout */}
+      {/* SECTION 2: Agenda & Tugas + Clock/Calendar */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5" suppressHydrationWarning>
         
-        {/* LEFT COLUMN: Agenda & Deadline (70%) */}
-        <div className="lg:col-span-8 space-y-4">
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[460px] flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-5 border-b border-gray-100 pb-3 dark:border-gray-800">
-                <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-4 bg-brand-500 rounded-full"></span>
-                  <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">
-                    {selectedDate ? `Agenda Tanggal: ${selectedDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}` : "Agenda & Deadline Terdekat"}
-                  </h2>
+        {/* LEFT COLUMN: Agenda & Tugas side-by-side (70% width) */}
+        <div className="lg:col-span-8 flex flex-col">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-850 dark:bg-gray-900 flex-1 flex flex-col justify-between max-h-[350px] min-h-[350px]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full overflow-hidden">
+              
+              {/* Agenda (Agenda Terdekat) */}
+              <div className="flex flex-col h-full overflow-hidden">
+                <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-2 dark:border-gray-800">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-3.5 bg-brand-500 rounded-full"></span>
+                    <h2 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">
+                      Agenda (Agenda Terdekat)
+                    </h2>
+                  </div>
+                  <Link href="/calendar" className="text-brand-500 font-black hover:underline text-[9px] uppercase tracking-wider">Semua</Link>
                 </div>
-                <div className="flex items-center gap-3">
-                  {selectedDate && (
-                    <button 
-                      onClick={() => setSelectedDate(null)} 
-                      className="text-[10px] text-red-500 font-black uppercase hover:underline"
-                    >
-                      Reset Filter
-                    </button>
-                  )}
-                  <Link href="/calendar" className="text-brand-500 font-black hover:underline text-[10px] uppercase tracking-wider">Lihat Semua</Link>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {loading ? (
-                  [1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
-                ) : displayAgendas.length > 0 ? (
-                  displayAgendas.map(agenda => (
-                    <div key={agenda.id} className="flex items-center justify-between p-4 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-white/[0.005] hover:border-brand-500/30 transition-all group">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg font-black text-xs ${
-                          agenda.scale === 'Q1' ? 'bg-red-50 text-red-500 dark:bg-red-950/20' : 'bg-gray-50 text-gray-500 dark:bg-gray-800'
-                        }`}>
-                          {agenda.scale}
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-gray-900 dark:text-white group-hover:text-brand-500 transition-colors leading-snug">
-                            {agenda.title}
-                          </h4>
-                          <div className="text-[10px] text-gray-400 mt-1 flex items-center gap-3 font-semibold uppercase tracking-wider">
-                            <span>{new Date(agenda.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                            <span className="text-brand-500 font-black">PIC: {agenda.pic}</span>
+                
+                <div className="space-y-2 overflow-y-auto pr-1 flex-1 no-scrollbar">
+                  {loading ? (
+                    [1, 2, 3].map(i => <div key={i} className="h-12 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
+                  ) : displayAgendas.length > 0 ? (
+                    displayAgendas.map(agenda => (
+                      <div key={agenda.id} className="flex items-center justify-between p-2.5 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-white/[0.005] hover:border-brand-500/30 transition-all group">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <div className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg font-black text-[9px] ${
+                            agenda.scale === 'Q1' ? 'bg-red-50 text-red-500 dark:bg-red-950/20' : 'bg-gray-50 text-gray-500 dark:bg-gray-800'
+                          }`}>
+                            {agenda.scale}
+                          </div>
+                          <div className="overflow-hidden">
+                            <h4 className="text-[11px] font-bold text-gray-900 dark:text-white group-hover:text-brand-500 transition-colors leading-snug truncate">
+                              {agenda.title}
+                            </h4>
+                            <div className="text-[9px] text-gray-400 mt-0.5 flex items-center gap-2 font-semibold uppercase tracking-wider">
+                              <span>{new Date(agenda.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+                              <span className="text-brand-500 font-black">PIC: {agenda.pic}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-10 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/20">
+                      <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">{APP_LABELS.dashboard.empty.agenda}</p>
                     </div>
-                  ))
-                ) : (
-                  <div className="text-center py-24 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/20">
-                    <svg className="w-10 h-10 text-gray-300 dark:text-gray-650 mx-auto mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                    </svg>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Tidak ada agenda hukum untuk tanggal ini.</p>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
+
+              {/* Tugas (Personal Tasks) */}
+              <div className="flex flex-col h-full overflow-hidden border-t md:border-t-0 md:border-l border-gray-150 dark:border-gray-800 md:pl-6 pt-4 md:pt-0">
+                <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-2 dark:border-gray-800">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-3.5 bg-red-500 rounded-full"></span>
+                    <h2 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">
+                      Tugas
+                    </h2>
+                  </div>
+                  <Link href="/catatan-pribadi" className="text-brand-500 font-black hover:underline text-[9px] uppercase tracking-wider">Semua</Link>
+                </div>
+                
+                <div className="space-y-2 overflow-y-auto pr-1 flex-1 no-scrollbar">
+                  {loading ? (
+                    [1, 2, 3].map(i => <div key={i} className="h-12 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
+                  ) : personalTasks.filter(t => t.status !== "COMPLETED").length > 0 ? (
+                    personalTasks.filter(t => t.status !== "COMPLETED").slice(0, 4).map(task => (
+                      <div key={task.id} className="flex items-center justify-between p-2.5 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-white/[0.005] hover:border-brand-500/30 transition-all group">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <div className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg font-black text-[9px] ${
+                            task.priority === 'Q1' ? 'bg-red-50 text-red-500 dark:bg-red-950/20' : 
+                            task.priority === 'Q2' ? 'bg-amber-50 text-amber-500 dark:bg-amber-950/20' : 
+                            'bg-gray-50 text-gray-500 dark:bg-gray-800'
+                          }`}>
+                            {task.priority || 'Q2'}
+                          </div>
+                          <div className="overflow-hidden">
+                            <h4 className="text-[11px] font-bold text-gray-900 dark:text-white group-hover:text-brand-500 transition-colors leading-snug truncate">
+                              {task.title}
+                            </h4>
+                            <div className="text-[9px] text-gray-400 mt-0.5 flex items-center gap-2 font-semibold uppercase tracking-wider">
+                              <span className="text-red-550 font-black uppercase tracking-widest text-[8px]">{task.status}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-10 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/20">
+                      <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Tidak ada tugas aktif.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Clock, Calendar & Quick Actions (30%) */}
-        <div className="lg:col-span-4 space-y-4">
-          <DigitalClock />
-          <MiniCalendar 
-            agendas={allAgendas} 
-            onDateClick={setSelectedDate} 
-            selectedDate={selectedDate}
-          />
-          
-          {/* Quick Actions Container */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 space-y-3">
-            <h4 className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 pb-2">Akses Cepat</h4>
-            <div className="grid grid-cols-2 gap-2">
-              <Link 
-                href="/catatan-pribadi" 
-                className="p-3 text-center border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all block group"
-              >
-                <span className="text-[10px] font-black text-gray-850 dark:text-gray-200 group-hover:text-brand-500 block uppercase tracking-wider">Buat Catatan</span>
-              </Link>
-              <Link 
-                href="/retainer" 
-                className="p-3 text-center border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all block group"
-              >
-                <span className="text-[10px] font-black text-gray-850 dark:text-gray-200 group-hover:text-brand-500 block uppercase tracking-wider">Tambah Proyek</span>
-              </Link>
-              <Link 
-                href="/narasumber-hukum" 
-                className="p-3 text-center border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all block group"
-              >
-                <span className="text-[10px] font-black text-gray-850 dark:text-gray-200 group-hover:text-brand-500 block uppercase tracking-wider">Upload Arsip</span>
-              </Link>
-              <Link 
-                href="/karyawan" 
-                className="p-3 text-center border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all block group"
-              >
-                <span className="text-[10px] font-black text-gray-850 dark:text-gray-200 group-hover:text-brand-500 block uppercase tracking-wider">Tambah Data</span>
-              </Link>
-            </div>
+        {/* RIGHT COLUMN: Clock, MiniCalendar (30% width) */}
+        <div className="lg:col-span-4 flex flex-col justify-between max-h-[350px] min-h-[350px] space-y-4">
+          <div className="flex-1 flex flex-col justify-center min-h-[90px] max-h-[90px]">
+            <DigitalClock />
+          </div>
+          <div className="flex-1 flex flex-col justify-between min-h-[244px] max-h-[244px]">
+            <MiniCalendar 
+              agendas={allAgendas} 
+              onDateClick={setSelectedDate} 
+              selectedDate={selectedDate}
+            />
           </div>
         </div>
       </div>
 
-      {/* SECTION 3: 50% / 50% Split Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5" suppressHydrationWarning>
+      {/* SECTION 3: Deadlines & Tabbed widget */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5" suppressHydrationWarning>
         
-        {/* LEFT COLUMN: Deadline Mendekat (50%) */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[350px]">
-          <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3 dark:border-gray-800">
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-red-500 rounded-full"></span>
-              <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Tenggat Waktu Mendekat</h2>
+        {/* Left Column: Tenggat Waktu Mendekat */}
+        <div className="lg:col-span-5">
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[210px] max-h-[210px] flex flex-col">
+            <div className="flex items-center gap-2 mb-3 border-b border-gray-100 pb-2 dark:border-gray-800">
+              <span className="w-1.5 h-3.5 bg-red-500 rounded-full"></span>
+              <h2 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">{APP_LABELS.dashboard.sections.upcomingDeadlines}</h2>
             </div>
-          </div>
-          <div className="space-y-3">
-            {loading ? (
-              [1, 2, 3].map(i => <div key={i} className="h-14 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
-            ) : upcomingDeadlines.length > 0 ? (
-              upcomingDeadlines.map((dl, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3.5 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/20 dark:bg-white/[0.002]">
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-900 dark:text-white leading-tight">{dl.title}</h4>
-                    <p className="text-[10px] text-gray-400 mt-1 font-semibold uppercase tracking-wider">Klien: {dl.client}</p>
-                  </div>
-                  <div className="text-right">
-                    <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg ${
-                      dl.remainingDays <= 7 ? "bg-red-50 text-red-500 dark:bg-red-950/20" : "bg-amber-50 text-amber-600 dark:bg-amber-950/20"
-                    }`}>
-                      {dl.remainingDays} Hari Lagi
-                    </span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-16">
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider italic">Tidak ada tenggat waktu kontrak mendesak.</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN: Aktivitas Terbaru (50%) */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[350px] flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3 dark:border-gray-800">
-              <div className="flex items-center gap-2">
-                <span className="w-1.5 h-4 bg-blue-500 rounded-full"></span>
-                <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Aktivitas Terbaru</h2>
-              </div>
-            </div>
-            <div className="space-y-3">
+            
+            <div className="space-y-2 overflow-y-auto pr-1 flex-1 no-scrollbar">
               {loading ? (
-                [1, 2, 3].map(i => <div key={i} className="h-14 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
-              ) : !isAdmin ? (
-                /* Non-admin fallback info card */
-                <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/10">
-                  <svg className="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                  </svg>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider leading-relaxed px-4">
-                    Log aktivitas sistem terenkripsi dan hanya dapat diakses oleh Administrator.
-                  </p>
-                </div>
-              ) : activityLogs.length > 0 ? (
-                activityLogs.map((log) => (
-                  <div key={log.id} className="flex items-start justify-between p-3 border border-gray-100 dark:border-gray-800 rounded-xl bg-gray-50/20 dark:bg-white/[0.002]">
-                    <div className="space-y-0.5">
-                      <p className="text-xs font-bold text-gray-900 dark:text-white">
-                        {log.userName || "Sistem"} <span className="font-normal text-gray-500 text-[11px]">{log.action}</span>
-                      </p>
-                      <p className="text-[10px] text-gray-400 font-medium truncate max-w-xs">{log.details}</p>
+                [1, 2].map(i => <div key={i} className="h-10 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
+              ) : upcomingDeadlines.length > 0 ? (
+                upcomingDeadlines.map((dl, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/20 dark:bg-white/[0.002]">
+                    <div className="overflow-hidden mr-2">
+                      <h4 className="text-[11px] font-bold text-gray-900 dark:text-white leading-tight truncate">{dl.title}</h4>
+                      <p className="text-[9px] text-gray-450 mt-0.5 font-semibold uppercase tracking-wider truncate">Klien: {dl.client}</p>
                     </div>
-                    <span className="text-[9px] text-gray-400 font-bold font-mono">
-                      {new Date(log.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
+                    <div className="text-right flex-shrink-0">
+                      <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
+                        dl.remainingDays <= 7 ? "bg-red-50 text-red-500 dark:bg-red-950/20" : "bg-amber-50 text-amber-600 dark:bg-amber-950/20"
+                      }`}>
+                        {dl.remainingDays} Hari
+                      </span>
+                    </div>
                   </div>
                 ))
               ) : (
-                <div className="text-center py-16">
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider italic">Belum ada catatan aktivitas.</p>
+                <div className="text-center py-8">
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider italic">{APP_LABELS.dashboard.empty.deadlines}</p>
                 </div>
               )}
             </div>
           </div>
-          {isAdmin && activityLogs.length > 0 && (
-            <div className="pt-3 border-t border-gray-100 dark:border-gray-800 text-right">
-              <Link href="/admin-control" className="text-[10px] font-black text-brand-500 uppercase tracking-widest hover:underline">
-                Lihat Semua &rarr;
-              </Link>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* SECTION 4: 50% / 50% Split Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5" suppressHydrationWarning>
-        
-        {/* LEFT COLUMN: Pengumuman (50%) */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[350px]">
-          <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3 dark:border-gray-800">
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-emerald-500 rounded-full"></span>
-              <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Pengumuman Internal</h2>
-            </div>
-            <Link href="/pengumuman" className="text-brand-500 font-black hover:underline text-[10px] uppercase tracking-wider">Semua</Link>
-          </div>
-          <div className="space-y-3">
-            {loading ? (
-              [1, 2].map(i => <div key={i} className="h-24 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
-            ) : announcements.length > 0 ? (
-              announcements.map((ann) => (
-                <div key={ann.id} className="p-4 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/20 dark:bg-white/[0.002] space-y-1">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-black text-gray-900 dark:text-white truncate max-w-[200px] uppercase tracking-wide">{ann.title}</h4>
-                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-lg ${
-                      ann.priority === "High" ? "bg-red-50 text-red-500 dark:bg-red-950/20" : "bg-gray-100 text-gray-500 dark:bg-gray-800"
-                    }`}>
-                      {ann.priority}
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">{ann.content}</p>
-                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider pt-1">
-                    {new Date(ann.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-20">
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider italic">Tidak ada pengumuman baru.</p>
-              </div>
-            )}
-          </div>
         </div>
 
-        {/* RIGHT COLUMN: Dokumen Terbaru (50%) */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[350px]">
-          <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3 dark:border-gray-800">
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-violet-500 rounded-full"></span>
-              <h2 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Dokumen Terbaru</h2>
+        {/* Right Column: Tabbed Panel for Pengumuman, Dokumen, Aktivitas */}
+        <div className="lg:col-span-7">
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[210px] max-h-[210px] flex flex-col">
+            
+            {/* Tab Headers */}
+            <div className="flex items-center justify-between border-b border-gray-150 pb-2 dark:border-gray-800 mb-3">
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setActiveBottomTab("announcements")}
+                  className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
+                    activeBottomTab === "announcements"
+                      ? "bg-brand-500 text-white shadow-sm"
+                      : "text-gray-450 hover:text-gray-900 dark:hover:text-white hover:bg-gray-105/50 dark:hover:bg-gray-800/40"
+                  }`}
+                >
+                  Pengumuman
+                </button>
+                <button
+                  onClick={() => setActiveBottomTab("docs")}
+                  className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
+                    activeBottomTab === "docs"
+                      ? "bg-violet-500 text-white shadow-sm"
+                      : "text-gray-450 hover:text-gray-900 dark:hover:text-white hover:bg-gray-105/50 dark:hover:bg-gray-800/40"
+                  }`}
+                >
+                  Dokumen
+                </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => setActiveBottomTab("logs")}
+                    className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
+                      activeBottomTab === "logs"
+                        ? "bg-blue-500 text-white shadow-sm"
+                        : "text-gray-450 hover:text-gray-900 dark:hover:text-white hover:bg-gray-105/50 dark:hover:bg-gray-800/40"
+                    }`}
+                  >
+                    Aktivitas
+                  </button>
+                )}
+              </div>
+              
+              <div>
+                {activeBottomTab === "announcements" && (
+                  <Link href="/pengumuman" className="text-brand-500 font-black hover:underline text-[9px] uppercase tracking-wider">Semua</Link>
+                )}
+                {activeBottomTab === "docs" && (
+                  <Link href="/narasumber-hukum" className="text-brand-500 font-black hover:underline text-[9px] uppercase tracking-wider">Eksplor</Link>
+                )}
+                {activeBottomTab === "logs" && isAdmin && (
+                  <Link href="/admin-control" className="text-blue-500 font-black hover:underline text-[9px] uppercase tracking-wider">Log</Link>
+                )}
+              </div>
             </div>
-            <Link href="/narasumber-hukum" className="text-brand-500 font-black hover:underline text-[10px] uppercase tracking-wider">Eksplor</Link>
-          </div>
-          <div className="space-y-3">
-            {loading ? (
-              [1, 2, 3].map(i => <div key={i} className="h-14 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
-            ) : gdriveError ? (
-              <div className="text-center py-16 px-4">
-                <svg className="w-8 h-8 text-amber-500 mx-auto mb-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold leading-relaxed">
-                  {gdriveError}
-                </p>
-              </div>
-            ) : recentDocs.length > 0 ? (
-              recentDocs.map((doc) => (
-                <div key={doc.id} className="flex items-center justify-between p-3.5 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/20 dark:bg-white/[0.002] hover:border-brand-500/30 transition-colors">
-                  <div className="flex items-center gap-3 overflow-hidden">
-                    <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                    </svg>
-                    <span className="text-xs font-bold text-gray-900 dark:text-white truncate max-w-xs">{doc.name}</span>
-                  </div>
-                  <div>
-                    {doc.webViewLink ? (
-                      <a 
-                        href={doc.webViewLink} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="text-[9px] font-black uppercase tracking-widest text-brand-500 hover:underline"
-                      >
-                        Buka
-                      </a>
-                    ) : (
-                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Folder</span>
-                    )}
-                  </div>
+
+            {/* Tab Contents */}
+            <div className="flex-1 overflow-y-auto pr-1 no-scrollbar">
+              
+              {/* Announcements */}
+              {activeBottomTab === "announcements" && (
+                <div className="space-y-2">
+                  {loading ? (
+                    [1, 2].map(i => <div key={i} className="h-12 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
+                  ) : announcements.length > 0 ? (
+                    announcements.map((ann) => (
+                      <div key={ann.id} className="p-2.5 rounded-xl border border-gray-150 dark:border-gray-800 bg-gray-50/20 dark:bg-white/[0.002] flex justify-between items-start gap-4">
+                        <div className="overflow-hidden">
+                          <h4 className="text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-wide truncate">{ann.title}</h4>
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-1 leading-relaxed mt-0.5">{ann.content}</p>
+                        </div>
+                        <div className="flex flex-col items-end flex-shrink-0 gap-1">
+                          <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${
+                            ann.priority === "High" ? "bg-red-50 text-red-500 dark:bg-red-950/20" : "bg-gray-100 text-gray-500 dark:bg-gray-800"
+                          }`}>
+                            {ann.priority}
+                          </span>
+                          <span className="text-[8px] text-gray-450 font-bold uppercase">
+                            {new Date(ann.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-[9px] text-gray-450 font-bold uppercase italic">{APP_LABELS.dashboard.empty.announcements}</p>
+                    </div>
+                  )}
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-20">
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider italic">Tidak ada dokumen di folder utama.</p>
-              </div>
-            )}
+              )}
+
+              {/* Documents */}
+              {activeBottomTab === "docs" && (
+                <div className="space-y-2">
+                  {loading ? (
+                    [1, 2, 3].map(i => <div key={i} className="h-10 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
+                  ) : gdriveError ? (
+                    <div className="text-center py-8 px-4">
+                      <p className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">{gdriveError}</p>
+                    </div>
+                  ) : recentDocs.length > 0 ? (
+                    recentDocs.slice(0, 3).map((doc) => (
+                      <div key={doc.id} className="flex items-center justify-between p-2 rounded-xl border border-gray-150 dark:border-gray-800 bg-gray-50/20 dark:bg-white/[0.002] hover:border-brand-500/30 transition-colors">
+                        <div className="flex items-center gap-2 overflow-hidden mr-2">
+                          <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                          </svg>
+                          <span className="text-[11px] font-bold text-gray-900 dark:text-white truncate">{doc.name}</span>
+                        </div>
+                        <div>
+                          {doc.webViewLink ? (
+                            <a 
+                              href={doc.webViewLink} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="text-[8px] font-black uppercase tracking-widest text-brand-500 hover:underline"
+                            >
+                              Buka
+                            </a>
+                          ) : (
+                            <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Folder</span>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-[9px] text-gray-450 font-bold uppercase italic">{APP_LABELS.dashboard.empty.recentDocs}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Logs */}
+              {activeBottomTab === "logs" && isAdmin && (
+                <div className="space-y-2">
+                  {loading ? (
+                    [1, 2, 3].map(i => <div key={i} className="h-10 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
+                  ) : activityLogs.length > 0 ? (
+                    activityLogs.slice(0, 3).map((log) => (
+                      <div key={log.id} className="flex items-start justify-between p-2 border border-gray-150 dark:border-gray-800 rounded-xl bg-gray-50/20 dark:bg-white/[0.002]">
+                        <div className="space-y-0.5 overflow-hidden mr-2">
+                          <p className="text-[11px] font-bold text-gray-900 dark:text-white truncate">
+                            {log.userName || "Sistem"} <span className="font-normal text-gray-500 text-[10px]">{log.action}</span>
+                          </p>
+                          <p className="text-[9px] text-gray-450 font-medium truncate">{log.details}</p>
+                        </div>
+                        <span className="text-[8px] text-gray-400 font-bold font-mono flex-shrink-0">
+                          {new Date(log.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-[9px] text-gray-400 font-bold uppercase italic">{APP_LABELS.dashboard.empty.activityLogs}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            </div>
           </div>
         </div>
+
       </div>
 
     </div>
