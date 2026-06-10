@@ -1008,20 +1008,8 @@ const Calendar: React.FC = () => {
           </svg>
         </div>
 
-        {/* Ringkasan */}
-        <div className="mt-3 p-3 bg-gray-50/50 dark:bg-white/[0.02] border border-gray-100 dark:border-gray-800 rounded-xl grid grid-cols-2 gap-2 text-center">
-          <div>
-            <span className="block text-[8px] font-black uppercase text-gray-400 tracking-wider">Hari Ini</span>
-            <span className="text-xs font-black text-black dark:text-white">{todayCount} Agenda</span>
-          </div>
-          <div className="border-l border-gray-100 dark:border-gray-800">
-            <span className="block text-[8px] font-black uppercase text-gray-400 tracking-wider">Minggu Ini</span>
-            <span className="text-xs font-black text-black dark:text-white">{weekCount} Agenda</span>
-          </div>
-        </div>
-
         {/* Agenda Scroll Area */}
-        <div className="flex-1 overflow-y-auto no-scrollbar py-4 space-y-4">
+        <div className="flex-1 overflow-y-auto no-scrollbar py-3 space-y-4">
           {selectedDate ? (
             filterBySearch(filteredEvents).length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center space-y-2 py-8">
@@ -1116,65 +1104,10 @@ const Calendar: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* 4 Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Agenda Hari Ini */}
-        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-brand-500 flex-shrink-0">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div>
-            <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Hari Ini</span>
-            <h4 className="text-xl font-black text-black dark:text-white leading-none mt-1">{todayCount}</h4>
-          </div>
-        </div>
-
-        {/* Card 2: Agenda Minggu Ini */}
-        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 flex-shrink-0">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-            </svg>
-          </div>
-          <div>
-            <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Minggu Ini</span>
-            <h4 className="text-lg font-black text-black dark:text-white leading-none mt-1">{weekCount}</h4>
-          </div>
-        </div>
-
-        {/* Card 3: Agenda Bulan Ini */}
-        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500 flex-shrink-0">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" />
-            </svg>
-          </div>
-          <div>
-            <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Bulan Ini</span>
-            <h4 className="text-lg font-black text-black dark:text-white leading-none mt-1">{monthCount}</h4>
-          </div>
-        </div>
-
-        {/* Card 4: Deadline Dekat */}
-        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500 flex-shrink-0">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z" />
-            </svg>
-          </div>
-          <div>
-            <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Deadline Dekat</span>
-            <h4 className="text-lg font-black text-black dark:text-white leading-none mt-1">{deadlineCount}</h4>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        {/* Left Side: Calendar Area (75% / xl:col-span-9) */}
-        <div className="xl:col-span-9 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-2xl p-4 md:p-6 flex flex-col">
+    <div>
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4" style={{ height: 'calc(100vh - 130px)', minHeight: '600px' }}>
+        {/* Left Side: Calendar Area */}
+        <div className="xl:col-span-9 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-2xl p-4 md:p-5 flex flex-col overflow-hidden">
           
           {/* Custom Header Toolbar */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-4 border-b border-gray-100 dark:border-gray-800">
@@ -1283,15 +1216,65 @@ const Calendar: React.FC = () => {
                 eventContent={renderEventContent}
                 dayCellContent={renderDayCellContent}
                 datesSet={handleDatesSet}
-                height="auto"
+                height="100%"
               />
             </div>
           )}
         </div>
 
-        {/* Right Side: Agenda List Panel (25% / xl:col-span-3) */}
-        <div className="xl:col-span-3 flex flex-col space-y-4">
-          <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-2xl p-4 md:p-5 flex flex-col h-[650px] overflow-hidden">
+        {/* Right Side: Agenda Panel + Stats */}
+        <div className="xl:col-span-3 flex flex-col h-full gap-3">
+
+          {/* Stat Mini Cards - 2x2 grid */}
+          <div className="grid grid-cols-2 gap-2 flex-shrink-0">
+            <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 px-3 py-2.5 rounded-xl flex items-center gap-2.5 shadow-sm">
+              <div className="w-7 h-7 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-500 flex-shrink-0">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider block">Hari Ini</span>
+                <span className="text-base font-black text-black dark:text-white leading-none">{todayCount}</span>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 px-3 py-2.5 rounded-xl flex items-center gap-2.5 shadow-sm">
+              <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 flex-shrink-0">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                </svg>
+              </div>
+              <div>
+                <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider block">Minggu Ini</span>
+                <span className="text-base font-black text-black dark:text-white leading-none">{weekCount}</span>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 px-3 py-2.5 rounded-xl flex items-center gap-2.5 shadow-sm">
+              <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500 flex-shrink-0">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                </svg>
+              </div>
+              <div>
+                <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider block">Bulan Ini</span>
+                <span className="text-base font-black text-black dark:text-white leading-none">{monthCount}</span>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 px-3 py-2.5 rounded-xl flex items-center gap-2.5 shadow-sm">
+              <div className="w-7 h-7 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500 flex-shrink-0">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z" />
+                </svg>
+              </div>
+              <div>
+                <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider block">Mendesak</span>
+                <span className="text-base font-black text-black dark:text-white leading-none">{deadlineCount}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Agenda Panel - fills remaining height */}
+          <div className="flex-1 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-2xl p-4 flex flex-col overflow-hidden min-h-0">
             {renderAgendaPanelContent()}
           </div>
         </div>
@@ -1573,36 +1556,110 @@ const Calendar: React.FC = () => {
               </div>
 
               {/* Upload File & Link File */}
-              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-100 dark:border-gray-800 pt-4 mt-2">
-                <div>
-                  <label className="block text-sm font-bold text-black dark:text-white mb-3">Unggah File (Opsional)</label>
-                  <div className="relative">
+              <div className="md:col-span-2 border-t border-gray-100 dark:border-gray-800 pt-4 mt-2 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-black dark:text-white mb-3">Unggah File (Opsional)</label>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        disabled={!canManage || uploadingFile}
+                        onChange={handleFileUpload}
+                        className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-3 file:border-0 file:text-xs file:font-bold file:bg-brand-500/10 file:text-brand-600 hover:file:bg-brand-500/20 cursor-pointer"
+                      />
+                      {uploadingFile && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                          <span className="w-3.5 h-3.5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></span>
+                          <span className="text-[10px] text-brand-500 font-bold">Mengunggah...</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-black dark:text-white mb-3">Link File / Tautan</label>
                     <input
-                      type="file"
-                      disabled={!canManage || uploadingFile}
-                      onChange={handleFileUpload}
-                      className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-3 file:border-0 file:text-xs file:font-bold file:bg-brand-500/10 file:text-brand-600 hover:file:bg-brand-500/20 cursor-pointer"
+                      type="text"
+                      disabled={!canManage}
+                      value={fileLink}
+                      onChange={(e) => setFileLink(e.target.value)}
+                      placeholder="https://drive.google.com/..."
+                      className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
                     />
-                    {uploadingFile && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                        <span className="w-3.5 h-3.5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></span>
-                        <span className="text-[10px] text-brand-500 font-bold">Mengunggah...</span>
-                      </div>
-                    )}
                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-black dark:text-white mb-3">Link File / Tautan</label>
-                  <input
-                    type="text"
-                    disabled={!canManage}
-                    value={fileLink}
-                    onChange={(e) => setFileLink(e.target.value)}
-                    placeholder="https://drive.google.com/..."
-                    className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
-                  />
-                </div>
+
+                {/* Document Preview Area */}
+                {fileLink && (() => {
+                  const isPDF = fileLink.toLowerCase().includes('.pdf');
+                  const isImage = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(fileLink);
+                  const fileName = fileLink.split('/').pop()?.split('?')[0] || 'Dokumen';
+
+                  return (
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-gray-50/50 dark:bg-white/[0.02]">
+                      {/* File Header Bar */}
+                      <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-white/[0.03]">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {isPDF ? (
+                            <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                              <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8.5 17.5h-1v-5h1v5zm3.5 0h-1V15h-1v-2.5h2V17.5zm3.5 0h-1v-2h-1v-1h1v-1.5h1V17.5z"/>
+                              </svg>
+                            </div>
+                          ) : isImage ? (
+                            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                              <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center flex-shrink-0">
+                              <svg className="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                              </svg>
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-black dark:text-white truncate">{decodeURIComponent(fileName)}</p>
+                            <p className="text-[10px] text-gray-400 font-medium">{isPDF ? 'PDF Document' : isImage ? 'Image File' : 'External Link'}</p>
+                          </div>
+                        </div>
+                        <a
+                          href={fileLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-brand-500 text-white text-[10px] font-black uppercase tracking-wider rounded-lg hover:bg-brand-600 transition-colors"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                          Lihat
+                        </a>
+                      </div>
+
+                      {/* Inline Preview */}
+                      {isPDF && (
+                        <div className="w-full" style={{ height: '340px' }}>
+                          <iframe
+                            src={fileLink}
+                            className="w-full h-full border-0"
+                            title="Preview Dokumen"
+                          />
+                        </div>
+                      )}
+                      {isImage && (
+                        <div className="p-3 flex items-center justify-center bg-gray-100/50 dark:bg-black/20" style={{ maxHeight: '300px', overflow: 'hidden' }}>
+                          <img
+                            src={fileLink}
+                            alt="Preview"
+                            className="max-w-full max-h-[280px] object-contain rounded-lg shadow"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
+
 
               {/* Scale */}
               <div>
