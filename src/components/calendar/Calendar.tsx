@@ -313,6 +313,12 @@ const Calendar: React.FC = () => {
     const scale = ev.extendedProps?.scale || "Q2";
     const statusVal = ev.extendedProps?.status || "Aktif";
     const isSelesai = statusVal === "Selesai";
+    const evFileLink = ev.extendedProps?.fileLink || "";
+
+    // Permission: admin bisa semua, atau user yang namanya ada di PIC
+    const userName = (session?.user as any)?.name || "";
+    const picList = (ev.extendedProps?.pic || "").split(", ");
+    const isCreatorOrAdmin = canManage && (isAdminUser || picList.includes(userName));
 
     let priorityText = "Rendah";
     let priorityColorClass = "bg-green-500/10 text-green-600 border border-green-200/30 dark:border-green-800/30";
@@ -339,46 +345,97 @@ const Calendar: React.FC = () => {
     return (
       <div
         key={ev.id}
-        className="p-3 border border-gray-150 dark:border-gray-800 bg-white dark:bg-white/[0.01] hover:border-brand-500/50 dark:hover:border-brand-500/30 rounded-xl flex flex-col gap-1.5 transition-all duration-200 group relative cursor-pointer shadow-sm hover:shadow"
-        onClick={() => handleEventClickFromList(ev)}
+        className="border border-gray-150 dark:border-gray-800 bg-white dark:bg-white/[0.01] hover:border-brand-500/30 dark:hover:border-brand-500/20 rounded-xl flex flex-col gap-0 transition-all duration-200 group relative shadow-sm hover:shadow overflow-hidden"
       >
-        <div className="flex items-center justify-between gap-2">
-          {/* Jam / Time Range */}
-          <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1">
-            <svg className="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {timeRange || "All Day"}
-          </span>
+        {/* Top clickable area */}
+        <div
+          className="p-3 flex flex-col gap-1.5 cursor-pointer"
+          onClick={() => handleEventClickFromList(ev)}
+        >
+          <div className="flex items-center justify-between gap-2">
+            {/* Jam */}
+            <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              <svg className="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {timeRange || "All Day"}
+            </span>
+            {/* Badge */}
+            <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${priorityColorClass}`}>
+              {priorityText}
+            </span>
+          </div>
 
-          {/* Status Indicator */}
-          <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${priorityColorClass}`}>
-            {priorityText}
+          {/* Judul */}
+          <h4 className="text-xs font-bold text-gray-800 dark:text-gray-200 leading-snug group-hover:text-brand-500 transition-colors line-clamp-2">
+            {ev.title}
+          </h4>
+
+          {/* PIC */}
+          <span className="text-[10px] text-gray-400 font-medium truncate" title={ev.extendedProps?.pic}>
+            PIC: <span className="font-bold text-gray-600 dark:text-gray-300">{ev.extendedProps?.pic || "WFO"}</span>
           </span>
         </div>
 
-        {/* Judul */}
-        <h4 className="text-xs font-bold text-gray-800 dark:text-gray-200 leading-snug group-hover:text-brand-500 transition-colors truncate">
-          {ev.title}
-        </h4>
-
-        {/* PIC & Action Row */}
-        <div className="flex items-center justify-between pt-1 border-t border-gray-100 dark:border-gray-800/50 text-[10px]">
-          <span className="text-gray-400 truncate max-w-[150px] font-medium" title={ev.extendedProps?.pic}>
-            PIC: <span className="font-bold text-gray-600 dark:text-gray-300">{ev.extendedProps?.pic || "WFO"}</span>
-          </span>
-
-          <div className="flex gap-2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleEventClickFromList(ev);
-              }}
-              className="text-[9px] font-black uppercase text-brand-500 hover:text-brand-600 transition"
+        {/* Action Bar */}
+        <div className="flex items-center border-t border-gray-100 dark:border-gray-800/50 divide-x divide-gray-100 dark:divide-gray-800/50">
+          {/* Lihat Dokumen - jika ada file */}
+          {evFileLink ? (
+            <a
+              href={evFileLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[9px] font-black uppercase tracking-wider text-brand-500 hover:bg-brand-500/5 transition-colors"
+              title="Lihat Dokumen"
             >
-              Detail
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+              Dok
+            </a>
+          ) : null}
+
+          {/* Detail */}
+          <button
+            onClick={(e) => { e.stopPropagation(); handleEventClickFromList(ev); }}
+            className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[9px] font-black uppercase tracking-wider text-gray-500 hover:text-brand-500 hover:bg-brand-500/5 transition-colors"
+            title="Detail Agenda"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Detail
+          </button>
+
+          {/* Edit - hanya creator/admin */}
+          {isCreatorOrAdmin && !isGoogle && (
+            <button
+              onClick={(e) => { e.stopPropagation(); handleEditDirect(ev); }}
+              className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[9px] font-black uppercase tracking-wider text-amber-500 hover:bg-amber-500/5 transition-colors"
+              title="Edit Agenda"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+              </svg>
+              Edit
             </button>
-          </div>
+          )}
+
+          {/* Hapus - hanya creator/admin */}
+          {isCreatorOrAdmin && !isGoogle && (
+            <button
+              onClick={(e) => { e.stopPropagation(); handleDeleteDirect(ev); }}
+              className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[9px] font-black uppercase tracking-wider text-red-500 hover:bg-red-500/5 transition-colors"
+              title="Hapus Agenda"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              </svg>
+              Hapus
+            </button>
+          )}
         </div>
       </div>
     );
@@ -739,6 +796,24 @@ const Calendar: React.FC = () => {
     } catch (error) {
       console.error("Delete error:", error);
     }
+  };
+
+  const handleDeleteDirect = async (ev: AgendaEvent) => {
+    if (!canManage) return;
+    if (!confirm(`Hapus agenda "${ev.title}"? Tindakan ini tidak dapat dibatalkan.`)) return;
+    try {
+      const isG = ev.extendedProps?.type === "Tim WFO";
+      const url = isG ? `/api/calendar/events?id=${ev.id}` : `/api/agenda?id=${ev.id}`;
+      const response = await fetch(url, { method: "DELETE" });
+      if (response.ok) fetchAllEvents();
+    } catch (error) {
+      console.error("Delete error:", error);
+    }
+  };
+
+  const handleEditDirect = (ev: AgendaEvent) => {
+    if (!canManage) return;
+    handleEventClickFromList(ev);
   };
 
   const resetForm = () => {
