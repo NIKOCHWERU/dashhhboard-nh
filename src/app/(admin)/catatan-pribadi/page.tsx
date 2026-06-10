@@ -146,7 +146,7 @@ function SortIcon({ col, sort }: { col: string; sort: SortState }) {
   if (sort.key !== col)
     return <span className="ml-1 text-gray-400 opacity-40">↕</span>;
   return (
-    <span className="ml-1 text-amber-500">
+    <span className="ml-1 text-brand-500">
       {sort.dir === 'asc' ? '↑' : '↓'}
     </span>
   );
@@ -155,7 +155,7 @@ function SortIcon({ col, sort }: { col: string; sort: SortState }) {
 function Spinner() {
   return (
     <div className="flex items-center justify-center py-20">
-      <div className="h-10 w-10 rounded-full border-4 border-amber-500 border-t-transparent animate-spin" />
+      <div className="h-10 w-10 rounded-full border-4 border-brand-500 border-t-transparent animate-spin" />
     </div>
   );
 }
@@ -251,7 +251,7 @@ function EditBtn({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
+      className="p-1.5 rounded-lg text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors"
       title="Edit"
     >
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -266,7 +266,7 @@ function DeleteBtn({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+      className="p-1.5 rounded-lg text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors"
       title="Hapus"
     >
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -324,7 +324,7 @@ function Modal({
           <button
             onClick={onSubmit}
             disabled={loading}
-            className="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-60 transition-colors flex items-center gap-2"
+            className="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-60 transition-colors flex items-center gap-2"
           >
             {loading && (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -341,11 +341,11 @@ function Modal({
 
 const labelClass = 'block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1';
 const inputClass =
-  'w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-white/[0.1] bg-white dark:bg-white/[0.04] text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-colors';
+  'w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-white/[0.1] bg-white dark:bg-white/[0.04] text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-colors';
 const textareaClass =
-  'w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-white/[0.1] bg-white dark:bg-white/[0.04] text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-colors resize-none';
+  'w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-white/[0.1] bg-white dark:bg-white/[0.04] text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-colors resize-none';
 const selectClass =
-  'w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-white/[0.1] bg-white dark:bg-white/[0.04] text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-colors';
+  'w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-white/[0.1] bg-white dark:bg-white/[0.04] text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-colors';
 
 function FormField({
   label,
@@ -372,7 +372,7 @@ function AddButton({ onClick, label }: { onClick: () => void; label: string }) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 active:scale-95 transition-all shadow-sm"
+      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 active:scale-95 transition-all shadow-sm"
     >
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
@@ -888,7 +888,7 @@ export default function DaftarCalonKlienPage() {
                 <button
                   key={k.id}
                   type="button"
-                  className="w-full text-left px-3 py-2 text-sm text-gray-800 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
+                  className="w-full text-left px-3 py-2 text-sm text-gray-800 dark:text-gray-200 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors"
                   onMouseDown={() => {
                     setFormSI(p => ({ ...p, klienId: k.id }));
                     setKlienSearch(k.namaKlien);
@@ -912,7 +912,7 @@ export default function DaftarCalonKlienPage() {
           <input
             ref={fileRef}
             type="file"
-            className="block w-full text-sm text-gray-600 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 dark:file:bg-amber-500/10 dark:file:text-amber-400 hover:file:bg-amber-100 transition-colors"
+            className="block w-full text-sm text-gray-600 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 dark:file:bg-brand-500/10 dark:file:text-brand-400 hover:file:bg-brand-100 transition-colors"
             onChange={e => setFormSI(p => ({ ...p, file: e.target.files?.[0] ?? null }))}
           />
         </FormField>
@@ -923,9 +923,9 @@ export default function DaftarCalonKlienPage() {
   // ─── BADGE HELPER ────────────────────────────────────────────────────────────
   const StatusBadge = ({ value }: { value: string }) => {
     const colors: Record<string, string> = {
-      'Publish': 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400',
-      'Selesai': 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
-      'Proses': 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
+      'Publish': 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-400',
+      'Selesai': 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-400',
+      'Proses': 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-400',
       'Antrian': 'bg-gray-100 text-gray-600 dark:bg-white/[0.06] dark:text-gray-400',
     };
     return (
@@ -937,9 +937,9 @@ export default function DaftarCalonKlienPage() {
 
   const KategoriManitBadge = ({ value }: { value: string }) => {
     const colors: Record<string, string> = {
-      A: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
-      B: 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400',
-      C: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
+      A: 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-400',
+      B: 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-400',
+      C: 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-400',
       D: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400',
       E: 'bg-lime-100 text-lime-700 dark:bg-lime-500/20 dark:text-lime-400',
     };
@@ -981,7 +981,7 @@ export default function DaftarCalonKlienPage() {
               onClick={() => setActiveTab(tab.key)}
               className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                 activeTab === tab.key
-                  ? 'bg-amber-600 text-white shadow-sm'
+                  ? 'bg-brand-600 text-white shadow-sm'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
             >
@@ -1032,7 +1032,7 @@ export default function DaftarCalonKlienPage() {
         </thead>
         <tbody>
           {sortedCalon.map((row, i) => (
-            <tr key={row.id} className={`${rowBg(i)} hover:bg-amber-50/40 dark:hover:bg-amber-500/[0.04] transition-colors`}>
+            <tr key={row.id} className={`${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
               <TdSticky className={rowBg(i)}>{i + 1}</TdSticky>
               <td className={tdClass}>{row.tanggal || '—'}</td>
               <td className={`${tdClass} font-semibold text-gray-800 dark:text-white`}>{row.namaProspek || '—'}</td>
@@ -1092,7 +1092,7 @@ export default function DaftarCalonKlienPage() {
         </thead>
         <tbody>
           {sortedKlien.map((row, i) => (
-            <tr key={row.id} className={`${rowBg(i)} hover:bg-amber-50/40 dark:hover:bg-amber-500/[0.04] transition-colors`}>
+            <tr key={row.id} className={`${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
               <TdSticky className={rowBg(i)}>{i + 1}</TdSticky>
               <td className={`${tdClass} font-semibold text-gray-800 dark:text-white`}>{row.namaKlien || '—'}</td>
               <td className={tdClass}>{row.sumber || '—'}</td>
@@ -1102,8 +1102,8 @@ export default function DaftarCalonKlienPage() {
               <td className={tdClass}>
                 <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
                   row.statusPembayaran?.toLowerCase().includes('lunas')
-                    ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400'
-                    : 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400'
+                    ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-400'
+                    : 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-400'
                 }`}>
                   {row.statusPembayaran || '—'}
                 </span>
@@ -1161,7 +1161,7 @@ export default function DaftarCalonKlienPage() {
         </thead>
         <tbody>
           {sortedKonten.map((row, i) => (
-            <tr key={row.id} className={`${rowBg(i)} hover:bg-amber-50/40 dark:hover:bg-amber-500/[0.04] transition-colors`}>
+            <tr key={row.id} className={`${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
               <TdSticky className={rowBg(i)}>{i + 1}</TdSticky>
               <td className={tdClass}>{row.tanggal || '—'}</td>
               <td className={`${tdClass} font-semibold text-gray-800 dark:text-white`}>{row.topik || '—'}</td>
@@ -1212,7 +1212,7 @@ export default function DaftarCalonKlienPage() {
           {sortedSI.map((row, i) => {
             const kl = klienData.find(k => k.id === row.klienId);
             return (
-              <tr key={row.id} className={`${rowBg(i)} hover:bg-amber-50/40 dark:hover:bg-amber-500/[0.04] transition-colors`}>
+              <tr key={row.id} className={`${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
                 <TdSticky className={rowBg(i)}>{i + 1}</TdSticky>
                 <td className={`${tdClass} font-semibold text-gray-800 dark:text-white`}>
                   {row.namaKlien ?? kl?.namaKlien ?? '—'}
@@ -1224,7 +1224,7 @@ export default function DaftarCalonKlienPage() {
                       href={row.webViewLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors"
+                      className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10 hover:bg-brand-100 dark:hover:bg-brand-500/20 transition-colors"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -1266,7 +1266,7 @@ export default function DaftarCalonKlienPage() {
             onClick={() => setInteraksiSubTab(sub.key)}
             className={`pb-3 text-sm font-semibold border-b-2 transition-colors ${
               interaksiSubTab === sub.key
-                ? 'border-amber-600 text-amber-600'
+                ? 'border-brand-600 text-brand-600'
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
             }`}
           >
@@ -1298,7 +1298,7 @@ export default function DaftarCalonKlienPage() {
           <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mb-3 font-medium uppercase tracking-wider">
             <span>CRM</span>
             <span>›</span>
-            <span className="text-amber-600">Daftar Calon Klien</span>
+            <span className="text-brand-600">Daftar Calon Klien</span>
           </div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
             Daftar Calon Klien
@@ -1313,9 +1313,9 @@ export default function DaftarCalonKlienPage() {
           <StatCard
             label="Total Calon Klien"
             value={calonData.length}
-            color="bg-amber-50 dark:bg-amber-500/10"
+            color="bg-brand-50 dark:bg-brand-500/10"
             icon={
-              <svg className="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-6 h-6 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
                   d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
@@ -1324,9 +1324,9 @@ export default function DaftarCalonKlienPage() {
           <StatCard
             label="Total Klien"
             value={klienData.length}
-            color="bg-blue-50 dark:bg-blue-500/10"
+            color="bg-brand-50 dark:bg-brand-500/10"
             icon={
-              <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-6 h-6 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
                   d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
@@ -1335,9 +1335,9 @@ export default function DaftarCalonKlienPage() {
           <StatCard
             label="Total Interaksi"
             value={kontenData.length + siData.length}
-            color="bg-green-50 dark:bg-green-500/10"
+            color="bg-brand-50 dark:bg-brand-500/10"
             icon={
-              <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-6 h-6 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
                   d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>

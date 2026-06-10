@@ -112,13 +112,13 @@ const YearView: React.FC<{
                   const allSelesai = dayEvents.every(ev => ev.extendedProps?.status === "Selesai");
 
                   if (containsQ1) {
-                    indicatorColor = "bg-red-500";         // Q1: Penting & Mendesak
+                    indicatorColor = "bg-brand-500";         // Q1: Penting & Mendesak
                   } else if (containsQ2) {
                     indicatorColor = "bg-[#B88A16]";       // Q2: Penting, Tidak Mendesak
                   } else if (containsQ3) {
-                    indicatorColor = "bg-green-500";       // Q3: Rendah
+                    indicatorColor = "bg-brand-500";       // Q3: Rendah
                   } else if (allSelesai) {
-                    indicatorColor = "bg-green-500";
+                    indicatorColor = "bg-brand-500";
                   }
                 }
 
@@ -341,25 +341,25 @@ const Calendar: React.FC = () => {
     const isCreatorOrAdmin = canManage && (isAdminUser || picList.includes(userName));
 
     let priorityText = "Rendah";
-    let priorityColorClass = "bg-green-500/10 text-green-600 border border-green-200/30 dark:border-green-800/30";
+    let priorityColorClass = "bg-brand-500/10 text-brand-600 border border-brand-200/30 dark:border-brand-800/30";
     
     if (isSelesai) {
       priorityText = "Selesai";
-      priorityColorClass = "bg-green-500/10 text-green-600 border border-green-200/30 dark:border-green-800/30";
+      priorityColorClass = "bg-brand-500/10 text-brand-600 border border-brand-200/30 dark:border-brand-800/30";
     } else if (scale === "Q1") {
       priorityText = "Mendesak";
-      priorityColorClass = "bg-red-500/10 text-red-600 border border-red-200/30 dark:border-red-800/30";
+      priorityColorClass = "bg-brand-500/10 text-brand-600 border border-brand-200/30 dark:border-brand-800/30";
     } else if (scale === "Q2") {
       priorityText = "Penting";
       priorityColorClass = "bg-[#B88A16]/10 text-[#B88A16] border border-[#B88A16]/20 dark:border-[#B88A16]/30";
     } else if (scale === "Q3") {
       priorityText = "Rendah";
-      priorityColorClass = "bg-green-500/10 text-green-600 border border-green-200/30 dark:border-green-800/30";
+      priorityColorClass = "bg-brand-500/10 text-brand-600 border border-brand-200/30 dark:border-brand-800/30";
     }
 
     if (isGoogle) {
       priorityText = "WFO";
-      priorityColorClass = "bg-blue-500/10 text-blue-600 border border-blue-200/30 dark:border-blue-800/30";
+      priorityColorClass = "bg-brand-500/10 text-brand-600 border border-brand-200/30 dark:border-brand-800/30";
     }
 
     return (
@@ -433,7 +433,7 @@ const Calendar: React.FC = () => {
           {isCreatorOrAdmin && !isGoogle && (
             <button
               onClick={(e) => { e.stopPropagation(); handleEditDirect(ev); }}
-              className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[9px] font-black uppercase tracking-wider text-amber-500 hover:bg-amber-500/5 transition-colors"
+              className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[9px] font-black uppercase tracking-wider text-brand-500 hover:bg-brand-500/5 transition-colors"
               title="Edit Agenda"
             >
               <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -447,7 +447,7 @@ const Calendar: React.FC = () => {
           {isCreatorOrAdmin && !isGoogle && (
             <button
               onClick={(e) => { e.stopPropagation(); handleDeleteDirect(ev); }}
-              className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[9px] font-black uppercase tracking-wider text-red-500 hover:bg-red-500/5 transition-colors"
+              className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[9px] font-black uppercase tracking-wider text-brand-500 hover:bg-brand-500/5 transition-colors"
               title="Hapus Agenda"
             >
               <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -1091,7 +1091,7 @@ const Calendar: React.FC = () => {
                 </span>
                 <button
                   onClick={() => setSelectedDate(null)}
-                  className="text-gray-400 hover:text-red-500 font-bold text-sm leading-none ml-2 cursor-pointer transition-colors"
+                  className="text-gray-400 hover:text-brand-500 font-bold text-sm leading-none ml-2 cursor-pointer transition-colors"
                   title="Reset Filter"
                 >
                   ×
@@ -1153,11 +1153,11 @@ const Calendar: React.FC = () => {
                 {filteredToday.length > 0 && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                      <span className="text-[10px] font-black text-brand-500 uppercase tracking-widest flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse"></span>
                         Hari Ini
                       </span>
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 bg-red-500/10 text-red-500 rounded-full">
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 bg-brand-500/10 text-brand-500 rounded-full">
                         {filteredToday.length}
                       </span>
                     </div>
@@ -1171,11 +1171,11 @@ const Calendar: React.FC = () => {
                 {filteredTomorrow.length > 0 && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                      <span className="text-[10px] font-black text-brand-500 uppercase tracking-widest flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
                         Besok
                       </span>
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 bg-amber-500/10 text-amber-500 rounded-full">
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 bg-brand-500/10 text-brand-500 rounded-full">
                         {filteredTomorrow.length}
                       </span>
                     </div>
@@ -1368,7 +1368,7 @@ const Calendar: React.FC = () => {
               </div>
             </div>
             <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 px-3 py-2.5 rounded-xl flex items-center gap-2.5 shadow-sm">
-              <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 flex-shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-500 flex-shrink-0">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
                 </svg>
@@ -1390,7 +1390,7 @@ const Calendar: React.FC = () => {
               </div>
             </div>
             <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 px-3 py-2.5 rounded-xl flex items-center gap-2.5 shadow-sm">
-              <div className="w-7 h-7 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500 flex-shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-500 flex-shrink-0">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z" />
                 </svg>
@@ -1450,16 +1450,16 @@ const Calendar: React.FC = () => {
                     {/* Badge Skala Prioritas */}
                     {(() => {
                       let priorityLabel = "Q3 — Rendah";
-                      let priorityClass = "bg-green-500/10 text-green-600 border border-green-500/20";
+                      let priorityClass = "bg-brand-500/10 text-brand-600 border border-brand-500/20";
                       if (scale === "Q1") {
                         priorityLabel = "Q1 — Mendesak";
-                        priorityClass = "bg-red-500/10 text-red-600 border border-red-500/20";
+                        priorityClass = "bg-brand-500/10 text-brand-600 border border-brand-500/20";
                       } else if (scale === "Q2") {
                         priorityLabel = "Q2 — Penting";
                         priorityClass = "bg-[#B88A16]/10 text-[#B88A16] border border-[#B88A16]/20";
                       } else if (scale === "Google Sync") {
                         priorityLabel = "WFO";
-                        priorityClass = "bg-blue-500/10 text-blue-600 border border-blue-500/20";
+                        priorityClass = "bg-brand-500/10 text-brand-600 border border-brand-500/20";
                       }
                       return (
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${priorityClass}`}>
@@ -1470,10 +1470,10 @@ const Calendar: React.FC = () => {
 
                     {/* Badge Status */}
                     {(() => {
-                      let statusClass = "bg-blue-500/10 text-blue-600 border border-blue-500/20";
-                      if (status === "Selesai") statusClass = "bg-green-500/10 text-green-600 border border-green-500/20";
-                      else if (status === "Ditunda") statusClass = "bg-amber-500/10 text-amber-600 border border-amber-500/20";
-                      else if (status === "Dibatalkan") statusClass = "bg-red-500/10 text-red-600 border border-red-500/20";
+                      let statusClass = "bg-brand-500/10 text-brand-600 border border-brand-500/20";
+                      if (status === "Selesai") statusClass = "bg-brand-500/10 text-brand-600 border border-brand-500/20";
+                      else if (status === "Ditunda") statusClass = "bg-brand-500/10 text-brand-600 border border-brand-500/20";
+                      else if (status === "Dibatalkan") statusClass = "bg-brand-500/10 text-brand-600 border border-brand-500/20";
                       
                       return (
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${statusClass}`}>
@@ -1585,14 +1585,14 @@ const Calendar: React.FC = () => {
                           <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-white/[0.03]">
                             <div className="flex items-center gap-2.5 min-w-0">
                               {isPDF ? (
-                                <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
-                                  <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                <div className="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center flex-shrink-0">
+                                  <svg className="w-4 h-4 text-brand-500" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8.5 17.5h-1v-5h1v5zm3.5 0h-1V15h-1v-2.5h2V17.5zm3.5 0h-1v-2h-1v-1h1v-1.5h1V17.5z"/>
                                   </svg>
                                 </div>
                               ) : isImage ? (
-                                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                                  <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <div className="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center flex-shrink-0">
+                                  <svg className="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                   </svg>
                                 </div>
@@ -1886,7 +1886,7 @@ const Calendar: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => setSelectedPeserta(selectedPeserta.filter((n) => n !== name))}
-                              className="text-gray-400 hover:text-red-500 ml-1 font-bold text-xs"
+                              className="text-gray-400 hover:text-brand-500 ml-1 font-bold text-xs"
                             >
                               &times;
                             </button>
@@ -1941,14 +1941,14 @@ const Calendar: React.FC = () => {
                         <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-white/[0.03]">
                           <div className="flex items-center gap-2.5 min-w-0">
                             {isPDF ? (
-                              <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
-                                <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                              <div className="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center flex-shrink-0">
+                                <svg className="w-4 h-4 text-brand-500" fill="currentColor" viewBox="0 0 24 24">
                                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8.5 17.5h-1v-5h1v5zm3.5 0h-1V15h-1v-2.5h2V17.5zm3.5 0h-1v-2h-1v-1h1v-1.5h1V17.5z"/>
                                 </svg>
                               </div>
                             ) : isImage ? (
-                              <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <div className="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center flex-shrink-0">
+                                <svg className="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                               </div>
@@ -2006,9 +2006,9 @@ const Calendar: React.FC = () => {
                   <label className="block text-sm font-bold text-black dark:text-white mb-3">Skala Prioritas</label>
                   <div className="grid grid-cols-3 gap-3">
                     {[
-                      { key: "Q1", label: "Q1 — Mendesak",   activeClass: "border-red-500 bg-red-500 text-white shadow-md" },
+                      { key: "Q1", label: "Q1 — Mendesak",   activeClass: "border-brand-500 bg-brand-500 text-white shadow-md" },
                       { key: "Q2", label: "Q2 — Penting",    activeClass: "border-[#B88A16] bg-[#B88A16] text-white shadow-md" },
-                      { key: "Q3", label: "Q3 — Rendah",     activeClass: "border-green-500 bg-green-500 text-white shadow-md" }
+                      { key: "Q3", label: "Q3 — Rendah",     activeClass: "border-brand-500 bg-brand-500 text-white shadow-md" }
                     ].map((q) => (
                       <button
                         key={q.key}
@@ -2032,10 +2032,10 @@ const Calendar: React.FC = () => {
                   <label className="block text-sm font-bold text-black dark:text-white mb-3">Status</label>
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      { key: "Aktif", label: "Aktif", color: "border-blue-500 bg-blue-500" },
-                      { key: "Selesai", label: "Selesai", color: "border-green-500 bg-green-500" },
-                      { key: "Ditunda", label: "Ditunda", color: "border-amber-500 bg-amber-500" },
-                      { key: "Dibatalkan", label: "Dibatalkan", color: "border-red-500 bg-red-500" }
+                      { key: "Aktif", label: "Aktif", color: "border-brand-500 bg-brand-500" },
+                      { key: "Selesai", label: "Selesai", color: "border-brand-500 bg-brand-500" },
+                      { key: "Ditunda", label: "Ditunda", color: "border-brand-500 bg-brand-500" },
+                      { key: "Dibatalkan", label: "Dibatalkan", color: "border-brand-500 bg-brand-500" }
                     ].map((s) => (
                       <button
                         key={s.key}
@@ -2087,7 +2087,7 @@ const Calendar: React.FC = () => {
               {selectedEventId && isCreatorOrAdminForSelected && (
                 <button
                   onClick={handleDelete}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-none text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-none text-sm font-bold text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                   Hapus Agenda
@@ -2299,14 +2299,14 @@ const renderEventContent = (eventInfo: EventContentArg) => {
   const type = eventInfo.event.extendedProps.type;
   return (
     <div className={`flex flex-col p-1.5 rounded-lg overflow-hidden border-l-4 ${
-      type === 'Tim WFO' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-brand-500 bg-brand-50 dark:bg-brand-500/10'
+      type === 'Tim WFO' ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-brand-500 bg-brand-50 dark:bg-brand-500/10'
     }`}>
       <div className="flex items-center gap-1.5">
         <span className="text-[10px] font-bold opacity-70">{eventInfo.timeText}</span>
         {type === 'local' ? (
           <span className="px-1 bg-brand-500 text-white text-[9px] rounded font-black">{eventInfo.event.extendedProps.scale}</span>
         ) : (
-          <span className="px-1 bg-blue-500 text-white text-[9px] rounded font-black uppercase tracking-tighter">Tim WFO</span>
+          <span className="px-1 bg-brand-500 text-white text-[9px] rounded font-black uppercase tracking-tighter">Tim WFO</span>
         )}
       </div>
       <div className="text-xs font-bold truncate text-gray-800 dark:text-gray-200">{eventInfo.event.title}</div>
