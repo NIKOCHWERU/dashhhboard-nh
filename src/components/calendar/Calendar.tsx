@@ -105,17 +105,17 @@ const YearView: React.FC<{
 
                 let indicatorColor = "bg-brand-500";
                 if (hasEvents) {
-                  const containsDeadline = dayEvents.some(ev => ev.extendedProps?.scale === "Q3" && ev.extendedProps?.status !== "Selesai");
-                  const containsHigh = dayEvents.some(ev => ev.extendedProps?.scale === "Q1" && ev.extendedProps?.status !== "Selesai");
-                  const containsNormal = dayEvents.some(ev => ev.extendedProps?.scale === "Q2" && ev.extendedProps?.status !== "Selesai");
+                  const containsQ1 = dayEvents.some(ev => ev.extendedProps?.scale === "Q1" && ev.extendedProps?.status !== "Selesai");
+                  const containsQ2 = dayEvents.some(ev => ev.extendedProps?.scale === "Q2" && ev.extendedProps?.status !== "Selesai");
+                  const containsQ3 = dayEvents.some(ev => ev.extendedProps?.scale === "Q3" && ev.extendedProps?.status !== "Selesai");
                   const allSelesai = dayEvents.every(ev => ev.extendedProps?.status === "Selesai");
 
-                  if (containsDeadline) {
-                    indicatorColor = "bg-red-500";
-                  } else if (containsHigh) {
-                    indicatorColor = "bg-[#B88A16]";
-                  } else if (containsNormal) {
-                    indicatorColor = "bg-blue-500";
+                  if (containsQ1) {
+                    indicatorColor = "bg-red-500";         // Q1: Penting & Mendesak
+                  } else if (containsQ2) {
+                    indicatorColor = "bg-[#B88A16]";       // Q2: Penting, Tidak Mendesak
+                  } else if (containsQ3) {
+                    indicatorColor = "bg-green-500";       // Q3: Rendah
                   } else if (allSelesai) {
                     indicatorColor = "bg-green-500";
                   }
@@ -314,21 +314,21 @@ const Calendar: React.FC = () => {
     const statusVal = ev.extendedProps?.status || "Aktif";
     const isSelesai = statusVal === "Selesai";
 
-    let priorityText = "Normal";
-    let priorityColorClass = "bg-blue-500/10 text-blue-600 border border-blue-200/30 dark:border-blue-800/30";
+    let priorityText = "Rendah";
+    let priorityColorClass = "bg-green-500/10 text-green-600 border border-green-200/30 dark:border-green-800/30";
     
     if (isSelesai) {
       priorityText = "Selesai";
       priorityColorClass = "bg-green-500/10 text-green-600 border border-green-200/30 dark:border-green-800/30";
     } else if (scale === "Q1") {
-      priorityText = "High Priority";
-      priorityColorClass = "bg-[#B88A16]/10 text-[#B88A16] border border-[#B88A16]/20 dark:border-[#B88A16]/30";
-    } else if (scale === "Q2") {
-      priorityText = "Normal";
-      priorityColorClass = "bg-blue-500/10 text-blue-600 border border-blue-200/30 dark:border-blue-800/30";
-    } else if (scale === "Q3") {
-      priorityText = "Deadline";
+      priorityText = "Mendesak";
       priorityColorClass = "bg-red-500/10 text-red-600 border border-red-200/30 dark:border-red-800/30";
+    } else if (scale === "Q2") {
+      priorityText = "Penting";
+      priorityColorClass = "bg-[#B88A16]/10 text-[#B88A16] border border-[#B88A16]/20 dark:border-[#B88A16]/30";
+    } else if (scale === "Q3") {
+      priorityText = "Rendah";
+      priorityColorClass = "bg-green-500/10 text-green-600 border border-green-200/30 dark:border-green-800/30";
     }
 
     if (isGoogle) {
@@ -463,15 +463,15 @@ const Calendar: React.FC = () => {
           } catch (e) {}
         }
         
-        let color = "#3B82F6"; // default Blue (Normal)
+        let color = "#10B981"; // default Green
         if (isSelesai) {
           color = "#10B981"; // Green (Selesai)
         } else if (a.scale === "Q1") {
-          color = "#B88A16"; // Gold (High Priority)
+          color = "#EF4444"; // Red (Penting & Mendesak)
         } else if (a.scale === "Q2") {
-          color = "#3B82F6"; // Blue (Normal)
+          color = "#B88A16"; // Amber/Gold (Penting, Tidak Mendesak)
         } else if (a.scale === "Q3") {
-          color = "#EF4444"; // Red (Deadline)
+          color = "#10B981"; // Green (Rendah)
         }
 
         return {
@@ -912,11 +912,11 @@ const Calendar: React.FC = () => {
         monthCount++;
       }
       
-      // Deadline Dekat: Q3 or Q1 occurring in the next 7 days, and not Selesai
+      // Mendesak Dekat: Q1 dalam 7 hari ke depan, belum Selesai
       const diffTime = evDate.getTime() - now.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       const isUpcoming = diffDays >= 0 && diffDays <= 7;
-      const isPriority = ev.extendedProps?.scale === "Q1" || ev.extendedProps?.scale === "Q3";
+      const isPriority = ev.extendedProps?.scale === "Q1";
       const isCompleted = ev.extendedProps?.status === "Selesai";
       if (isUpcoming && isPriority && !isCompleted) {
         deadlineCount++;
@@ -1609,9 +1609,9 @@ const Calendar: React.FC = () => {
                 <label className="block text-sm font-bold text-black dark:text-white mb-3">Skala Prioritas</label>
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { key: "Q1", label: "Q1 (Tinggi)" },
-                    { key: "Q2", label: "Q2 (Sedang)" },
-                    { key: "Q3", label: "Q3 (Rendah)" }
+                    { key: "Q1", label: "Q1 — Mendesak",   activeClass: "border-red-500 bg-red-500 text-white shadow-md" },
+                    { key: "Q2", label: "Q2 — Penting",    activeClass: "border-[#B88A16] bg-[#B88A16] text-white shadow-md" },
+                    { key: "Q3", label: "Q3 — Rendah",     activeClass: "border-green-500 bg-green-500 text-white shadow-md" }
                   ].map((q) => (
                     <button
                       key={q.key}
@@ -1620,11 +1620,7 @@ const Calendar: React.FC = () => {
                       onClick={() => setScale(q.key)}
                       className={`py-3 rounded-none border-2 transition-all font-bold text-xs ${
                         scale === q.key
-                          ? q.key === "Q1"
-                            ? "border-red-500 bg-red-500 text-white shadow-md"
-                            : q.key === "Q2"
-                            ? "border-amber-500 bg-amber-500 text-white shadow-md"
-                            : "border-green-500 bg-green-500 text-white shadow-md"
+                          ? q.activeClass
                           : "border-stroke bg-transparent text-gray-400 hover:border-brand-500/50 dark:border-form-strokedark"
                       }`}
                     >
