@@ -27,6 +27,7 @@ interface AgendaEvent extends EventInput {
     kategori?: string;
     lokasi?: string;
     fileLink?: string;
+    userId?: string;
   };
 }
 
@@ -179,6 +180,8 @@ const Calendar: React.FC = () => {
   const pesertaDropdownRef = useRef<HTMLDivElement>(null);
 
   const [status, setStatus] = useState("Aktif");
+  const [viewMode, setViewMode] = useState<"view" | "edit">("view");
+  const [showAllAgenda, setShowAllAgenda] = useState(false);
   const [searchAgendaQuery, setSearchAgendaQuery] = useState("");
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -472,6 +475,7 @@ const Calendar: React.FC = () => {
       resetForm();
       setStartDate(info.dateStr);
       setEndDate(info.dateStr);
+      setViewMode("edit");
       openModal();
     } else {
       lastClickRef.current = { dateStr: info.dateStr, time: now };
@@ -546,6 +550,7 @@ const Calendar: React.FC = () => {
             kategori: parsedNotes.kategori || "Retainer",
             lokasi: parsedNotes.lokasi || "",
             fileLink: parsedNotes.fileLink || "",
+            userId: a.userId,
           },
           backgroundColor: color,
           borderColor: "transparent",
@@ -602,15 +607,23 @@ const Calendar: React.FC = () => {
 
 
   const userObj = session?.user as any;
+  const userName = userObj?.name || "";
   const isAdminUser = userObj?.role === "admin";
   const isRegularUser = userObj?.role?.toLowerCase() === "user";
   const canManage = !isRegularUser && (isAdminUser || userObj?.canCreateAgenda);
+
+  const selectedEvent = events.find((e) => e.id === selectedEventId);
+  const eventUserId = selectedEvent?.extendedProps?.userId;
+  const eventPic = selectedEvent?.extendedProps?.pic || "";
+  const eventPicList = eventPic.split(", ").filter(Boolean);
+  const isCreatorOrAdminForSelected = canManage && (isAdminUser || eventUserId === userObj?.id || eventPicList.includes(userName));
 
   const handleDateSelect = (selectInfo: DateSelectArg) => {
     if (!canManage) return;
     resetForm();
     setStartDate(selectInfo.startStr.split("T")[0]);
     setEndDate(selectInfo.endStr.split("T")[0]);
+    setViewMode("edit");
     openModal();
   };
 
@@ -1041,6 +1054,7 @@ const Calendar: React.FC = () => {
                     resetForm();
                     setStartDate(selectedDate || new Date().toISOString().split("T")[0]);
                     setEndDate(selectedDate || new Date().toISOString().split("T")[0]);
+                    setViewMode("edit");
                     openModal();
                   }}
                   className="px-2.5 py-1.5 bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 font-bold text-[9px] uppercase tracking-widest cursor-pointer shadow active:scale-95 transition-transform rounded-lg flex items-center gap-1"
@@ -1354,7 +1368,6 @@ const Calendar: React.FC = () => {
           </div>
         </div>
       </div>
-
       <Modal isOpen={isOpen} onClose={closeModal}>
         <div className="bg-white dark:bg-boxdark rounded-none overflow-hidden shadow-2xl border border-stroke dark:border-strokedark max-w-3xl w-full mx-auto animate-in zoom-in duration-300">
           {/* Header Modern */}
@@ -1365,10 +1378,10 @@ const Calendar: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-black dark:text-white">
-                  {selectedEventId ? (canManage ? "Detail & Edit Agenda" : "Detail Agenda") : "Buat Agenda Baru"}
+                  {viewMode === "view" ? "Detail Agenda" : (selectedEventId ? "Edit Agenda" : "Buat Agenda Baru")}
                 </h3>
                 <p className="text-xs text-gray-500 font-medium">
-                  {canManage ? "Lengkapi rincian jadwal kegiatan Anda" : "Rincian jadwal kegiatan resmi NH"}
+                  {viewMode === "view" ? "Rincian jadwal kegiatan resmi NH" : "Lengkapi rincian jadwal kegiatan Anda"}
                 </p>
               </div>
             </div>
@@ -1380,445 +1393,658 @@ const Calendar: React.FC = () => {
             </button>
           </div>
 
-          <div className="p-8 max-h-[70vh] overflow-y-auto no-scrollbar">            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Title */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-bold text-black dark:text-white mb-3">Judul</label>
-                <input
-                  type="text"
-                  disabled={!canManage}
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Meeting PT. A"
-                  className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
-                />
-              </div>
+          <div className="p-8 max-h-[70vh] overflow-y-auto no-scrollbar">
+            {viewMode === "view" ? (
+              <div className="space-y-6 animate-in fade-in duration-200">
+                {/* Header Info: Judul */}
+                <div>
+                  <h2 className="text-2xl font-extrabold text-black dark:text-white leading-tight mb-3">
+                    {title}
+                  </h2>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    {/* Badge Kategori */}
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20">
+                      Kategori: {kategori === "Lainnya" ? (kategoriLainnya || "Lainnya") : kategori}
+                    </span>
 
-              {/* Kategori */}
-              <div>
-                <label className="block text-sm font-bold text-black dark:text-white mb-3">Kategori</label>
-                <select
-                  disabled={!canManage}
-                  value={kategori}
-                  onChange={(e) => setKategori(e.target.value)}
-                  className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3.5 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-semibold text-sm"
-                >
-                  <option value="Retainer">Retainer</option>
-                  <option value="Non Retainer">Non Retainer</option>
-                  <option value="Internal">Internal</option>
-                  <option value="Lainnya">Lainnya (Input Manual)</option>
-                </select>
-                {kategori === "Lainnya" && (
+                    {/* Badge Skala Prioritas */}
+                    {(() => {
+                      let priorityLabel = "Q3 — Rendah";
+                      let priorityClass = "bg-green-500/10 text-green-600 border border-green-500/20";
+                      if (scale === "Q1") {
+                        priorityLabel = "Q1 — Mendesak";
+                        priorityClass = "bg-red-500/10 text-red-600 border border-red-500/20";
+                      } else if (scale === "Q2") {
+                        priorityLabel = "Q2 — Penting";
+                        priorityClass = "bg-[#B88A16]/10 text-[#B88A16] border border-[#B88A16]/20";
+                      } else if (scale === "Google Sync") {
+                        priorityLabel = "WFO";
+                        priorityClass = "bg-blue-500/10 text-blue-600 border border-blue-500/20";
+                      }
+                      return (
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${priorityClass}`}>
+                          {priorityLabel}
+                        </span>
+                      );
+                    })()}
+
+                    {/* Badge Status */}
+                    {(() => {
+                      let statusClass = "bg-blue-500/10 text-blue-600 border border-blue-500/20";
+                      if (status === "Selesai") statusClass = "bg-green-500/10 text-green-600 border border-green-500/20";
+                      else if (status === "Ditunda") statusClass = "bg-amber-500/10 text-amber-600 border border-amber-500/20";
+                      else if (status === "Dibatalkan") statusClass = "bg-red-500/10 text-red-600 border border-red-500/20";
+                      
+                      return (
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${statusClass}`}>
+                          Status: {status}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                {/* Details Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-b border-gray-100 dark:border-gray-800 py-4">
+                  {/* Waktu */}
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-white/[0.03] flex items-center justify-center text-gray-500 flex-shrink-0">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block">Waktu Pelaksanaan</span>
+                      <p className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                        {startDate ? new Date(startDate).toLocaleDateString("id-ID", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : "-"}
+                      </p>
+                      <p className="text-xs text-gray-500 font-semibold mt-0.5">
+                        {startTime} s/d {endTime} WIB
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Lokasi */}
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-white/[0.03] flex items-center justify-center text-gray-500 flex-shrink-0">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25C4.5 6.22 7.86 3 12 3c4.14 0 7.5 3.22 7.5 7.5z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block">Lokasi / Tempat</span>
+                      <p className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                        {lokasi || "Tidak Ditentukan"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* PIC & Peserta */}
+                  <div className="flex items-start gap-3 md:col-span-2">
+                    <div className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-white/[0.03] flex items-center justify-center text-gray-500 flex-shrink-0">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.97 5.97 0 00-.75-2.906m-.173-4.093a3 3 0 11-2.827 0m0 0a5 5 0 01-5.656 0m0 0a3 3 0 10-2.828 0m0 0a3.01 3.01 0 012.828 0m-2.828 0a5.01 5.01 0 013.298-2.233" />
+                      </svg>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block mb-1">PIC & Peserta</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {pic && (
+                          <span className="inline-flex items-center px-2.5 py-1 bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[10px] font-black uppercase tracking-wide rounded border border-brand-500/20">
+                            PIC: {pic}
+                          </span>
+                        )}
+                        {selectedPeserta.map((name) => (
+                          <span
+                            key={name}
+                            className="inline-flex items-center px-2.5 py-1 bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 text-[10px] font-bold uppercase tracking-wide rounded"
+                          >
+                            {name}
+                          </span>
+                        ))}
+                        {(!pic && selectedPeserta.length === 0) && (
+                          <span className="text-xs text-gray-500 font-medium">Tidak ada peserta tercantum</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Keterangan */}
+                {description && (
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block">Keterangan / Agenda</span>
+                    <div className="p-4 bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-gray-800/50 rounded-xl text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed font-medium">
+                      {description}
+                    </div>
+                  </div>
+                )}
+
+                {/* Catatan */}
+                {notes && (
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block">Catatan Tambahan</span>
+                    <div className="p-4 bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-gray-800/50 rounded-xl text-sm text-gray-750 dark:text-gray-300 whitespace-pre-wrap leading-relaxed italic font-medium">
+                      {notes}
+                    </div>
+                  </div>
+                )}
+
+                {/* Dokumen Lampiran */}
+                {fileLink && (
+                  <div className="space-y-3 pt-2">
+                    <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block">Berkas Lampiran</span>
+                    {(() => {
+                      const isPDF = fileLink.toLowerCase().includes('.pdf');
+                      const isImage = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(fileLink);
+                      const fileName = fileLink.split('/').pop()?.split('?')[0] || 'Dokumen';
+
+                      return (
+                        <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-gray-50/50 dark:bg-white/[0.02]">
+                          <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-white/[0.03]">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              {isPDF ? (
+                                <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                                  <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8.5 17.5h-1v-5h1v5zm3.5 0h-1V15h-1v-2.5h2V17.5zm3.5 0h-1v-2h-1v-1h1v-1.5h1V17.5z"/>
+                                  </svg>
+                                </div>
+                              ) : isImage ? (
+                                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                                  <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                </div>
+                              ) : (
+                                <div className="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center flex-shrink-0">
+                                  <svg className="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                  </svg>
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold text-black dark:text-white truncate">{decodeURIComponent(fileName)}</p>
+                                <p className="text-[10px] text-gray-400 font-medium">{isPDF ? 'Dokumen PDF' : isImage ? 'File Gambar' : 'Tautan Luar'}</p>
+                              </div>
+                            </div>
+                            <a
+                              href={fileLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-brand-500 text-white text-[10px] font-black uppercase tracking-wider rounded-lg hover:bg-brand-600 transition-colors"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                              Lihat
+                            </a>
+                          </div>
+
+                          {/* Inline Preview */}
+                          {isPDF && (
+                            <div className="w-full text-center" style={{ height: '340px' }}>
+                              <iframe
+                                src={fileLink}
+                                className="w-full h-full border-0"
+                                title="Preview Dokumen"
+                              />
+                            </div>
+                          )}
+                          {isImage && (
+                            <div className="p-3 flex items-center justify-center bg-gray-100/50 dark:bg-black/20" style={{ maxHeight: '300px', overflow: 'hidden' }}>
+                              <img
+                                src={fileLink}
+                                alt="Preview"
+                                className="max-w-full max-h-[280px] object-contain rounded-lg shadow"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-200">
+                {/* Title */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-bold text-black dark:text-white mb-3">Judul</label>
                   <input
                     type="text"
                     disabled={!canManage}
-                    value={kategoriLainnya}
-                    onChange={(e) => setKategoriLainnya(e.target.value)}
-                    placeholder="Masukkan Kategori Lainnya..."
-                    className="w-full mt-3 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
-                  />
-                )}
-              </div>
-
-              {/* Lokasi */}
-              <div>
-                <label className="block text-sm font-bold text-black dark:text-white mb-3">Lokasi</label>
-                <input
-                  type="text"
-                  list="locations"
-                  disabled={!canManage}
-                  value={lokasi}
-                  onChange={(e) => setLokasi(e.target.value)}
-                  placeholder="Pilih atau ketik lokasi..."
-                  className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
-                />
-                <datalist id="locations">
-                  <option value="Kantor Pusat Narasumber Hukum" />
-                  <option value="Pengadilan Negeri Jakarta Pusat" />
-                  <option value="Ruang Rapat Utama" />
-                  <option value="Ruang Rapat Direksi" />
-                  <option value="Online via Zoom" />
-                </datalist>
-              </div>
-
-              {/* Start Date & Time */}
-              <div className="space-y-3">
-                <label className="block text-sm font-bold text-black dark:text-white">Waktu Mulai</label>
-                <div className="flex gap-3">
-                  <input
-                    type="date"
-                    disabled={!canManage}
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="flex-1 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
-                  />
-                  <input
-                    type="time"
-                    disabled={!canManage}
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className="w-32 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-semibold text-sm"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Meeting PT. A"
+                    className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
                   />
                 </div>
-              </div>
 
-              {/* End Date & Time */}
-              <div className="space-y-3">
-                <label className="block text-sm font-bold text-black dark:text-white">Waktu Selesai</label>
-                <div className="flex gap-3">
-                  <input
-                    type="date"
+                {/* Kategori */}
+                <div>
+                  <label className="block text-sm font-bold text-black dark:text-white mb-3">Kategori</label>
+                  <select
                     disabled={!canManage}
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="flex-1 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
-                  />
-                  <input
-                    type="time"
-                    disabled={!canManage}
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    className="w-32 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-semibold text-sm"
-                  />
-                </div>
-              </div>
-
-              {/* Tambah Pengingat */}
-              <div className="md:col-span-2 border border-gray-100 dark:border-gray-800 p-4 rounded-xl space-y-4">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-bold text-black dark:text-white">Tambah Pengingat</label>
-                  <input
-                    type="checkbox"
-                    disabled={!canManage}
-                    checked={reminderEnabled}
-                    onChange={(e) => setReminderEnabled(e.target.checked)}
-                    className="w-4 h-4 text-brand-500 rounded border-gray-300 focus:ring-brand-500 cursor-pointer"
-                  />
-                </div>
-                {reminderEnabled && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in slide-in-from-top-1 duration-200">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 mb-2">Waktu Pengingat</label>
-                      <input
-                        type="time"
-                        disabled={!canManage}
-                        value={pengingatWaktu}
-                        onChange={(e) => setPengingatWaktu(e.target.value)}
-                        className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-3 py-2 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white font-semibold text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 mb-2">Hari Pengingat</label>
-                      <select
-                        disabled={!canManage}
-                        value={pengingatHari}
-                        onChange={(e) => setPengingatHari(e.target.value)}
-                        className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-3 py-2.5 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white font-semibold text-sm"
-                      >
-                        <option value="0">Hari H</option>
-                        <option value="1">1 Hari Sebelumnya</option>
-                        <option value="2">2 Hari Sebelumnya</option>
-                        <option value="3">3 Hari Sebelumnya</option>
-                        <option value="7">1 Minggu Sebelumnya</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 mb-2">Pengulangan</label>
-                      <select
-                        disabled={!canManage}
-                        value={pengingatPengulangan}
-                        onChange={(e) => setPengingatPengulangan(e.target.value)}
-                        className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-3 py-2.5 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white font-semibold text-sm"
-                      >
-                        <option value="none">Tidak Ada Pengulangan</option>
-                        <option value="tanggal7">Per Tanggal 7</option>
-                        <option value="weekly">1 Minggu Sekali</option>
-                        <option value="monthly">1 Bulan Sekali</option>
-                        <option value="yearly">1 Tahun Sekali</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Peserta (Multi-select) */}
-              <div ref={pesertaDropdownRef} className="md:col-span-2 relative">
-                <label className="block text-sm font-bold text-black dark:text-white mb-2">Peserta</label>
-                <button
-                  type="button"
-                  disabled={!canManage}
-                  onClick={() => setIsPesertaDropdownOpen(!isPesertaDropdownOpen)}
-                  className="w-full text-left flex justify-between items-center rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white"
-                >
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    {selectedPeserta.length > 0
-                      ? `${selectedPeserta.length} Peserta Terpilih`
-                      : "Pilih Peserta..."}
-                  </span>
-                  <span className="text-gray-400">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                    </svg>
-                  </span>
-                </button>
-                
-                {isPesertaDropdownOpen && (
-                  <div className="absolute left-0 mt-1 w-full bg-white dark:bg-gray-800 border border-stroke dark:border-strokedark shadow-2xl z-999 p-3 max-h-[250px] overflow-y-auto rounded-none animate-in fade-in zoom-in-95 duration-200">
+                    value={kategori}
+                    onChange={(e) => setKategori(e.target.value)}
+                    className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3.5 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-semibold text-sm"
+                  >
+                    <option value="Retainer">Retainer</option>
+                    <option value="Non Retainer">Non Retainer</option>
+                    <option value="Internal">Internal</option>
+                    <option value="Lainnya">Lainnya (Input Manual)</option>
+                  </select>
+                  {kategori === "Lainnya" && (
                     <input
                       type="text"
-                      placeholder="Cari karyawan..."
-                      value={pesertaSearchQuery}
-                      onChange={(e) => setPesertaSearchQuery(e.target.value)}
-                      className="w-full mb-3 px-3 py-1.5 text-xs rounded border border-stroke dark:border-form-strokedark bg-transparent text-black dark:text-white outline-none focus:border-brand-500"
+                      disabled={!canManage}
+                      value={kategoriLainnya}
+                      onChange={(e) => setKategoriLainnya(e.target.value)}
+                      placeholder="Masukkan Kategori Lainnya..."
+                      className="w-full mt-3 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
                     />
-                    <div className="space-y-1">
-                      {karyawanList
-                        .filter((k) =>
-                          k.name.toLowerCase().includes(pesertaSearchQuery.toLowerCase()) ||
-                          (k.position && k.position.toLowerCase().includes(pesertaSearchQuery.toLowerCase()))
-                        )
-                        .map((k) => {
-                          const isChecked = selectedPeserta.includes(k.name);
-                          return (
-                            <label
-                              key={k.id}
-                              className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer rounded transition-colors text-xs font-semibold"
+                  )}
+                </div>
+
+                {/* Lokasi */}
+                <div>
+                  <label className="block text-sm font-bold text-black dark:text-white mb-3">Lokasi</label>
+                  <input
+                    type="text"
+                    list="locations"
+                    disabled={!canManage}
+                    value={lokasi}
+                    onChange={(e) => setLokasi(e.target.value)}
+                    placeholder="Pilih atau ketik lokasi..."
+                    className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
+                  />
+                  <datalist id="locations">
+                    <option value="Kantor Pusat Narasumber Hukum" />
+                    <option value="Pengadilan Negeri Jakarta Pusat" />
+                    <option value="Ruang Rapat Utama" />
+                    <option value="Ruang Rapat Direksi" />
+                    <option value="Online via Zoom" />
+                  </datalist>
+                </div>
+
+                {/* Start Date & Time */}
+                <div className="space-y-3">
+                  <label className="block text-sm font-bold text-black dark:text-white">Waktu Mulai</label>
+                  <div className="flex gap-3">
+                    <input
+                      type="date"
+                      disabled={!canManage}
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="flex-1 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
+                    />
+                    <input
+                      type="time"
+                      disabled={!canManage}
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      className="w-32 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-semibold text-sm"
+                    />
+                  </div>
+                </div>
+
+                {/* End Date & Time */}
+                <div className="space-y-3">
+                  <label className="block text-sm font-bold text-black dark:text-white">Waktu Selesai</label>
+                  <div className="flex gap-3">
+                    <input
+                      type="date"
+                      disabled={!canManage}
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="flex-1 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
+                    />
+                    <input
+                      type="time"
+                      disabled={!canManage}
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      className="w-32 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-semibold text-sm"
+                    />
+                  </div>
+                </div>
+
+                {/* Tambah Pengingat */}
+                <div className="md:col-span-2 border border-gray-100 dark:border-gray-800 p-4 rounded-xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-bold text-black dark:text-white">Tambah Pengingat</label>
+                    <input
+                      type="checkbox"
+                      disabled={!canManage}
+                      checked={reminderEnabled}
+                      onChange={(e) => setReminderEnabled(e.target.checked)}
+                      className="w-4 h-4 text-brand-500 rounded border-gray-300 focus:ring-brand-500 cursor-pointer"
+                    />
+                  </div>
+                  {reminderEnabled && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in slide-in-from-top-1 duration-200">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-2">Waktu Pengingat</label>
+                        <input
+                          type="time"
+                          disabled={!canManage}
+                          value={pengingatWaktu}
+                          onChange={(e) => setPengingatWaktu(e.target.value)}
+                          className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-3 py-2 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white font-semibold text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-2">Hari Pengingat</label>
+                        <select
+                          disabled={!canManage}
+                          value={pengingatHari}
+                          onChange={(e) => setPengingatHari(e.target.value)}
+                          className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-3 py-2.5 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white font-semibold text-sm"
+                        >
+                          <option value="0">Hari H</option>
+                          <option value="1">1 Hari Sebelumnya</option>
+                          <option value="2">2 Hari Sebelumnya</option>
+                          <option value="3">3 Hari Sebelumnya</option>
+                          <option value="7">1 Minggu Sebelumnya</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-2">Pengulangan</label>
+                        <select
+                          disabled={!canManage}
+                          value={pengingatPengulangan}
+                          onChange={(e) => setPengingatPengulangan(e.target.value)}
+                          className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-3 py-2.5 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white font-semibold text-sm"
+                        >
+                          <option value="none">Tidak Ada Pengulangan</option>
+                          <option value="tanggal7">Per Tanggal 7</option>
+                          <option value="weekly">1 Minggu Sekali</option>
+                          <option value="monthly">1 Bulan Sekali</option>
+                          <option value="yearly">1 Tahun Sekali</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Peserta (Multi-select) */}
+                <div ref={pesertaDropdownRef} className="md:col-span-2 relative">
+                  <label className="block text-sm font-bold text-black dark:text-white mb-2">Peserta</label>
+                  <button
+                    type="button"
+                    disabled={!canManage}
+                    onClick={() => setIsPesertaDropdownOpen(!isPesertaDropdownOpen)}
+                    className="w-full text-left flex justify-between items-center rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white"
+                  >
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                      {selectedPeserta.length > 0
+                        ? `${selectedPeserta.length} Peserta Terpilih`
+                        : "Pilih Peserta..."}
+                    </span>
+                    <span className="text-gray-400">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                      </svg>
+                    </span>
+                  </button>
+                  
+                  {isPesertaDropdownOpen && (
+                    <div className="absolute left-0 mt-1 w-full bg-white dark:bg-gray-800 border border-stroke dark:border-strokedark shadow-2xl z-999 p-3 max-h-[250px] overflow-y-auto rounded-none animate-in fade-in zoom-in-95 duration-200">
+                      <input
+                        type="text"
+                        placeholder="Cari karyawan..."
+                        value={pesertaSearchQuery}
+                        onChange={(e) => setPesertaSearchQuery(e.target.value)}
+                        className="w-full mb-3 px-3 py-1.5 text-xs rounded border border-stroke dark:border-form-strokedark bg-transparent text-black dark:text-white outline-none focus:border-brand-500"
+                      />
+                      <div className="space-y-1">
+                        {karyawanList
+                          .filter((k) =>
+                            k.name.toLowerCase().includes(pesertaSearchQuery.toLowerCase()) ||
+                            (k.position && k.position.toLowerCase().includes(pesertaSearchQuery.toLowerCase()))
+                          )
+                          .map((k) => {
+                            const isChecked = selectedPeserta.includes(k.name);
+                            return (
+                              <label
+                                key={k.id}
+                                className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer rounded transition-colors text-xs font-semibold"
+                              >
+                                <input
+                                  type="checkbox"
+                                  disabled={!canManage}
+                                  checked={isChecked}
+                                  onChange={() => {
+                                    if (isChecked) {
+                                      setSelectedPeserta(selectedPeserta.filter((name) => name !== k.name));
+                                    } else {
+                                      setSelectedPeserta([...selectedPeserta, k.name]);
+                                    }
+                                  }}
+                                  className="w-3.5 h-3.5 text-brand-500 rounded border-gray-300 focus:ring-brand-500"
+                                />
+                                <div className="flex flex-col">
+                                  <span className="text-black dark:text-white">{k.name}</span>
+                                  <span className="text-[9px] text-gray-400 font-medium uppercase">{k.position}</span>
+                                </div>
+                              </label>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
+                  {selectedPeserta.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {selectedPeserta.map((name) => (
+                        <span
+                          key={name}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[10px] font-black uppercase tracking-wide rounded border border-brand-500/20"
+                        >
+                          {name}
+                          {canManage && (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedPeserta(selectedPeserta.filter((n) => n !== name))}
+                              className="text-gray-400 hover:text-red-500 ml-1 font-bold text-xs"
                             >
-                              <input
-                                type="checkbox"
-                                disabled={!canManage}
-                                checked={isChecked}
-                                onChange={() => {
-                                  if (isChecked) {
-                                    setSelectedPeserta(selectedPeserta.filter((name) => name !== k.name));
-                                  } else {
-                                    setSelectedPeserta([...selectedPeserta, k.name]);
-                                  }
-                                }}
-                                className="w-3.5 h-3.5 text-brand-500 rounded border-gray-300 focus:ring-brand-500"
-                              />
-                              <div className="flex flex-col">
-                                <span className="text-black dark:text-white">{k.name}</span>
-                                <span className="text-[9px] text-gray-400 font-medium uppercase">{k.position}</span>
-                              </div>
-                            </label>
-                          );
-                        })}
+                              &times;
+                            </button>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Upload File & Link File */}
+                <div className="md:col-span-2 border-t border-gray-100 dark:border-gray-800 pt-4 mt-2 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-bold text-black dark:text-white mb-3">Unggah File (Opsional)</label>
+                      <div className="relative">
+                        <input
+                          type="file"
+                          disabled={!canManage || uploadingFile}
+                          onChange={handleFileUpload}
+                          className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-3 file:border-0 file:text-xs file:font-bold file:bg-brand-500/10 file:text-brand-600 hover:file:bg-brand-500/20 cursor-pointer"
+                        />
+                        {uploadingFile && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                            <span className="w-3.5 h-3.5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></span>
+                            <span className="text-[10px] text-brand-500 font-bold">Mengunggah...</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-black dark:text-white mb-3">Link File / Tautan</label>
+                      <input
+                        type="text"
+                        disabled={!canManage}
+                        value={fileLink}
+                        onChange={(e) => setFileLink(e.target.value)}
+                        placeholder="https://drive.google.com/..."
+                        className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
+                      />
                     </div>
                   </div>
-                )}
-                {selectedPeserta.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {selectedPeserta.map((name) => (
-                      <span
-                        key={name}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[10px] font-black uppercase tracking-wide rounded border border-brand-500/20"
-                      >
-                        {name}
-                        {canManage && (
-                          <button
-                            type="button"
-                            onClick={() => setSelectedPeserta(selectedPeserta.filter((n) => n !== name))}
-                            className="text-gray-400 hover:text-red-500 ml-1 font-bold text-xs"
+
+                  {/* Document Preview Area (inside edit form) */}
+                  {fileLink && (() => {
+                    const isPDF = fileLink.toLowerCase().includes('.pdf');
+                    const isImage = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(fileLink);
+                    const fileName = fileLink.split('/').pop()?.split('?')[0] || 'Dokumen';
+
+                    return (
+                      <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-gray-50/50 dark:bg-white/[0.02]">
+                        <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-white/[0.03]">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            {isPDF ? (
+                              <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                                <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8.5 17.5h-1v-5h1v5zm3.5 0h-1V15h-1v-2.5h2V17.5zm3.5 0h-1v-2h-1v-1h1v-1.5h1V17.5z"/>
+                                </svg>
+                              </div>
+                            ) : isImage ? (
+                              <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                              </div>
+                            ) : (
+                              <div className="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center flex-shrink-0">
+                                <svg className="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                </svg>
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-black dark:text-white truncate">{decodeURIComponent(fileName)}</p>
+                              <p className="text-[10px] text-gray-400 font-medium">{isPDF ? 'PDF Document' : isImage ? 'Image File' : 'External Link'}</p>
+                            </div>
+                          </div>
+                          <a
+                            href={fileLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-brand-500 text-white text-[10px] font-black uppercase tracking-wider rounded-lg hover:bg-brand-600 transition-colors"
                           >
-                            &times;
-                          </button>
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            Lihat
+                          </a>
+                        </div>
+
+                        {/* Inline Preview */}
+                        {isPDF && (
+                          <div className="w-full text-center" style={{ height: '340px' }}>
+                            <iframe
+                              src={fileLink}
+                              className="w-full h-full border-0"
+                              title="Preview Dokumen"
+                            />
+                          </div>
                         )}
-                      </span>
+                        {isImage && (
+                          <div className="p-3 flex items-center justify-center bg-gray-100/50 dark:bg-black/20" style={{ maxHeight: '300px', overflow: 'hidden' }}>
+                            <img
+                              src={fileLink}
+                              alt="Preview"
+                              className="max-w-full max-h-[280px] object-contain rounded-lg shadow"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Scale */}
+                <div>
+                  <label className="block text-sm font-bold text-black dark:text-white mb-3">Skala Prioritas</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { key: "Q1", label: "Q1 — Mendesak",   activeClass: "border-red-500 bg-red-500 text-white shadow-md" },
+                      { key: "Q2", label: "Q2 — Penting",    activeClass: "border-[#B88A16] bg-[#B88A16] text-white shadow-md" },
+                      { key: "Q3", label: "Q3 — Rendah",     activeClass: "border-green-500 bg-green-500 text-white shadow-md" }
+                    ].map((q) => (
+                      <button
+                        key={q.key}
+                        type="button"
+                        disabled={!canManage}
+                        onClick={() => setScale(q.key)}
+                        className={`py-3 rounded-none border-2 transition-all font-bold text-xs ${
+                          scale === q.key
+                            ? q.activeClass
+                            : "border-stroke bg-transparent text-gray-400 hover:border-brand-500/50 dark:border-form-strokedark"
+                        }`}
+                      >
+                        {q.label}
+                      </button>
                     ))}
                   </div>
-                )}
-              </div>
+                </div>
 
-              {/* Upload File & Link File */}
-              <div className="md:col-span-2 border-t border-gray-100 dark:border-gray-800 pt-4 mt-2 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold text-black dark:text-white mb-3">Unggah File (Opsional)</label>
-                    <div className="relative">
-                      <input
-                        type="file"
-                        disabled={!canManage || uploadingFile}
-                        onChange={handleFileUpload}
-                        className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-3 file:border-0 file:text-xs file:font-bold file:bg-brand-500/10 file:text-brand-600 hover:file:bg-brand-500/20 cursor-pointer"
-                      />
-                      {uploadingFile && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                          <span className="w-3.5 h-3.5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></span>
-                          <span className="text-[10px] text-brand-500 font-bold">Mengunggah...</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-black dark:text-white mb-3">Link File / Tautan</label>
-                    <input
-                      type="text"
-                      disabled={!canManage}
-                      value={fileLink}
-                      onChange={(e) => setFileLink(e.target.value)}
-                      placeholder="https://drive.google.com/..."
-                      className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
-                    />
+                {/* Status */}
+                <div>
+                  <label className="block text-sm font-bold text-black dark:text-white mb-3">Status</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { key: "Aktif", label: "Aktif", color: "border-blue-500 bg-blue-500" },
+                      { key: "Selesai", label: "Selesai", color: "border-green-500 bg-green-500" },
+                      { key: "Ditunda", label: "Ditunda", color: "border-amber-500 bg-amber-500" },
+                      { key: "Dibatalkan", label: "Dibatalkan", color: "border-red-500 bg-red-500" }
+                    ].map((s) => (
+                      <button
+                        key={s.key}
+                        type="button"
+                        disabled={!canManage}
+                        onClick={() => setStatus(s.key)}
+                        className={`py-2.5 rounded-none border-2 transition-all font-bold text-xs ${
+                          status === s.key
+                            ? `${s.color} text-white shadow-md`
+                            : "border-stroke bg-transparent text-gray-400 hover:border-brand-500/50 dark:border-form-strokedark"
+                        }`}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                {/* Document Preview Area */}
-                {fileLink && (() => {
-                  const isPDF = fileLink.toLowerCase().includes('.pdf');
-                  const isImage = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(fileLink);
-                  const fileName = fileLink.split('/').pop()?.split('?')[0] || 'Dokumen';
+                {/* Description */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-bold text-black dark:text-white mb-3">Keterangan</label>
+                  <textarea
+                    rows={3}
+                    disabled={!canManage}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
+                  ></textarea>
+                </div>
 
-                  return (
-                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-gray-50/50 dark:bg-white/[0.02]">
-                      {/* File Header Bar */}
-                      <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-white/[0.03]">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          {isPDF ? (
-                            <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
-                              <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8.5 17.5h-1v-5h1v5zm3.5 0h-1V15h-1v-2.5h2V17.5zm3.5 0h-1v-2h-1v-1h1v-1.5h1V17.5z"/>
-                              </svg>
-                            </div>
-                          ) : isImage ? (
-                            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                              <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                            </div>
-                          ) : (
-                            <div className="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center flex-shrink-0">
-                              <svg className="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                              </svg>
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <p className="text-xs font-bold text-black dark:text-white truncate">{decodeURIComponent(fileName)}</p>
-                            <p className="text-[10px] text-gray-400 font-medium">{isPDF ? 'PDF Document' : isImage ? 'Image File' : 'External Link'}</p>
-                          </div>
-                        </div>
-                        <a
-                          href={fileLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-brand-500 text-white text-[10px] font-black uppercase tracking-wider rounded-lg hover:bg-brand-600 transition-colors"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                          Lihat
-                        </a>
-                      </div>
-
-                      {/* Inline Preview */}
-                      {isPDF && (
-                        <div className="w-full" style={{ height: '340px' }}>
-                          <iframe
-                            src={fileLink}
-                            className="w-full h-full border-0"
-                            title="Preview Dokumen"
-                          />
-                        </div>
-                      )}
-                      {isImage && (
-                        <div className="p-3 flex items-center justify-center bg-gray-100/50 dark:bg-black/20" style={{ maxHeight: '300px', overflow: 'hidden' }}>
-                          <img
-                            src={fileLink}
-                            alt="Preview"
-                            className="max-w-full max-h-[280px] object-contain rounded-lg shadow"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
-
-
-              {/* Scale */}
-              <div>
-                <label className="block text-sm font-bold text-black dark:text-white mb-3">Skala Prioritas</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { key: "Q1", label: "Q1 — Mendesak",   activeClass: "border-red-500 bg-red-500 text-white shadow-md" },
-                    { key: "Q2", label: "Q2 — Penting",    activeClass: "border-[#B88A16] bg-[#B88A16] text-white shadow-md" },
-                    { key: "Q3", label: "Q3 — Rendah",     activeClass: "border-green-500 bg-green-500 text-white shadow-md" }
-                  ].map((q) => (
-                    <button
-                      key={q.key}
-                      type="button"
-                      disabled={!canManage}
-                      onClick={() => setScale(q.key)}
-                      className={`py-3 rounded-none border-2 transition-all font-bold text-xs ${
-                        scale === q.key
-                          ? q.activeClass
-                          : "border-stroke bg-transparent text-gray-400 hover:border-brand-500/50 dark:border-form-strokedark"
-                      }`}
-                    >
-                      {q.label}
-                    </button>
-                  ))}
+                {/* Notes */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-bold text-black dark:text-white mb-3">Catatan</label>
+                  <textarea
+                    rows={2}
+                    disabled={!canManage}
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
+                  ></textarea>
                 </div>
               </div>
-
-              {/* Status */}
-              <div>
-                <label className="block text-sm font-bold text-black dark:text-white mb-3">Status</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { key: "Aktif", label: "Aktif", color: "border-blue-500 bg-blue-500" },
-                    { key: "Selesai", label: "Selesai", color: "border-green-500 bg-green-500" },
-                    { key: "Ditunda", label: "Ditunda", color: "border-amber-500 bg-amber-500" },
-                    { key: "Dibatalkan", label: "Dibatalkan", color: "border-red-500 bg-red-500" }
-                  ].map((s) => (
-                    <button
-                      key={s.key}
-                      type="button"
-                      disabled={!canManage}
-                      onClick={() => setStatus(s.key)}
-                      className={`py-2.5 rounded-none border-2 transition-all font-bold text-xs ${
-                        status === s.key
-                          ? `${s.color} text-white shadow-md`
-                          : "border-stroke bg-transparent text-gray-400 hover:border-brand-500/50 dark:border-form-strokedark"
-                      }`}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Description */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-bold text-black dark:text-white mb-3">Keterangan</label>
-                <textarea
-                  rows={3}
-                  disabled={!canManage}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
-                ></textarea>
-              </div>
-
-              {/* Notes */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-bold text-black dark:text-white mb-3">Catatan</label>
-                <textarea
-                  rows={2}
-                  disabled={!canManage}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
-                ></textarea>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Footer Modern */}
           <div className="px-8 py-6 bg-white dark:bg-boxdark border-t border-stroke dark:border-strokedark flex justify-between items-center">
             <div>
-              {selectedEventId && canManage && (
+              {selectedEventId && isCreatorOrAdminForSelected && (
                 <button
                   onClick={handleDelete}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-none text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
@@ -1833,19 +2059,29 @@ const Calendar: React.FC = () => {
                 onClick={closeModal}
                 className="px-6 py-2.5 rounded-none text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
               >
-                {canManage ? "Batal" : "Tutup"}
+                {viewMode === "view" ? "Tutup" : "Batal"}
               </button>
-              {!isGoogleEvent && canManage && (
-                <button
-                  onClick={validateAndSubmit}
-                  className="px-8 py-2.5 rounded-none text-sm font-black bg-brand-500 text-white shadow-lg shadow-brand-500/25 hover:bg-brand-600 hover:shadow-brand-500/40 transition-all active:scale-95"
-                >
-                  {selectedEventId ? "Simpan Perubahan" : "Konfirmasi Agenda"}
-                </button>
+              {viewMode === "view" ? (
+                isCreatorOrAdminForSelected && !isGoogleEvent && (
+                  <button
+                    onClick={() => setViewMode("edit")}
+                    className="px-8 py-2.5 rounded-none text-sm font-black bg-brand-500 text-white shadow-lg shadow-brand-500/25 hover:bg-brand-600 hover:shadow-brand-500/40 transition-all active:scale-95"
+                  >
+                    Edit Agenda
+                  </button>
+                )
+              ) : (
+                !isGoogleEvent && canManage && (
+                  <button
+                    onClick={validateAndSubmit}
+                    className="px-8 py-2.5 rounded-none text-sm font-black bg-brand-500 text-white shadow-lg shadow-brand-500/25 hover:bg-brand-600 hover:shadow-brand-500/40 transition-all active:scale-95"
+                  >
+                    {selectedEventId ? "Simpan Perubahan" : "Konfirmasi Agenda"}
+                  </button>
+                )
               )}
             </div>
           </div>
-
         </div>
       </Modal>
 

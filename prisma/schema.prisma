@@ -358,3 +358,86 @@ model NarasumberHukum {
   @@map("narasumber_hukum")
 }
 
+model CalonKlien {
+  id                    String   @id @default(cuid())
+  tanggal               DateTime?
+  namaProspek           String
+  potensiPekerjaan      String?  @db.Text
+  domisili              String?
+  email                 String?
+  mediaSosial           String?
+  telephone             String?
+  kategoriManit         String?  // A, B, C, D, E atau custom
+  kegiatanDilakukan     String?  @db.Text
+  tantangan             String?  @db.Text
+  informasiPenting      String?  @db.Text
+  keterangan            String?  @db.Text
+  catatan               String?  @db.Text
+  createdBy             String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("calon_klien")
+}
+
+model Klien {
+  id                  String   @id @default(cuid())
+  namaKlien           String
+  sumber              String?
+  nomorInvoice        String?
+  jenisPekerjaan      String?
+  telephone           String?
+  statusPembayaran    String?
+  posisiProgres       String?  @db.Text
+  statusPekerjaan     String?
+  informasiLain       String?  @db.Text
+  pencairan           String?
+  keterangan          String?  @db.Text
+  catatan             String?  @db.Text
+  createdBy           String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  SuratIntroduksi SuratIntroduksi[]
+
+  @@map("klien")
+}
+
+model KontenInteraksi {
+  id                 String   @id @default(cuid())
+  tanggal            DateTime?
+  topik              String?
+  judul              String
+  pembahasan         String?  @db.Text
+  asalMateri         String?
+  isiKonten          String?  @db.Text
+  targetAudien       String?
+  tipe               String?  // SOFTSELLING, HARDSELLING, INFORMASI, dll
+  statusPengerjaan   String?
+  kataKunci          String?
+  bentukKonten       String?
+  saluranDistribusi  String?
+  catatan            String?  @db.Text
+  keteranganPublis   String?  @db.Text
+  createdBy          String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("konten_interaksi")
+}
+
+model SuratIntroduksi {
+  id          String   @id @default(cuid())
+  klienId     String
+  klien       Klien    @relation(fields: [klienId], references: [id], onDelete: Cascade)
+  keterangan  String?  @db.Text
+  googleFileId   String?
+  googleFolderId String?
+  webViewLink    String?
+  fileName       String?
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("surat_introduksi")
+}
