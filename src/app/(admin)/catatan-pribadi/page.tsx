@@ -999,7 +999,6 @@ export default function DaftarCalonKlienPage() {
 
   const CalonTable = () => {
     if (loadingCalon) return <Spinner />;
-    if (sortedCalon.length === 0) return <EmptyState message="Belum ada data calon klien" />;
     const cols = [
       { key: 'tanggal', label: 'Tanggal' },
       { key: 'namaProspek', label: 'Nama Prospek' },
@@ -1031,7 +1030,14 @@ export default function DaftarCalonKlienPage() {
           </tr>
         </thead>
         <tbody>
-          {sortedCalon.map((row, i) => (
+          {sortedCalon.length === 0 ? (
+            <tr>
+              <td colSpan={cols.length + 2}>
+                <EmptyState message="Belum ada data calon klien" />
+              </td>
+            </tr>
+          ) : (
+            sortedCalon.map((row, i) => (
             <tr key={row.id} className={`${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
               <TdSticky className={rowBg(i)}>{i + 1}</TdSticky>
               <td className={tdClass}>{row.tanggal || '—'}</td>
@@ -1054,7 +1060,7 @@ export default function DaftarCalonKlienPage() {
                 </div>
               </td>
             </tr>
-          ))}
+          )))}
         </tbody>
       </TableWrapper>
     );
@@ -1062,7 +1068,6 @@ export default function DaftarCalonKlienPage() {
 
   const KlienTable = () => {
     if (loadingKlien) return <Spinner />;
-    if (sortedKlien.length === 0) return <EmptyState message="Belum ada data klien" />;
     const cols = [
       { key: 'namaKlien', label: 'Nama Klien' },
       { key: 'sumber', label: 'Sumber' },
@@ -1091,7 +1096,14 @@ export default function DaftarCalonKlienPage() {
           </tr>
         </thead>
         <tbody>
-          {sortedKlien.map((row, i) => (
+          {sortedKlien.length === 0 ? (
+            <tr>
+              <td colSpan={cols.length + 2}>
+                <EmptyState message="Belum ada data klien" />
+              </td>
+            </tr>
+          ) : (
+            sortedKlien.map((row, i) => (
             <tr key={row.id} className={`${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
               <TdSticky className={rowBg(i)}>{i + 1}</TdSticky>
               <td className={`${tdClass} font-semibold text-gray-800 dark:text-white`}>{row.namaKlien || '—'}</td>
@@ -1121,7 +1133,7 @@ export default function DaftarCalonKlienPage() {
                 </div>
               </td>
             </tr>
-          ))}
+          )))}
         </tbody>
       </TableWrapper>
     );
@@ -1129,7 +1141,6 @@ export default function DaftarCalonKlienPage() {
 
   const KontenTable = () => {
     if (loadingKonten) return <Spinner />;
-    if (sortedKonten.length === 0) return <EmptyState message="Belum ada data konten interaksi" />;
     const cols = [
       { key: 'tanggal', label: 'Tanggal' },
       { key: 'topik', label: 'Topik' },
@@ -1160,7 +1171,14 @@ export default function DaftarCalonKlienPage() {
           </tr>
         </thead>
         <tbody>
-          {sortedKonten.map((row, i) => (
+          {sortedKonten.length === 0 ? (
+            <tr>
+              <td colSpan={cols.length + 2}>
+                <EmptyState message="Belum ada data konten interaksi" />
+              </td>
+            </tr>
+          ) : (
+            sortedKonten.map((row, i) => (
             <tr key={row.id} className={`${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
               <TdSticky className={rowBg(i)}>{i + 1}</TdSticky>
               <td className={tdClass}>{row.tanggal || '—'}</td>
@@ -1188,7 +1206,7 @@ export default function DaftarCalonKlienPage() {
                 </div>
               </td>
             </tr>
-          ))}
+          )))}
         </tbody>
       </TableWrapper>
     );
@@ -1196,7 +1214,6 @@ export default function DaftarCalonKlienPage() {
 
   const SITable = () => {
     if (loadingSI) return <Spinner />;
-    if (sortedSI.length === 0) return <EmptyState message="Belum ada data surat introduksi" />;
     return (
       <TableWrapper>
         <thead>
@@ -1209,7 +1226,14 @@ export default function DaftarCalonKlienPage() {
           </tr>
         </thead>
         <tbody>
-          {sortedSI.map((row, i) => {
+          {sortedSI.length === 0 ? (
+            <tr>
+              <td colSpan={5}>
+                <EmptyState message="Belum ada data surat introduksi" />
+              </td>
+            </tr>
+          ) : (
+            sortedSI.map((row, i) => {
             const kl = klienData.find(k => k.id === row.klienId);
             return (
               <tr key={row.id} className={`${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
@@ -1246,7 +1270,7 @@ export default function DaftarCalonKlienPage() {
                 </td>
               </tr>
             );
-          })}
+          }))}
         </tbody>
       </TableWrapper>
     );
