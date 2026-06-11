@@ -32,9 +32,10 @@ export async function POST(req: Request) {
     let fileName: string | null = null;
 
     if (file) {
-      const rootFolderId = process.env.GDRIVE_ROOT_FOLDER_ID || "";
       const accessToken = await getAccessToken();
-      const folderId = await getOrCreateFolder(accessToken, SI_FOLDER_NAME, rootFolderId);
+      const mainFolderId = await getOrCreateFolder(accessToken, "Dashboard Office");
+      const internalFolderId = await getOrCreateFolder(accessToken, "Berkas Internal", mainFolderId);
+      const folderId = await getOrCreateFolder(accessToken, SI_FOLDER_NAME, internalFolderId);
       const buffer = Buffer.from(await file.arrayBuffer());
       const result = await uploadFile(folderId, file.name, file.type, buffer, keterangan);
       googleFileId = result.id || null;

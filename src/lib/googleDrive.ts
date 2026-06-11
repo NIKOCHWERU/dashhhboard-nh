@@ -160,7 +160,7 @@ export async function createInternalDocumentFolder(
     const mainFolderId = await getOrCreateFolder(accessToken, "Dashboard Office");
 
     // 2. Get or Create Internal Folder
-    const internalFolderId = await getOrCreateFolder(accessToken, "Internal Documents", mainFolderId);
+    const internalFolderId = await getOrCreateFolder(accessToken, "Berkas Internal", mainFolderId);
 
     // 3. Create Specific subfolder for this document
     const folderName = `${documentType} - ${documentNumber.replace(/\//g, "-")} - ${recipientName}`;

@@ -724,13 +724,17 @@ const Calendar: React.FC = () => {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("/api/upload", {
+      const res = await fetch("/api/upload?category=Berkas Agenda", {
         method: "POST",
         body: formData,
       });
       const data = await res.json();
       if (data.url) {
-        setFileLink(window.location.origin + data.url);
+        if (data.url.startsWith("http")) {
+          setFileLink(data.url);
+        } else {
+          setFileLink(window.location.origin + data.url);
+        }
       } else {
         alert("Gagal mengunggah berkas");
       }
