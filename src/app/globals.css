@@ -957,34 +957,89 @@ html.dark:not(.gold) tbody tr:hover {
 }
 
 
-/* ─── GOLD THEME OVERRIDES (Full Gold, White Accents) ─── */
+/* ─── GOLD THEME OVERRIDES (Luxurious Metallic Gold & Glassmorphism) ─── */
 html.gold body,
 html.gold main,
 html.gold .min-h-screen,
 html.gold .bg-gray-50,
-html.gold .bg-gray-100,
-html.gold .dark\:bg-gray-900,
-html.gold .dark\:bg-gray-950,
-html.gold .dark\:bg-gray-dark,
-html.gold .dark\:bg-\[\#0f1117\],
-html.gold .dark\:bg-\[\#101828\],
-html.gold .dark\:bg-\[\#1a1d27\],
-html.gold .dark\:bg-\[\#1a2231\],
-html.gold .dark\:bg-\[\#121824\],
-html.gold .bg-white,
-html.gold .dark\:bg-\[\#0f1117\] {
-  background-color: #C5A028 !important;
+html.gold .bg-gray-100 {
+  background: linear-gradient(135deg, #EADCB3 0%, #D8BE73 50%, #B69842 100%) !important;
+  color: #3A2C02 !important;
+  background-attachment: fixed !important;
 }
 
+/* Glassmorphism Cards & Containers */
+html.gold .bg-white,
+html.gold .dark\:bg-\[\#0f1117\],
+html.gold .bg-white\/80,
+html.gold [class*="bg-white"],
+html.gold .dark\:bg-white\/\[0\.02\],
+html.gold .dark\:bg-white\/\[0\.01\] {
+  background: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.55) !important;
+  box-shadow: 
+    0 12px 30px 0 rgba(115, 87, 8, 0.15),
+    inset 0 2px 4px 0 rgba(255, 255, 255, 0.45) !important;
+  border-radius: 1rem !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* 3D Lift effect on hover */
+html.gold .bg-white:hover,
+html.gold .dark\:bg-\[\#0f1117\]:hover,
+html.gold [class*="bg-white"]:hover {
+  transform: translateY(-5px) scale(1.01) !important;
+  box-shadow: 
+    0 20px 40px 0 rgba(115, 87, 8, 0.22),
+    inset 0 2px 4px 0 rgba(255, 255, 255, 0.55) !important;
+}
+
+/* Glassmorphism Header & Sidebar */
 html.gold header,
 html.gold aside {
-  background-color: #D4B23F !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.35) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-right: 1.5px solid rgba(255, 255, 255, 0.4) !important;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 8px 32px 0 rgba(115, 87, 8, 0.08) !important;
 }
 
-html.gold .bg-white,
-html.gold .dark\:bg-\[\#0f1117\] {
-  background-color: #D4B23F !important;
+html.gold aside * {
+  color: #4B3704 !important;
+}
+
+html.gold aside .bg-brand-500\/\[0\.12\],
+html.gold aside .bg-white\/\[0\.04\],
+html.gold aside .bg-brand-50,
+html.gold aside [class*="bg-brand-"] {
+  background-color: rgba(255, 255, 255, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.5) !important;
+}
+
+/* 3D Buttons in Gold Theme */
+html.gold .bg-brand-600,
+html.gold button[class*="bg-brand-"],
+html.gold label[class*="bg-brand-"] {
+  background: linear-gradient(135deg, #DFBA4E 0%, #C5A028 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 
+    0 4px 0 0 #856106,
+    0 4px 10px 0 rgba(133, 97, 6, 0.3) !important;
+  transition: all 0.1s ease !important;
+  position: relative !important;
+}
+
+html.gold .bg-brand-600:active,
+html.gold button[class*="bg-brand-"]:active {
+  transform: translateY(3px) !important;
+  box-shadow: 
+    0 1px 0 0 #856106,
+    0 2px 4px 0 rgba(133, 97, 6, 0.2) !important;
 }
 
 /* Borders in Gold Mode */
@@ -997,72 +1052,58 @@ html.gold .border-r,
 html.gold [class*="border-gray-"],
 html.gold [class*="border-white/"],
 html.gold hr {
-  border-color: rgba(255, 255, 255, 0.35) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
 }
 
-/* Texts in Gold Mode */
-html.gold body,
+/* Text Colors in Gold Mode (Royal Dark Gold) */
 html.gold .text-gray-900,
 html.gold .text-gray-800,
 html.gold .text-gray-700,
 html.gold .text-gray-600,
-html.gold .text-gray-500,
-html.gold .text-gray-400,
-html.gold .dark\:text-white,
-html.gold .dark\:text-white\/90,
-html.gold .dark\:text-gray-300,
-html.gold .dark\:text-gray-400,
 html.gold h1,
 html.gold h2,
 html.gold h3,
 html.gold h4,
 html.gold h5,
 html.gold h6 {
-  color: #ffffff !important;
+  color: #4B3704 !important;
+}
+
+html.gold .text-gray-500,
+html.gold .text-gray-400 {
+  color: #7B6224 !important;
+}
+
+/* Tables in Gold Mode */
+html.gold thead tr,
+html.gold thead th {
+  background-color: rgba(255, 255, 255, 0.6) !important;
+  color: #4B3704 !important;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.7) !important;
+}
+
+html.gold tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.25) !important;
 }
 
 /* Inputs & Textareas in Gold Mode */
 html.gold input,
 html.gold textarea,
 html.gold select {
-  background-color: #D4B23F !important;
-  border-color: rgba(255, 255, 255, 0.35) !important;
-  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  color: #4B3704 !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05) !important;
 }
 
-/* White accents: badges, active items */
-html.gold .bg-brand-600 {
+html.gold input:focus,
+html.gold textarea:focus,
+html.gold select:focus {
+  border-color: #A67C00 !important;
   background-color: #ffffff !important;
-  color: #C5A028 !important;
-}
-html.gold .bg-brand-600:hover {
-  background-color: #f3f4f6 !important;
-}
-
-html.gold .bg-brand-50,
-html.gold .bg-brand-100,
-html.gold .dark\:bg-brand-500\/10,
-html.gold .dark\:bg-brand-500\/20 {
-  background-color: rgba(255, 255, 255, 0.2) !important;
-  color: #ffffff !important;
-}
-
-html.gold .text-brand-500,
-html.gold .text-brand-600,
-html.gold .text-brand-700,
-html.gold .dark\:text-brand-400 {
-  color: #ffffff !important;
-  fill: #ffffff !important;
-}
-
-html.gold thead tr,
-html.gold thead th {
-  background-color: #D4B23F !important;
-  color: #ffffff !important;
-}
-
-html.gold tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 
+    0 0 0 3px rgba(197, 160, 40, 0.25),
+    inset 0 1px 3px rgba(0, 0, 0, 0.05) !important;
 }
 
 
