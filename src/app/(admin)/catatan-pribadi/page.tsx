@@ -628,7 +628,7 @@ export default function DaftarCalonKlienPage() {
           const res = await fetch(`/api/surat-introduksi?id=${editId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ klienId: formSI.klienId, keterangan: formSI.keterangan }),
+            body: JSON.stringify({ id: editId, klienId: formSI.klienId, keterangan: formSI.keterangan }),
           });
           if (res.ok) { closeModal(); fetchSI(); }
         }
