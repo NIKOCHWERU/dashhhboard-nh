@@ -762,8 +762,8 @@ body.modal-open header {
 
 /* ─── CUSTOM GLOBAL SCROLLBARS ─── */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -781,8 +781,8 @@ html:not(.dark):not(.gold) ::-webkit-scrollbar-track {
   background: #ffffff;
 }
 html:not(.dark):not(.gold) ::-webkit-scrollbar-thumb {
-  background: #E6D987;
-  border: 2px solid #ffffff;
+  background: #EADCB3;
+  border: 1px solid #ffffff;
 }
 
 /* Scrollbar Dark Mode (Navy & White) */
@@ -790,17 +790,74 @@ html.dark:not(.gold) ::-webkit-scrollbar-track {
   background: #0A192F;
 }
 html.dark:not(.gold) ::-webkit-scrollbar-thumb {
-  background: #ffffff;
-  border: 2px solid #0A192F;
+  background: #172A45;
+  border: 1px solid #0A192F;
+}
+html.dark:not(.gold) ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
-/* Scrollbar Gold Mode (Gold & White) */
+/* Scrollbar Gold Mode (Champagne Gold) */
 html.gold ::-webkit-scrollbar-track {
-  background: #C5A028;
+  background: #F8F7F4;
 }
 html.gold ::-webkit-scrollbar-thumb {
-  background: #ffffff;
-  border: 2px solid #C5A028;
+  background: #E3DEC3;
+  border: 1px solid #F8F7F4;
+}
+html.gold ::-webkit-scrollbar-thumb:hover {
+  background: #C5A028;
+}
+
+
+/* ─── GLOBAL NEAT & FORMAL ANIMATIONS ─── */
+
+/* 1. Global Transitions on Interactive and Layout Elements */
+a, button, input, select, textarea, label,
+.bg-white, .bg-gray-50, .bg-gray-100,
+aside, header, main, nav,
+table, tr, td, th,
+.card,
+.border, .border-t, .border-b, .border-l, .border-r,
+[class*="bg-"], [class*="text-"], [class*="border-"] {
+  transition: background-color 0.22s cubic-bezier(0.4, 0, 0.2, 1), 
+              border-color 0.22s cubic-bezier(0.4, 0, 0.2, 1), 
+              color 0.18s cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1), 
+              transform 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* 2. Page/Content Smooth Entry Animation */
+@keyframes formalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+main, .page-transition, .formal-fade-in {
+  animation: formalFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 3. Formal Card Hover Animation */
+.bg-white:hover,
+[class*="bg-white"]:hover,
+.card:hover,
+.stat-card:hover {
+  transform: translateY(-2px) !important;
+}
+
+/* 4. Button & Toggle Pill Click Active Response */
+button:active,
+.btn:active,
+a.bg-brand-600:active,
+.active-scale:active,
+input[type="submit"]:active {
+  transform: scale(0.98) !important;
 }
 
 
@@ -816,7 +873,7 @@ html:not(.dark):not(.gold) .bg-gray-100 {
 html:not(.dark):not(.gold) header,
 html:not(.dark):not(.gold) aside {
   background-color: #ffffff !important;
-  border-color: rgba(166, 124, 0, 0.15) !important;
+  border-color: rgba(166, 124, 0, 0.12) !important;
 }
 
 html:not(.dark):not(.gold) .bg-white {
@@ -838,19 +895,24 @@ html:not(.dark):not(.gold) .bg-brand-600:hover {
 }
 html:not(.dark):not(.gold) .bg-brand-50,
 html:not(.dark):not(.gold) .bg-brand-100 {
-  background-color: #F9F7E1 !important;
+  background-color: #FAF6E5 !important;
   color: #8B6508 !important;
 }
 html:not(.dark):not(.gold) thead tr,
 html:not(.dark):not(.gold) thead th {
-  background-color: #FDFBF2 !important;
+  background-color: #FAF7EE !important;
   color: #A67C00 !important;
 }
 html:not(.dark):not(.gold) tbody tr:hover {
-  background-color: #FCFBF0 !important;
+  background-color: #FCFAF5 !important;
 }
 html:not(.dark):not(.gold) * {
-  border-color: rgba(166, 124, 0, 0.15) !important;
+  border-color: rgba(166, 124, 0, 0.12) !important;
+}
+
+/* Light mode specific card shadows */
+html:not(.dark):not(.gold) .bg-white:hover {
+  box-shadow: 0 8px 16px rgba(166, 124, 0, 0.06) !important;
 }
 
 
@@ -874,7 +936,7 @@ html.dark:not(.gold) .dark\:bg-\[\#121824\] {
 html.dark:not(.gold) header,
 html.dark:not(.gold) aside {
   background-color: #0F1D36 !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 html.dark:not(.gold) .bg-white,
@@ -892,7 +954,7 @@ html.dark:not(.gold) .border-r,
 html.dark:not(.gold) [class*="border-gray-"],
 html.dark:not(.gold) [class*="border-white/"],
 html.dark:not(.gold) hr {
-  border-color: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 /* Texts in Dark Navy Mode */
@@ -921,8 +983,16 @@ html.dark:not(.gold) input,
 html.dark:not(.gold) textarea,
 html.dark:not(.gold) select {
   background-color: #172A45 !important;
-  border-color: rgba(255, 255, 255, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
   color: #ffffff !important;
+}
+
+html.dark:not(.gold) input:focus,
+html.dark:not(.gold) textarea:focus,
+html.dark:not(.gold) select:focus {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15) !important;
+  outline: none !important;
 }
 
 /* White accents: badges, buttons */
@@ -937,7 +1007,7 @@ html.dark:not(.gold) .bg-brand-50,
 html.dark:not(.gold) .bg-brand-100,
 html.dark:not(.gold) .dark\:bg-brand-500\/10,
 html.dark:not(.gold) .dark\:bg-brand-500\/20 {
-  background-color: rgba(255, 255, 255, 0.15) !important;
+  background-color: rgba(255, 255, 255, 0.12) !important;
   color: #ffffff !important;
 }
 html.dark:not(.gold) .text-brand-500,
@@ -953,58 +1023,39 @@ html.dark:not(.gold) thead th {
   color: #ffffff !important;
 }
 html.dark:not(.gold) tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.08) !important;
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Dark mode specific card shadows */
+html.dark:not(.gold) .bg-white:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3) !important;
 }
 
 
-/* ─── GOLD THEME OVERRIDES (Luxurious Metallic Gold & Glassmorphism) ─── */
+/* ─── GOLD THEME OVERRIDES (Formal & Premium Champagne Gold) ─── */
 html.gold body,
 html.gold main,
 html.gold .min-h-screen,
 html.gold .bg-gray-50,
-html.gold .bg-gray-100 {
-  background: linear-gradient(135deg, #EADCB3 0%, #D8BE73 50%, #B69842 100%) !important;
-  color: #3A2C02 !important;
-  background-attachment: fixed !important;
-}
-
-/* Glassmorphism Cards & Containers */
-html.gold .bg-white,
+html.gold .bg-gray-100,
+html.gold .dark\:bg-gray-900,
+html.gold .dark\:bg-gray-950,
+html.gold .dark\:bg-gray-dark,
 html.gold .dark\:bg-\[\#0f1117\],
-html.gold .bg-white\/80,
-html.gold [class*="bg-white"],
-html.gold .dark\:bg-white\/\[0\.02\],
-html.gold .dark\:bg-white\/\[0\.01\] {
-  background: rgba(255, 255, 255, 0.45) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.55) !important;
-  box-shadow: 
-    0 12px 30px 0 rgba(115, 87, 8, 0.15),
-    inset 0 2px 4px 0 rgba(255, 255, 255, 0.45) !important;
-  border-radius: 1rem !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+html.gold .dark\:bg-\[\#101828\],
+html.gold .dark\:bg-\[\#1a1d27\],
+html.gold .dark\:bg-\[\#1a2231\],
+html.gold .dark\:bg-\[\#121824\] {
+  background-color: #F8F7F4 !important;
+  background-image: none !important;
+  color: #4B3704 !important;
 }
 
-/* 3D Lift effect on hover */
-html.gold .bg-white:hover,
-html.gold .dark\:bg-\[\#0f1117\]:hover,
-html.gold [class*="bg-white"]:hover {
-  transform: translateY(-5px) scale(1.01) !important;
-  box-shadow: 
-    0 20px 40px 0 rgba(115, 87, 8, 0.22),
-    inset 0 2px 4px 0 rgba(255, 255, 255, 0.55) !important;
-}
-
-/* Glassmorphism Header & Sidebar */
+/* Clean Sidebar & Header */
 html.gold header,
 html.gold aside {
-  background: rgba(255, 255, 255, 0.35) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border-right: 1.5px solid rgba(255, 255, 255, 0.4) !important;
-  border-bottom: 1.5px solid rgba(255, 255, 255, 0.4) !important;
-  box-shadow: 0 8px 32px 0 rgba(115, 87, 8, 0.08) !important;
+  background-color: #F3F1EA !important;
+  border-color: rgba(197, 160, 40, 0.22) !important;
 }
 
 html.gold aside * {
@@ -1015,31 +1066,46 @@ html.gold aside .bg-brand-500\/\[0\.12\],
 html.gold aside .bg-white\/\[0\.04\],
 html.gold aside .bg-brand-50,
 html.gold aside [class*="bg-brand-"] {
-  background-color: rgba(255, 255, 255, 0.5) !important;
-  border: 1px solid rgba(255, 255, 255, 0.6) !important;
-  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.5) !important;
+  background-color: #E3DEC3 !important;
+  color: #4B3704 !important;
+  border: 1px solid rgba(197, 160, 40, 0.3) !important;
 }
 
-/* 3D Buttons in Gold Theme */
+/* Premium Solid White Cards with Subtle Gold Borders */
+html.gold .bg-white,
+html.gold [class*="bg-white"],
+html.gold .dark\:bg-\[\#0f1117\],
+html.gold .dark\:bg-white\/\[0\.02\],
+html.gold .dark\:bg-white\/\[0\.01\] {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  border: 1px solid rgba(197, 160, 40, 0.22) !important;
+  box-shadow: 0 4px 6px -1px rgba(197, 160, 40, 0.05), 0 2px 4px -1px rgba(197, 160, 40, 0.03) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-radius: 0.75rem !important;
+}
+
+/* Gold theme specific card shadows on hover */
+html.gold .bg-white:hover,
+html.gold [class*="bg-white"]:hover {
+  box-shadow: 0 8px 16px rgba(197, 160, 40, 0.12) !important;
+}
+
+/* Satin Gold Buttons */
 html.gold .bg-brand-600,
 html.gold button[class*="bg-brand-"],
 html.gold label[class*="bg-brand-"] {
-  background: linear-gradient(135deg, #DFBA4E 0%, #C5A028 100%) !important;
+  background-color: #C5A028 !important;
+  background-image: none !important;
   color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.35) !important;
-  box-shadow: 
-    0 4px 0 0 #856106,
-    0 4px 10px 0 rgba(133, 97, 6, 0.3) !important;
-  transition: all 0.1s ease !important;
-  position: relative !important;
+  border: 1px solid #B49020 !important;
+  box-shadow: 0 2px 4px rgba(197, 160, 40, 0.12) !important;
 }
 
-html.gold .bg-brand-600:active,
-html.gold button[class*="bg-brand-"]:active {
-  transform: translateY(3px) !important;
-  box-shadow: 
-    0 1px 0 0 #856106,
-    0 2px 4px 0 rgba(133, 97, 6, 0.2) !important;
+html.gold .bg-brand-600:hover,
+html.gold button[class*="bg-brand-"]:hover {
+  background-color: #B49020 !important;
 }
 
 /* Borders in Gold Mode */
@@ -1052,7 +1118,7 @@ html.gold .border-r,
 html.gold [class*="border-gray-"],
 html.gold [class*="border-white/"],
 html.gold hr {
-  border-color: rgba(255, 255, 255, 0.5) !important;
+  border-color: rgba(197, 160, 40, 0.22) !important;
 }
 
 /* Text Colors in Gold Mode (Royal Dark Gold) */
@@ -1077,33 +1143,43 @@ html.gold .text-gray-400 {
 /* Tables in Gold Mode */
 html.gold thead tr,
 html.gold thead th {
-  background-color: rgba(255, 255, 255, 0.6) !important;
+  background-color: #F3F1EA !important;
   color: #4B3704 !important;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.7) !important;
+  border-bottom: 1.5px solid rgba(197, 160, 40, 0.3) !important;
 }
 
 html.gold tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.25) !important;
+  background-color: #FAF9F5 !important;
 }
 
 /* Inputs & Textareas in Gold Mode */
 html.gold input,
 html.gold textarea,
 html.gold select {
-  background-color: rgba(255, 255, 255, 0.6) !important;
-  border-color: rgba(255, 255, 255, 0.5) !important;
+  background-color: #ffffff !important;
+  border-color: rgba(197, 160, 40, 0.3) !important;
   color: #4B3704 !important;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03) !important;
 }
 
 html.gold input:focus,
 html.gold textarea:focus,
 html.gold select:focus {
-  border-color: #A67C00 !important;
-  background-color: #ffffff !important;
-  box-shadow: 
-    0 0 0 3px rgba(197, 160, 40, 0.25),
-    inset 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  border-color: #C5A028 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(197, 160, 40, 0.18), inset 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+}
+
+/* Badges and small elements */
+html.gold .bg-brand-50,
+html.gold .bg-brand-100 {
+  background-color: #FAF5E6 !important;
+  color: #C5A028 !important;
+}
+html.gold .text-brand-500,
+html.gold .text-brand-600,
+html.gold .text-brand-700 {
+  color: #C5A028 !important;
 }
 
 
