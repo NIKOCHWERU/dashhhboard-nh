@@ -3,7 +3,7 @@
 import type React from "react";
 import { createContext, useState, useContext, useEffect } from "react";
 
-type Theme = "light" | "dark";
+type Theme = "light" | "dark" | "gold";
 
 type ThemeContextType = {
   theme: Theme;
@@ -19,9 +19,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // This code will only run on the client side
     const savedTheme = localStorage.getItem("theme") as Theme | null;
-    const initialTheme = savedTheme || "light"; // Default to light theme
+    const initialTheme = savedTheme || "light";
 
     setTheme(initialTheme);
     setIsInitialized(true);
@@ -30,16 +29,22 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (isInitialized) {
       localStorage.setItem("theme", theme);
+      document.documentElement.classList.remove("dark", "gold");
       if (theme === "dark") {
         document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
+      } else if (theme === "gold") {
+        // Gold theme is a dark gold theme, so we keep .dark class for dark variants
+        document.documentElement.classList.add("dark", "gold");
       }
     }
   }, [theme, isInitialized]);
 
   const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
+    setTheme((prevTheme) => {
+      if (prevTheme === "light") return "dark";
+      if (prevTheme === "dark") return "gold";
+      return "light";
+    });
   };
 
   return (

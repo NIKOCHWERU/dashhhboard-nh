@@ -759,3 +759,125 @@ span.flatpickr-weekday,
 body.modal-open header {
   display: none !important;
 }
+
+/* ─── CUSTOM GLOBAL SCROLLBARS ─── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f9fafb;
+}
+::-webkit-scrollbar-thumb {
+  background: #d0d5dd;
+  border-radius: 9999px;
+  border: 2px solid #f9fafb;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #98a2b3;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #0f1117;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #344054;
+  border: 2px solid #0f1117;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475467;
+}
+
+.gold ::-webkit-scrollbar-track {
+  background: #120e06;
+}
+.gold ::-webkit-scrollbar-thumb {
+  background: #a67c00;
+  border: 2px solid #120e06;
+}
+.gold ::-webkit-scrollbar-thumb:hover {
+  background: #c5a028;
+}
+
+/* ─── PREMIUM GOLD THEME OVERRIDES ─── */
+html.gold {
+  color-scheme: dark;
+}
+
+html.gold body {
+  background-color: #120e06 !important;
+  color: #f7ebd3 !important;
+}
+
+/* Backgrounds */
+html.gold .dark\:bg-gray-900,
+html.gold .dark\:bg-gray-950,
+html.gold .dark\:bg-gray-dark,
+html.gold .dark\:bg-\[\#0f1117\],
+html.gold .dark\:bg-\[\#101828\],
+html.gold .dark\:bg-\[\#1a1d27\],
+html.gold .dark\:bg-\[\#1a2231\],
+html.gold .dark\:bg-\[\#121824\] {
+  background-color: #1a140a !important;
+}
+
+html.gold .dark\:bg-white\/\[0\.01\],
+html.gold .dark\:bg-white\/\[0\.02\] {
+  background-color: rgba(166, 124, 0, 0.03) !important;
+}
+
+html.gold .dark\:bg-white\/\[0\.03\],
+html.gold .dark\:bg-white\/\[0\.04\] {
+  background-color: rgba(166, 124, 0, 0.06) !important;
+}
+
+html.gold .dark\:bg-white\/\[0\.06\],
+html.gold .dark\:bg-white\/\[0\.08\],
+html.gold .dark\:bg-white\/\[0\.1\] {
+  background-color: rgba(166, 124, 0, 0.1) !important;
+}
+
+/* Header & Sidebar */
+html.gold header,
+html.gold aside,
+html.gold .dark\:bg-gray-dark,
+html.gold .dark\:bg-gray-900 {
+  background-color: #151007 !important;
+}
+
+/* Cards & Modals */
+html.gold .bg-white,
+html.gold .dark\:bg-\[\#0f1117\] {
+  background-color: #1d170c !important;
+}
+
+/* Borders */
+html.gold *,
+html.gold ::after,
+html.gold ::before,
+html.gold .dark\:border-white\/\[0\.06\],
+html.gold .dark\:border-white\/\[0\.08\],
+html.gold .dark\:border-white\/\[0\.1\],
+html.gold .dark\:border-gray-800 {
+  border-color: rgba(166, 124, 0, 0.2) !important;
+}
+
+/* Texts */
+html.gold .dark\:text-gray-300,
+html.gold .dark\:text-gray-400 {
+  color: #dfd4be !important;
+}
+
+html.gold .dark\:text-white,
+html.gold .text-gray-800,
+html.gold .dark\:text-white\/90 {
+  color: #fff9e6 !important;
+}
+
+/* Hover effects */
+html.gold .dark\:hover\:bg-white\/5,
+html.gold .dark\:hover\:bg-white\/\[0\.1\],
+html.gold .hover\:bg-gray-100 {
+  background-color: rgba(166, 124, 0, 0.15) !important;
+}
+

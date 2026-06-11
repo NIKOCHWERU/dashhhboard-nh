@@ -381,20 +381,8 @@ function Modal({
         onClick={onClose}
       />
       <div className="relative z-10 w-full max-w-3xl bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-white/[0.08] rounded-2xl shadow-2xl flex flex-col max-h-[90vh] animate-[fadeInUp_0.2s_ease]">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-white/[0.06]">
-          <h3 className="text-base font-bold text-gray-800 dark:text-white">{title}</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
         {/* Body */}
-        <div className="overflow-y-auto flex-1 px-6 py-5">{children}</div>
+        <div className="overflow-y-auto flex-1 px-6 py-6">{children}</div>
         {/* Footer */}
         <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-white/[0.06]">
           <button
@@ -508,7 +496,12 @@ export default function DaftarCalonKlienPage() {
   const [kategoriManitOther, setKategoriManitOther] = useState(false);
   const [klienSearch, setKlienSearch] = useState('');
   const [klienDropdownOpen, setKlienDropdownOpen] = useState(false);
+  const [tableSearch, setTableSearch] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setTableSearch('');
+  }, [activeTab, interaksiSubTab]);
 
   // ── Fetch
   const fetchCalon = useCallback(async () => {
@@ -855,6 +848,60 @@ export default function DaftarCalonKlienPage() {
   const sortedKonten = sortData(kontenData, sortKonten);
   const sortedSI = sortData(siData, sortSI);
 
+  // ── Searched/Filtered data
+  const searchedCalon = sortedCalon.filter(row => {
+    const q = tableSearch.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      (row.namaProspek && row.namaProspek.toLowerCase().includes(q)) ||
+      (row.potensiPekerjaan && row.potensiPekerjaan.toLowerCase().includes(q)) ||
+      (row.domisili && row.domisili.toLowerCase().includes(q)) ||
+      (row.email && row.email.toLowerCase().includes(q)) ||
+      (row.telephone && row.telephone.toLowerCase().includes(q)) ||
+      (row.keterangan && row.keterangan.toLowerCase().includes(q)) ||
+      (row.catatan && row.catatan.toLowerCase().includes(q))
+    );
+  });
+
+  const searchedKlien = sortedKlien.filter(row => {
+    const q = tableSearch.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      (row.namaKlien && row.namaKlien.toLowerCase().includes(q)) ||
+      (row.sumber && row.sumber.toLowerCase().includes(q)) ||
+      (row.nomorInvoice && row.nomorInvoice.toLowerCase().includes(q)) ||
+      (row.jenisPekerjaan && row.jenisPekerjaan.toLowerCase().includes(q)) ||
+      (row.telephone && row.telephone.toLowerCase().includes(q)) ||
+      (row.posisiProgres && row.posisiProgres.toLowerCase().includes(q)) ||
+      (row.catatan && row.catatan.toLowerCase().includes(q))
+    );
+  });
+
+  const searchedKonten = sortedKonten.filter(row => {
+    const q = tableSearch.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      (row.topik && row.topik.toLowerCase().includes(q)) ||
+      (row.judul && row.judul.toLowerCase().includes(q)) ||
+      (row.pembahasan && row.pembahasan.toLowerCase().includes(q)) ||
+      (row.asalMateri && row.asalMateri.toLowerCase().includes(q)) ||
+      (row.targetAudien && row.targetAudien.toLowerCase().includes(q)) ||
+      (row.catatan && row.catatan.toLowerCase().includes(q))
+    );
+  });
+
+  const searchedSI = sortedSI.filter(row => {
+    const q = tableSearch.toLowerCase().trim();
+    if (!q) return true;
+    const kl = klienData.find(k => k.id === row.klienId);
+    const clientName = kl ? kl.namaKlien : '';
+    return (
+      (row.namaKlien && row.namaKlien.toLowerCase().includes(q)) ||
+      clientName.toLowerCase().includes(q) ||
+      (row.keterangan && row.keterangan.toLowerCase().includes(q))
+    );
+  });
+
   // ─── CALON KLIEN FORM ───────────────────────────────────────────────────────
   const CalonForm = (
     <div className="space-y-4">
@@ -1120,29 +1167,58 @@ export default function DaftarCalonKlienPage() {
         <div className="relative">
           <input
             type="text"
-            className={inputClass}
+            className={`${inputClass} pr-10`}
             placeholder="Cari nama klien..."
             value={klienSearch}
-            onChange={e => { setKlienSearch(e.target.value); setKlienDropdownOpen(true); }}
+            onChange={e => {
+              setKlienSearch(e.target.value);
+              setKlienDropdownOpen(true);
+              if (!e.target.value) {
+                setFormSI(p => ({ ...p, klienId: '' }));
+              }
+            }}
             onFocus={() => setKlienDropdownOpen(true)}
             onBlur={() => setTimeout(() => setKlienDropdownOpen(false), 200)}
           />
-          {klienDropdownOpen && filteredKlien.length > 0 && (
+          <button
+            type="button"
+            className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-brand-500 transition-colors"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              setKlienDropdownOpen(prev => !prev);
+            }}
+          >
+            <svg
+              className={`w-4 h-4 transform transition-transform duration-200 ${klienDropdownOpen ? 'rotate-180' : ''}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {klienDropdownOpen && (
             <div className="absolute z-20 mt-1 w-full bg-white dark:bg-[#1a1d27] border border-gray-200 dark:border-white/[0.1] rounded-lg shadow-xl max-h-48 overflow-y-auto">
-              {filteredKlien.map(k => (
-                <button
-                  key={k.id}
-                  type="button"
-                  className="w-full text-left px-3 py-2 text-sm text-gray-800 dark:text-gray-200 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors"
-                  onMouseDown={() => {
-                    setFormSI(p => ({ ...p, klienId: k.id }));
-                    setKlienSearch(k.namaKlien);
-                    setKlienDropdownOpen(false);
-                  }}
-                >
-                  {k.namaKlien}
-                </button>
-              ))}
+              {filteredKlien.length > 0 ? (
+                filteredKlien.map(k => (
+                  <button
+                    key={k.id}
+                    type="button"
+                    className="w-full text-left px-3 py-2 text-sm text-gray-800 dark:text-gray-200 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors"
+                    onMouseDown={() => {
+                      setFormSI(p => ({ ...p, klienId: k.id }));
+                      setKlienSearch(k.namaKlien);
+                      setKlienDropdownOpen(false);
+                    }}
+                  >
+                    {k.namaKlien}
+                  </button>
+                ))
+              ) : (
+                <div className="px-3 py-2 text-xs text-gray-400 italic">
+                  Belum ada klien (ketik manual untuk menambah)
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1217,9 +1293,9 @@ export default function DaftarCalonKlienPage() {
     };
 
     return (
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
         {/* Tab Selector */}
-        <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-white/[0.04] rounded-xl">
+        <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-white/[0.04] rounded-xl shrink-0">
           {tabs.map(tab => (
             <button
               key={tab.key}
@@ -1234,8 +1310,25 @@ export default function DaftarCalonKlienPage() {
             </button>
           ))}
         </div>
+
+        {/* Global Search Bar */}
+        <div className="relative flex-1 max-w-sm">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400 dark:text-gray-500">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </span>
+          <input
+            type="text"
+            className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-gray-200 dark:border-white/[0.1] bg-white dark:bg-white/[0.04] text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-colors"
+            placeholder={`Cari data ${activeTab === 'calon' ? 'potensi klien' : activeTab === 'klien' ? 'klien' : interaksiSubTab === 'konten' ? 'bahan konten' : 'surat introduksi'}...`}
+            value={tableSearch}
+            onChange={e => setTableSearch(e.target.value)}
+          />
+        </div>
+
         {/* Add Button & Import/Export */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           {activeTab === 'calon' && (
             <>
               <input type="file" accept=".xlsx,.xls,.csv" className="hidden" id="import-calon" onChange={(e) => handleImportExcel(e, 'calon')} />
@@ -1299,14 +1392,14 @@ export default function DaftarCalonKlienPage() {
           </tr>
         </thead>
         <tbody>
-          {sortedCalon.length === 0 ? (
+          {searchedCalon.length === 0 ? (
             <tr>
               <td colSpan={cols.length + 2}>
-                <EmptyState message="Belum ada data calon klien" />
+                <EmptyState message={tableSearch ? "Data pencarian tidak ditemukan" : "Belum ada data calon klien"} />
               </td>
             </tr>
           ) : (
-            sortedCalon.map((row, i) => (
+            searchedCalon.map((row, i) => (
             <tr key={row.id} className={`${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
               <TdSticky className={rowBg(i)}>{i + 1}</TdSticky>
               <td className={tdClass}>{formatDateIndo(row.tanggal)}</td>
@@ -1374,14 +1467,14 @@ export default function DaftarCalonKlienPage() {
           </tr>
         </thead>
         <tbody>
-          {sortedKlien.length === 0 ? (
+          {searchedKlien.length === 0 ? (
             <tr>
               <td colSpan={cols.length + 2}>
-                <EmptyState message="Belum ada data klien" />
+                <EmptyState message={tableSearch ? "Data pencarian tidak ditemukan" : "Belum ada data klien"} />
               </td>
             </tr>
           ) : (
-            sortedKlien.map((row, i) => (
+            searchedKlien.map((row, i) => (
             <tr key={row.id} className={`${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
               <TdSticky className={rowBg(i)}>{i + 1}</TdSticky>
               <td className={`${tdClass} font-semibold text-gray-800 dark:text-white`}>{row.namaKlien || '—'}</td>
@@ -1458,14 +1551,14 @@ export default function DaftarCalonKlienPage() {
           </tr>
         </thead>
         <tbody>
-          {sortedKonten.length === 0 ? (
+          {searchedKonten.length === 0 ? (
             <tr>
               <td colSpan={cols.length + 2}>
-                <EmptyState message="Belum ada data bahan konten" />
+                <EmptyState message={tableSearch ? "Data pencarian tidak ditemukan" : "Belum ada data bahan konten"} />
               </td>
             </tr>
           ) : (
-            sortedKonten.map((row, i) => (
+            searchedKonten.map((row, i) => (
             <tr key={row.id} className={`${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
               <TdSticky className={rowBg(i)}>{i + 1}</TdSticky>
               <td className={tdClass}>{formatDateIndo(row.tanggal)}</td>
@@ -1513,14 +1606,14 @@ export default function DaftarCalonKlienPage() {
           </tr>
         </thead>
         <tbody>
-          {sortedSI.length === 0 ? (
+          {searchedSI.length === 0 ? (
             <tr>
               <td colSpan={5}>
-                <EmptyState message="Belum ada data surat introduksi" />
+                <EmptyState message={tableSearch ? "Data pencarian tidak ditemukan" : "Belum ada data surat introduksi"} />
               </td>
             </tr>
           ) : (
-            sortedSI.map((row, i) => {
+            searchedSI.map((row, i) => {
             const kl = klienData.find(k => k.id === row.klienId);
             return (
               <tr key={row.id} className={`${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
