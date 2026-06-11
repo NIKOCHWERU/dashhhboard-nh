@@ -33,8 +33,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
       if (theme === "dark") {
         document.documentElement.classList.add("dark");
       } else if (theme === "gold") {
-        // Gold theme is a dark gold theme, so we keep .dark class for dark variants
-        document.documentElement.classList.add("dark", "gold");
+        // Gold theme is a bright luxury gold theme, so we only add the gold class
+        document.documentElement.classList.add("gold");
       }
     }
   }, [theme, isInitialized]);
