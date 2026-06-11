@@ -824,12 +824,12 @@ aside, header, .card, table, tr, td, th,
               transform 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-/* 2. Page/Content Smooth Entry Animation */
-@keyframes smoothFadeIn {
+/* 2. Page/Content Smooth Entry Animation (Staggered Entrance) */
+@keyframes staggeredSlideIn {
   0% {
     opacity: 0;
-    transform: translateY(8px);
-    filter: blur(2px);
+    transform: translateY(12px);
+    filter: blur(1.5px);
   }
   100% {
     opacity: 1;
@@ -840,8 +840,61 @@ aside, header, .card, table, tr, td, th,
 
 main, .page-transition, .formal-fade-in {
   opacity: 0;
-  animation: smoothFadeIn 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: staggeredSlideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Apply staggered animations 1-by-1 to layout children and grid cells */
+.animate-stagger > div > div > *,
+.animate-stagger > div > *,
+.animate-stagger main > div,
+.animate-stagger main section,
+.animate-stagger main .card,
+.animate-stagger main .stat-card,
+.animate-stagger main table,
+.animate-stagger .grid > *,
+.animate-stagger .grid > div {
+  opacity: 0;
+  animation: staggeredSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Stagger Delays */
+.animate-stagger > div > div > *:nth-child(1),
+.animate-stagger > div > *:nth-child(1),
+.animate-stagger main > div:nth-child(1),
+.animate-stagger .grid > *:nth-child(1) { animation-delay: 0.04s; }
+
+.animate-stagger > div > div > *:nth-child(2),
+.animate-stagger > div > *:nth-child(2),
+.animate-stagger main > div:nth-child(2),
+.animate-stagger .grid > *:nth-child(2) { animation-delay: 0.11s; }
+
+.animate-stagger > div > div > *:nth-child(3),
+.animate-stagger > div > *:nth-child(3),
+.animate-stagger main > div:nth-child(3),
+.animate-stagger .grid > *:nth-child(3) { animation-delay: 0.18s; }
+
+.animate-stagger > div > div > *:nth-child(4),
+.animate-stagger > div > *:nth-child(4),
+.animate-stagger main > div:nth-child(4),
+.animate-stagger .grid > *:nth-child(4) { animation-delay: 0.25s; }
+
+.animate-stagger > div > div > *:nth-child(5),
+.animate-stagger > div > *:nth-child(5),
+.animate-stagger main > div:nth-child(5),
+.animate-stagger .grid > *:nth-child(5) { animation-delay: 0.32s; }
+
+.animate-stagger > div > div > *:nth-child(6),
+.animate-stagger > div > *:nth-child(6),
+.animate-stagger main > div:nth-child(6),
+.animate-stagger .grid > *:nth-child(6) { animation-delay: 0.39s; }
+
+.animate-stagger > div > div > *:nth-child(7),
+.animate-stagger > div > *:nth-child(7),
+.animate-stagger .grid > *:nth-child(7) { animation-delay: 0.46s; }
+
+.animate-stagger > div > div > *:nth-child(8),
+.animate-stagger > div > *:nth-child(8),
+.animate-stagger .grid > *:nth-child(8) { animation-delay: 0.53s; }
 
 /* 3. Formal Card Hover Animation */
 .bg-white:hover,
@@ -1021,7 +1074,7 @@ html.dark:not(.gold) .dark\:bg-brand-500\/20 {
 }
 html.dark:not(.gold) .text-brand-500,
 html.dark:not(.gold) .text-brand-600,
-html.dark:not(.gold) .text-brand-700,
+html.gold .text-brand-700,
 html.dark:not(.gold) .dark\:text-brand-400 {
   color: #ffffff !important;
   fill: #ffffff !important;
@@ -1041,7 +1094,9 @@ html.dark:not(.gold) .bg-white:hover {
 }
 
 
-/* ─── GOLD THEME OVERRIDES (Dominan Warna Gold Logo & Aksen Gold Terang) ─── */
+/* ─── GOLD THEME OVERRIDES (Dominan Gold Logo & Aksen Gold Terang - Terbalik) ─── */
+
+/* 1. Page Background (Comfortable Darker Gold #8E690B) */
 html.gold body,
 html.gold main,
 html.gold .min-h-screen,
@@ -1055,21 +1110,48 @@ html.gold .dark\:bg-\[\#101828\],
 html.gold .dark\:bg-\[\#1a1d27\],
 html.gold .dark\:bg-\[\#1a2231\],
 html.gold .dark\:bg-\[\#121824\] {
-  background-color: #B88A16 !important;
+  background-color: #8E690B !important;
   background-image: none !important;
 }
 
-/* Header & Sidebar */
-html.gold header,
+/* 2. Header (Identical to Light Theme: White bg, dark gray & gold text) */
+html.gold header {
+  background-color: #ffffff !important;
+  border-color: rgba(166, 124, 0, 0.12) !important;
+}
+html.gold header * {
+  color: inherit !important;
+}
+html.gold header .text-brand-500,
+html.gold header .text-brand-600,
+html.gold header .text-brand-700 {
+  color: #A67C00 !important;
+}
+html.gold header .text-gray-900,
+html.gold header .text-gray-800,
+html.gold header .text-gray-700,
+html.gold header .text-gray-600,
+html.gold header .text-gray-500,
+html.gold header .text-gray-400 {
+  color: #374151 !important;
+}
+html.gold header input {
+  background-color: #F9FAFB !important;
+  border-color: #E5E7EB !important;
+  color: #374151 !important;
+}
+html.gold header svg {
+  color: #6B7280 !important;
+}
+
+/* 3. Sidebar (Slightly Darker Gold) */
 html.gold aside {
   background-color: #9D750E !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
 }
-
 html.gold aside * {
   color: #ffffff !important;
 }
-
 html.gold aside .bg-brand-500\/\[0\.12\],
 html.gold aside .bg-white\/\[0\.04\],
 html.gold aside .bg-brand-50,
@@ -1079,13 +1161,13 @@ html.gold aside [class*="bg-brand-"] {
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
-/* Cards & Containers (Rich Darker Gold) */
+/* 4. Cards & Containers (Logo Gold #B88A16) */
 html.gold .bg-white,
 html.gold [class*="bg-white"],
 html.gold .dark\:bg-\[\#0f1117\],
 html.gold .dark\:bg-white\/\[0\.02\],
 html.gold .dark\:bg-white\/\[0\.01\] {
-  background-color: #8E690B !important;
+  background-color: #B88A16 !important;
   background-image: none !important;
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2) !important;
@@ -1094,13 +1176,13 @@ html.gold .dark\:bg-white\/\[0\.01\] {
   border-radius: 0.75rem !important;
 }
 
-/* Gold theme specific card shadows on hover */
+/* Card Hover shadow */
 html.gold .bg-white:hover,
 html.gold [class*="bg-white"]:hover {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35) !important;
 }
 
-/* White Buttons (just like Navy dark mode) */
+/* 5. Buttons & Action Links */
 html.gold .bg-brand-600,
 html.gold button[class*="bg-brand-"],
 html.gold label[class*="bg-brand-"],
@@ -1112,17 +1194,10 @@ html.gold .bg-brand-500 {
   border: 1px solid #ffffff !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
 }
-
 html.gold .bg-brand-600:hover,
 html.gold button[class*="bg-brand-"]:hover,
 html.gold button.bg-brand-500:hover {
   background-color: #f3f4f6 !important;
-  color: #B88A16 !important;
-}
-
-html.gold .bg-brand-600 *,
-html.gold button[class*="bg-brand-"] *,
-html.gold label[class*="bg-brand-"] * {
   color: #B88A16 !important;
 }
 
@@ -1206,6 +1281,37 @@ html.gold .dark\:text-white,
 html.gold .dark\:text-gray-300,
 html.gold .dark\:text-gray-400 {
   color: #ffffff !important;
+}
+
+/* 6b. Reset header text colors to match Light theme */
+html.gold header,
+html.gold header p,
+html.gold header span,
+html.gold header label,
+html.gold header a,
+html.gold header div,
+html.gold header input,
+html.gold header select,
+html.gold header h1, html.gold header h2, html.gold header h3, html.gold header h4, html.gold header h5, html.gold header h6,
+html.gold header .text-gray-900,
+html.gold header .text-gray-800,
+html.gold header .text-gray-700,
+html.gold header .text-gray-600,
+html.gold header .text-gray-500,
+html.gold header .text-gray-400,
+html.gold header .text-black,
+html.gold header .dark\:text-white {
+  color: #374151 !important;
+}
+
+html.gold header .text-brand-500,
+html.gold header .text-brand-600,
+html.gold header .text-brand-700 {
+  color: #A67C00 !important;
+}
+
+html.gold header svg {
+  color: #6B7280 !important;
 }
 
 /* Tables in Gold Mode */
