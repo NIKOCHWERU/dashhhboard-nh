@@ -173,6 +173,74 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
+function parseIndonesianDate(dateStr: any): string | null {
+  if (!dateStr) return null;
+
+  // Handle Excel Date Serial Numbers (e.g. 46094)
+  if (typeof dateStr === 'number') {
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    const parsedDate = new Date(excelEpoch.getTime() + dateStr * 24 * 60 * 60 * 1000);
+    if (!isNaN(parsedDate.getTime())) {
+      const y = parsedDate.getFullYear();
+      const m = String(parsedDate.getMonth() + 1).padStart(2, '0');
+      const d = String(parsedDate.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+  }
+
+  const str = String(dateStr).trim();
+  if (!str) return null;
+
+  // If already standard ISO date, return it
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+
+  // Indonesian months mapping
+  const monthsMap: Record<string, string> = {
+    januari: 'January', jan: 'January',
+    februari: 'February', feb: 'February',
+    maret: 'March', mar: 'March',
+    april: 'April', apr: 'April',
+    mei: 'May',
+    juni: 'June', jun: 'June',
+    juli: 'July', jul: 'July',
+    agustus: 'August', agu: 'August', agt: 'August',
+    september: 'September', sep: 'September',
+    oktober: 'October', okt: 'October',
+    november: 'November', nov: 'November',
+    desember: 'December', des: 'December'
+  };
+
+  // Convert separators to space
+  const cleaned = str.replace(/[-/]/g, ' ');
+  const parts = cleaned.split(/\s+/);
+  if (parts.length === 3) {
+    const day = parts[0];
+    const monthIndo = parts[1].toLowerCase();
+    const year = parts[2];
+    const monthEng = monthsMap[monthIndo];
+    if (monthEng) {
+      const parsedDate = new Date(`${monthEng} ${day}, ${year}`);
+      if (!isNaN(parsedDate.getTime())) {
+        const y = parsedDate.getFullYear();
+        const m = String(parsedDate.getMonth() + 1).padStart(2, '0');
+        const d = String(parsedDate.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+    }
+  }
+
+  // Fallback to standard JS parsing
+  const fallback = new Date(str);
+  if (!isNaN(fallback.getTime())) {
+    const y = fallback.getFullYear();
+    const m = String(fallback.getMonth() + 1).padStart(2, '0');
+    const d = String(fallback.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  return null;
+}
+
 // ─── STAT CARD ────────────────────────────────────────────────────────────────
 
 function StatCard({
@@ -508,17 +576,92 @@ export default function DaftarCalonKlienPage() {
         const sheetName = workbook.SheetNames[0];
         const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
-        const endpoint = type === 'calon' ? '/api/calon-klien' : '/api/klien';
-        for (const row of rows as any[]) {
-          await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(row),
-          });
+        const mappedRows = rows.map((row: any) => {
+          const getVal = (keyNames: string[]) => {
+            for (const name of keyNames) {
+              const foundKey = Object.keys(row).find(k => k.trim().toUpperCase() === name.toUpperCase());
+              if (foundKey) return row[foundKey];
+            }
+            return '';
+          };
+
+          if (type === 'calon') {
+            const rawTanggal = getVal(['TANGGAL', 'TGL']);
+            const parsedTanggal = parseIndonesianDate(rawTanggal);
+            return {
+              tanggal: parsedTanggal,
+              namaProspek: String(getVal(['NAMA PROSPEK', 'NAMA']) || '').trim(),
+              potensiPekerjaan: String(getVal(['POTENSI PEKERJAAN/PERKARA', 'POTENSI PEKERJAAN', 'PERKARA']) || '').trim(),
+              domisili: String(getVal(['DOMISILI']) || '').trim(),
+              email: String(getVal(['EMAIL']) || '').trim(),
+              mediaSosial: String(getVal(['MEDIA SOSIAL', 'MEDSOS']) || '').trim(),
+              telephone: String(getVal(['TELEPHONE', 'TELEPON', 'TELP', 'HP']) || '').trim(),
+              kategoriManit: String(getVal(['KATEGORI MANIT (HOT A-E)', 'KATEGORI MANIT', 'MANIT']) || '').trim(),
+              kegiatanDilakukan: String(getVal(['KEGIATAN YANG SUDAH DILAKUKAN', 'KEGIATAN']) || '').trim(),
+              tantangan: String(getVal(['TANTANGAN/HAMBATAN', 'TANTANGAN', 'HAMBATAN']) || '').trim(),
+              informasiPenting: String(getVal(['INFORMASI PENTING']) || '').trim(),
+              keterangan: String(getVal(['KETERANGAN']) || '').trim(),
+              catatan: String(getVal(['CATATAN']) || '').trim(),
+            };
+          } else {
+            return {
+              namaKlien: String(getVal(['NAMA KLIEN', 'NAMA']) || '').trim(),
+              sumber: String(getVal(['SUMBER']) || '').trim(),
+              nomorInvoice: String(getVal(['NOMOR INVOICE', 'NO INVOICE', 'INVOICE']) || '').trim(),
+              jenisPekerjaan: String(getVal(['JENIS PEKERJAAN/PERKARA', 'JENIS PEKERJAAN', 'PERKARA']) || '').trim(),
+              telephone: String(getVal(['TELEPHONE', 'TELEPON', 'TELP', 'HP']) || '').trim(),
+              statusPembayaran: String(getVal(['STATUS PEMBAYARAN', 'STATUS BAYAR']) || '').trim(),
+              posisiProgres: String(getVal(['POSISI/TINDAKAN/PROGRES', 'POSISI', 'TINDAKAN', 'PROGRES']) || '').trim(),
+              statusPekerjaan: String(getVal(['STATUS PEKERJAAN', 'STATUS KERJA']) || '').trim(),
+              informasiLain: String(getVal(['INFORMASI LAIN', 'INFO LAIN']) || '').trim(),
+              pencairan: String(getVal(['PENCAIRAN']) || '').trim(),
+              keterangan: String(getVal(['KETERANGAN']) || '').trim(),
+              catatan: String(getVal(['CATATAN']) || '').trim(),
+            };
+          }
+        });
+
+        // Filter out rows without required name fields
+        const validRows = mappedRows.filter((row: any) => {
+          if (type === 'calon') {
+            return row.namaProspek.length > 0;
+          } else {
+            return row.namaKlien.length > 0;
+          }
+        });
+
+        if (validRows.length === 0) {
+          alert('Tidak ada baris data valid untuk diimpor. Pastikan kolom Nama terisi.');
+          setSubmitting(false);
+          e.target.value = '';
+          return;
         }
+
+        const endpoint = type === 'calon' ? '/api/calon-klien' : '/api/klien';
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const row of validRows) {
+          try {
+            const res = await fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(row),
+            });
+            if (res.ok) {
+              successCount++;
+            } else {
+              failCount++;
+            }
+          } catch {
+            failCount++;
+          }
+        }
+
         if (type === 'calon') fetchCalon();
         if (type === 'klien') fetchKlien();
-        alert('Impor Selesai. (Pastikan database sudah di-upgrade jika data tidak muncul)');
+
+        alert(`Impor Selesai. Berhasil: ${successCount}, Gagal: ${failCount}.`);
       } catch (err) {
         console.error(err);
         alert('Gagal mengimpor data. Pastikan file valid.');
