@@ -766,126 +766,228 @@ body.modal-open header {
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #f9fafb;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: #d0d5dd;
   border-radius: 9999px;
-  border: 2px solid #f9fafb;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #98a2b3;
 }
 
-.dark ::-webkit-scrollbar-track {
-  background: #0f1117;
+/* Scrollbar Light Mode */
+html:not(.dark):not(.gold) ::-webkit-scrollbar-track {
+  background: #ffffff;
 }
-.dark ::-webkit-scrollbar-thumb {
-  background: #344054;
-  border: 2px solid #0f1117;
-}
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #475467;
+html:not(.dark):not(.gold) ::-webkit-scrollbar-thumb {
+  background: #E6D987;
+  border: 2px solid #ffffff;
 }
 
-.gold ::-webkit-scrollbar-track {
-  background: #FAF6E8;
+/* Scrollbar Dark Mode (Navy & White) */
+html.dark:not(.gold) ::-webkit-scrollbar-track {
+  background: #0A192F;
 }
-.gold ::-webkit-scrollbar-thumb {
-  background: #A67C00;
-  border: 2px solid #FAF6E8;
+html.dark:not(.gold) ::-webkit-scrollbar-thumb {
+  background: #ffffff;
+  border: 2px solid #0A192F;
 }
-.gold ::-webkit-scrollbar-thumb:hover {
+
+/* Scrollbar Gold Mode (Gold & White) */
+html.gold ::-webkit-scrollbar-track {
   background: #C5A028;
 }
-
-/* ─── DARK MODE CLEANLINESS (No white/light borders, lines, or components) ─── */
-.dark .border,
-.dark .border-t,
-.dark .border-b,
-.dark .border-l,
-.dark .border-r,
-.dark [class*="border-gray-"],
-.dark [class*="border-white/"],
-.dark hr {
-  border-color: rgba(255, 255, 255, 0.08) !important;
+html.gold ::-webkit-scrollbar-thumb {
+  background: #ffffff;
+  border: 2px solid #C5A028;
 }
 
-/* Ensure no light backgrounds on cards/components in dark mode */
-.dark .bg-white,
-.dark .bg-gray-50,
-.dark .bg-gray-100,
-.dark .bg-gray-200 {
-  background-color: #0f1117 !important;
+
+/* ─── LIGHT THEME OVERRIDES (Full White, Gold Accents) ─── */
+html:not(.dark):not(.gold) body,
+html:not(.dark):not(.gold) main,
+html:not(.dark):not(.gold) .min-h-screen,
+html:not(.dark):not(.gold) .bg-gray-50,
+html:not(.dark):not(.gold) .bg-gray-100 {
+  background-color: #ffffff !important;
 }
 
-.dark .bg-gray-50\/50,
-.dark .bg-gray-100\/50 {
-  background-color: rgba(0, 0, 0, 0.2) !important;
+html:not(.dark):not(.gold) header,
+html:not(.dark):not(.gold) aside {
+  background-color: #ffffff !important;
+  border-color: rgba(166, 124, 0, 0.15) !important;
 }
 
-/* Ensure only text can be light/white */
-.dark .text-gray-800,
-.dark .text-gray-900,
-.dark .text-black {
-  color: #f3f4f6 !important;
+html:not(.dark):not(.gold) .bg-white {
+  background-color: #ffffff !important;
 }
 
-/* ─── LUXURIOUS LIGHT GOLD THEME OVERRIDES ─── */
-html.gold {
-  color-scheme: light;
+/* Gold accents in light mode */
+html:not(.dark):not(.gold) .text-brand-500,
+html:not(.dark):not(.gold) .text-brand-600,
+html:not(.dark):not(.gold) .text-brand-700 {
+  color: #A67C00 !important;
+}
+html:not(.dark):not(.gold) .bg-brand-600 {
+  background-color: #A67C00 !important;
+  color: #ffffff !important;
+}
+html:not(.dark):not(.gold) .bg-brand-600:hover {
+  background-color: #8B6508 !important;
+}
+html:not(.dark):not(.gold) .bg-brand-50,
+html:not(.dark):not(.gold) .bg-brand-100 {
+  background-color: #F9F7E1 !important;
+  color: #8B6508 !important;
+}
+html:not(.dark):not(.gold) thead tr,
+html:not(.dark):not(.gold) thead th {
+  background-color: #FDFBF2 !important;
+  color: #A67C00 !important;
+}
+html:not(.dark):not(.gold) tbody tr:hover {
+  background-color: #FCFBF0 !important;
+}
+html:not(.dark):not(.gold) * {
+  border-color: rgba(166, 124, 0, 0.15) !important;
 }
 
-html.gold body {
-  background-color: #FAF6E8 !important;
-  color: #3A2E05 !important;
+
+/* ─── DARK THEME OVERRIDES (Full Navy, White Accents) ─── */
+html.dark:not(.gold) body,
+html.dark:not(.gold) main,
+html.dark:not(.gold) .min-h-screen,
+html.dark:not(.gold) .bg-gray-50,
+html.dark:not(.gold) .bg-gray-100,
+html.dark:not(.gold) .dark\:bg-gray-900,
+html.dark:not(.gold) .dark\:bg-gray-950,
+html.dark:not(.gold) .dark\:bg-gray-dark,
+html.dark:not(.gold) .dark\:bg-\[\#0f1117\],
+html.dark:not(.gold) .dark\:bg-\[\#101828\],
+html.dark:not(.gold) .dark\:bg-\[\#1a1d27\],
+html.dark:not(.gold) .dark\:bg-\[\#1a2231\],
+html.dark:not(.gold) .dark\:bg-\[\#121824\] {
+  background-color: #0A192F !important;
 }
 
-/* Page content area background */
+html.dark:not(.gold) header,
+html.dark:not(.gold) aside {
+  background-color: #0F1D36 !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+html.dark:not(.gold) .bg-white,
+html.dark:not(.gold) .dark\:bg-\[\#0f1117\] {
+  background-color: #172A45 !important;
+}
+
+/* Borders in Dark Navy Mode */
+html.dark:not(.gold) *,
+html.dark:not(.gold) .border,
+html.dark:not(.gold) .border-t,
+html.dark:not(.gold) .border-b,
+html.dark:not(.gold) .border-l,
+html.dark:not(.gold) .border-r,
+html.dark:not(.gold) [class*="border-gray-"],
+html.dark:not(.gold) [class*="border-white/"],
+html.dark:not(.gold) hr {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Texts in Dark Navy Mode */
+html.dark:not(.gold) body,
+html.dark:not(.gold) .text-gray-900,
+html.dark:not(.gold) .text-gray-800,
+html.dark:not(.gold) .text-gray-700,
+html.dark:not(.gold) .text-gray-600,
+html.dark:not(.gold) .text-gray-500,
+html.dark:not(.gold) .text-gray-400,
+html.dark:not(.gold) .dark\:text-white,
+html.dark:not(.gold) .dark\:text-white\/90,
+html.dark:not(.gold) .dark\:text-gray-300,
+html.dark:not(.gold) .dark\:text-gray-400,
+html.dark:not(.gold) h1,
+html.dark:not(.gold) h2,
+html.dark:not(.gold) h3,
+html.dark:not(.gold) h4,
+html.dark:not(.gold) h5,
+html.dark:not(.gold) h6 {
+  color: #ffffff !important;
+}
+
+/* Inputs & Textareas in Dark Mode */
+html.dark:not(.gold) input,
+html.dark:not(.gold) textarea,
+html.dark:not(.gold) select {
+  background-color: #172A45 !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+/* White accents: badges, buttons */
+html.dark:not(.gold) .bg-brand-600 {
+  background-color: #ffffff !important;
+  color: #0A192F !important;
+}
+html.dark:not(.gold) .bg-brand-600:hover {
+  background-color: #f3f4f6 !important;
+}
+html.dark:not(.gold) .bg-brand-50,
+html.dark:not(.gold) .bg-brand-100,
+html.dark:not(.gold) .dark\:bg-brand-500\/10,
+html.dark:not(.gold) .dark\:bg-brand-500\/20 {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+html.dark:not(.gold) .text-brand-500,
+html.dark:not(.gold) .text-brand-600,
+html.dark:not(.gold) .text-brand-700,
+html.dark:not(.gold) .dark\:text-brand-400 {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+html.dark:not(.gold) thead tr,
+html.dark:not(.gold) thead th {
+  background-color: #0F1D36 !important;
+  color: #ffffff !important;
+}
+html.dark:not(.gold) tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+
+/* ─── GOLD THEME OVERRIDES (Full Gold, White Accents) ─── */
+html.gold body,
 html.gold main,
+html.gold .min-h-screen,
 html.gold .bg-gray-50,
 html.gold .bg-gray-100,
-html.gold .min-h-screen {
-  background-color: #F5EFCF !important;
-}
-
-/* Component / Card Backgrounds */
+html.gold .dark\:bg-gray-900,
+html.gold .dark\:bg-gray-950,
+html.gold .dark\:bg-gray-dark,
+html.gold .dark\:bg-\[\#0f1117\],
+html.gold .dark\:bg-\[\#101828\],
+html.gold .dark\:bg-\[\#1a1d27\],
+html.gold .dark\:bg-\[\#1a2231\],
+html.gold .dark\:bg-\[\#121824\],
 html.gold .bg-white,
-html.gold .bg-white\/80,
-html.gold [class*="bg-white"],
-html.gold .bg-white\/\[0\.02\],
-html.gold .bg-white\/\[0\.01\] {
-  background-color: #FFFDF4 !important;
+html.gold .dark\:bg-\[\#0f1117\] {
+  background-color: #C5A028 !important;
 }
 
-/* Sidebar & Header - Shining Gold Gradient */
-html.gold aside,
-html.gold header {
-  background: linear-gradient(135deg, #DFBA4E 0%, #C5A028 50%, #A67C00 100%) !important;
-  border-color: #DAC64B !important;
+html.gold header,
+html.gold aside {
+  background-color: #D4B23F !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
 }
 
-/* Sidebar items and header texts */
-html.gold aside *,
-html.gold header * {
-  color: #3A2E05 !important;
+html.gold .bg-white,
+html.gold .dark\:bg-\[\#0f1117\] {
+  background-color: #D4B23F !important;
 }
 
-html.gold aside .bg-brand-500\/\[0\.12\],
-html.gold aside .bg-white\/\[0\.04\],
-html.gold aside .bg-brand-50,
-html.gold aside [class*="bg-brand-"] {
-  background-color: rgba(255, 255, 255, 0.4) !important;
-}
-
-html.gold aside .text-brand-400,
-html.gold aside .text-brand-500,
-html.gold aside .text-brand-700 {
-  color: #4B3704 !important;
-  font-weight: 700 !important;
-}
-
-/* Borders in Gold Theme */
+/* Borders in Gold Mode */
 html.gold *,
 html.gold .border,
 html.gold .border-t,
@@ -893,65 +995,75 @@ html.gold .border-b,
 html.gold .border-l,
 html.gold .border-r,
 html.gold [class*="border-gray-"],
-html.gold [class*="border-white/"] {
-  border-color: rgba(197, 160, 40, 0.3) !important;
+html.gold [class*="border-white/"],
+html.gold hr {
+  border-color: rgba(255, 255, 255, 0.35) !important;
 }
 
-/* Text Colors in Gold Theme */
+/* Texts in Gold Mode */
+html.gold body,
 html.gold .text-gray-900,
 html.gold .text-gray-800,
 html.gold .text-gray-700,
 html.gold .text-gray-600,
+html.gold .text-gray-500,
+html.gold .text-gray-400,
+html.gold .dark\:text-white,
+html.gold .dark\:text-white\/90,
+html.gold .dark\:text-gray-300,
+html.gold .dark\:text-gray-400,
 html.gold h1,
 html.gold h2,
 html.gold h3,
 html.gold h4,
 html.gold h5,
 html.gold h6 {
-  color: #4B3704 !important;
+  color: #ffffff !important;
 }
 
-html.gold .text-gray-500,
-html.gold .text-gray-400 {
-  color: #7B6224 !important;
-}
-
-/* Tables in Gold Theme */
-html.gold thead tr,
-html.gold thead th {
-  background-color: #F1E7B9 !important;
-  color: #4B3704 !important;
-}
-
-html.gold tbody tr:hover {
-  background-color: rgba(197, 160, 40, 0.1) !important;
-}
-
-html.gold .bg-brand-600 {
-  background-color: #C5A028 !important;
-}
-html.gold .bg-brand-600:hover {
-  background-color: #A67C00 !important;
-}
-
-html.gold .bg-brand-50 {
-  background-color: #FFFDF4 !important;
-}
-
-/* Inputs & Textareas */
+/* Inputs & Textareas in Gold Mode */
 html.gold input,
 html.gold textarea,
 html.gold select {
-  background-color: #FFFDF4 !important;
-  border-color: rgba(197, 160, 40, 0.5) !important;
-  color: #3A2E05 !important;
+  background-color: #D4B23F !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
 }
 
-html.gold input:focus,
-html.gold textarea:focus,
-html.gold select:focus {
-  border-color: #A67C00 !important;
-  box-shadow: 0 0 0 2px rgba(166, 124, 0, 0.2) !important;
+/* White accents: badges, active items */
+html.gold .bg-brand-600 {
+  background-color: #ffffff !important;
+  color: #C5A028 !important;
 }
+html.gold .bg-brand-600:hover {
+  background-color: #f3f4f6 !important;
+}
+
+html.gold .bg-brand-50,
+html.gold .bg-brand-100,
+html.gold .dark\:bg-brand-500\/10,
+html.gold .dark\:bg-brand-500\/20 {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+html.gold .text-brand-500,
+html.gold .text-brand-600,
+html.gold .text-brand-700,
+html.gold .dark\:text-brand-400 {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+html.gold thead tr,
+html.gold thead th {
+  background-color: #D4B23F !important;
+  color: #ffffff !important;
+}
+
+html.gold tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
 
 
