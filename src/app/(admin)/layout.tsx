@@ -8,6 +8,7 @@ import React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { UploadProvider } from "@/context/UploadContext";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function AdminLayout({
   children,
@@ -90,7 +91,17 @@ export default function AdminLayout({
           {/* Page Content Guard */}
           <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6" suppressHydrationWarning>
             {isAllowed ? (
-              children
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={pathname}
+                  initial={{ opacity: 0, y: 8, filter: "blur(4px)" }}
+                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, y: -8, filter: "blur(4px)" }}
+                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  {children}
+                </motion.div>
+              </AnimatePresence>
             ) : (
               <div className="min-h-[70vh] flex items-center justify-center p-4">
                 <div className="w-full max-w-md p-8 border border-red-500/30 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md rounded-none shadow-2xl text-center space-y-6 animate-fade-in relative overflow-hidden">
