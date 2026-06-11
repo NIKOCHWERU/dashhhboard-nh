@@ -41,20 +41,7 @@ export default function ThemeTogglerTwo() {
           />
         </svg>
       )}
-      {theme === "gold" && (
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M5 16L3 5L8.5 10L12 4L15.5 10L21 5L19 16H5ZM19 18H5C3.89543 18 3 18.8954 3 20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20C21 18.8954 20.1046 18 19 18Z"
-            fill="#DAC64B"
-          />
-        </svg>
-      )}
+
     </button>
   );
 }

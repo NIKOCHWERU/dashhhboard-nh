@@ -3,7 +3,7 @@
 import type React from "react";
 import { createContext, useState, useContext, useEffect } from "react";
 
-type Theme = "light" | "dark" | "gold";
+type Theme = "light" | "dark";
 
 type ThemeContextType = {
   theme: Theme;
@@ -32,19 +32,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
       document.documentElement.classList.remove("dark", "gold");
       if (theme === "dark") {
         document.documentElement.classList.add("dark");
-      } else if (theme === "gold") {
-        // Gold theme is a bright luxury gold theme, so we only add the gold class
-        document.documentElement.classList.add("gold");
       }
     }
   }, [theme, isInitialized]);
 
   const toggleTheme = () => {
-    setTheme((prevTheme) => {
-      if (prevTheme === "light") return "dark";
-      if (prevTheme === "dark") return "gold";
-      return "light";
-    });
+    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
   };
 
   return (
