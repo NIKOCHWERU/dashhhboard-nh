@@ -275,8 +275,8 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/catatan-pribadi" className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-brand-500 text-[9px] font-black uppercase tracking-wider transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98]">
-            + Catatan
+          <Link href="/daftar-potensi-klien" className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-brand-500 text-[9px] font-black uppercase tracking-wider transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98]">
+            + Potensi
           </Link>
           <Link href="/retainer" className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-brand-500 text-[9px] font-black uppercase tracking-wider transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98]">
             + Pekerjaan
@@ -402,7 +402,7 @@ export default function Dashboard() {
                       Tugas
                     </h2>
                   </div>
-                  <Link href="/catatan-pribadi" className="text-brand-500 font-black hover:underline text-[9px] uppercase tracking-wider">Semua</Link>
+                  <Link href="/daftar-potensi-klien" className="text-brand-500 font-black hover:underline text-[9px] uppercase tracking-wider">Semua</Link>
                 </div>
                 
                 <div className="space-y-2 overflow-y-auto pr-1 flex-1 no-scrollbar">
@@ -650,8 +650,8 @@ export default function Dashboard() {
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2 flex-1 items-center">
-                  <Link href="/catatan-pribadi" className="flex flex-col items-center justify-center p-2 text-center border border-gray-100 dark:border-gray-850 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] group h-12">
-                    <span className="text-[9px] font-black text-gray-800 dark:text-gray-200 group-hover:text-brand-500 uppercase tracking-wider">Catatan</span>
+                  <Link href="/daftar-potensi-klien" className="flex flex-col items-center justify-center p-2 text-center border border-gray-100 dark:border-gray-850 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] group h-12">
+                    <span className="text-[9px] font-black text-gray-800 dark:text-gray-200 group-hover:text-brand-500 uppercase tracking-wider">Potensi</span>
                   </Link>
                   <Link href="/legal/template-management" className="flex flex-col items-center justify-center p-2 text-center border border-gray-100 dark:border-gray-850 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] group h-12">
                     <span className="text-[9px] font-black text-gray-800 dark:text-gray-200 group-hover:text-brand-500 uppercase tracking-wider">Formulir</span>
