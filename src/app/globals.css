@@ -1084,9 +1084,9 @@ html.dark:not(.gold) .bg-white:hover {
 }
 
 
-/* ─── GOLD THEME OVERRIDES (Reversed: Brand Logo Gold bg & Comfort Darker Gold Cards) ─── */
+/* ─── GOLD THEME OVERRIDES (Premium: Cream bg, White Cards, Bronze Sidebar, Gold Accent) ─── */
 
-/* 1. Page Background (Logo Gold #B88A16) */
+/* 1. Page Background → Warm Cream #F8F6F1 (light, airy, premium) */
 html.gold body,
 html.gold main,
 html.gold .min-h-screen,
@@ -1100,14 +1100,15 @@ html.gold .dark\:bg-\[\#101828\],
 html.gold .dark\:bg-\[\#1a1d27\],
 html.gold .dark\:bg-\[\#1a2231\],
 html.gold .dark\:bg-\[\#121824\] {
-  background-color: #B88A16 !important;
+  background-color: #F8F6F1 !important;
   background-image: none !important;
 }
 
-/* 2. Header (Identical to Light Theme: White bg, dark gray & gold text) */
+/* 2. Header — Tetap putih, sama seperti Light Theme */
 html.gold header {
   background-color: #ffffff !important;
-  border-color: rgba(166, 124, 0, 0.12) !important;
+  border-color: rgba(166, 124, 0, 0.15) !important;
+  box-shadow: 0 1px 3px rgba(166, 124, 0, 0.08) !important;
 }
 html.gold header,
 html.gold header * {
@@ -1127,102 +1128,104 @@ html.gold header svg {
   color: #6B7280 !important;
 }
 
-/* 3. Sidebar (Deep Rich Bronze Gold #6B4E06) */
+/* 3. Sidebar → Deep Dark Bronze #2F2410 (premium, bisa dibaca) */
 html.gold aside {
-  background-color: #6B4E06 !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
+  background-color: #2F2410 !important;
+  border-color: rgba(166, 124, 0, 0.2) !important;
 }
 html.gold aside * {
-  color: #ffffff !important;
+  color: rgba(255, 255, 255, 0.85) !important;
 }
 html.gold aside .bg-brand-500\/\[0\.12\],
 html.gold aside .bg-white\/\[0\.04\],
 html.gold aside .bg-brand-50,
 html.gold aside [class*="bg-brand-"] {
-  background-color: rgba(255, 255, 255, 0.12) !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(166, 124, 0, 0.25) !important;
 }
 
-/* 4. Cards & Containers (Comfortable Darker Gold #8E690B) */
+/* 4. Cards & Containers → Putih murni #FFFFFF */
 html.gold .bg-white,
 html.gold [class*="bg-white"],
 html.gold .dark\:bg-\[\#0f1117\],
 html.gold .dark\:bg-white\/\[0\.02\],
 html.gold .dark\:bg-white\/\[0\.01\] {
-  background-color: #8E690B !important;
+  background-color: #ffffff !important;
   background-image: none !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid rgba(166, 124, 0, 0.15) !important;
+  box-shadow: 0 1px 3px rgba(166, 124, 0, 0.08), 0 4px 6px rgba(0, 0, 0, 0.04) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   border-radius: 0.75rem !important;
 }
 
-/* Card Hover shadow */
+/* Card Hover */
 html.gold .bg-white:hover,
 html.gold [class*="bg-white"]:hover {
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35) !important;
+  box-shadow: 0 8px 20px rgba(166, 124, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+  border-color: rgba(166, 124, 0, 0.25) !important;
 }
 
-/* 5. Buttons & Action Links (White bg, gold text) */
+/* 5. Primary Buttons → Gold solid #A67C00 */
 html.gold .bg-brand-600,
 html.gold button[class*="bg-brand-"],
 html.gold label[class*="bg-brand-"],
 html.gold button.bg-brand-500,
 html.gold .bg-brand-500,
 html.gold a.bg-brand-600 {
-  background-color: #ffffff !important;
+  background-color: #A67C00 !important;
   background-image: none !important;
-  color: #8E690B !important;
-  border: 1px solid #ffffff !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  color: #ffffff !important;
+  border: 1px solid #8B6508 !important;
+  box-shadow: 0 2px 6px rgba(166, 124, 0, 0.25) !important;
 }
 html.gold .bg-brand-600 *,
 html.gold button[class*="bg-brand-"] *,
 html.gold button.bg-brand-500 *,
 html.gold .bg-brand-500 * {
-  color: #8E690B !important;
+  color: #ffffff !important;
 }
 html.gold .bg-brand-600:hover,
 html.gold button[class*="bg-brand-"]:hover,
 html.gold button.bg-brand-500:hover {
-  background-color: #f3f4f6 !important;
-  color: #8E690B !important;
+  background-color: #8B6508 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(166, 124, 0, 0.35) !important;
 }
 html.gold .bg-brand-600:hover *,
 html.gold button[class*="bg-brand-"]:hover * {
-  color: #8E690B !important;
+  color: #ffffff !important;
 }
 
-/* Active Sidebar Menu Item (Bright Gold Accent) */
+/* Active Sidebar Menu Item → Gold #A67C00 terang, teks putih */
 html.gold aside .bg-brand-500,
 html.gold aside [class*="bg-brand-500"] {
-  background-color: #FFD700 !important;
-  color: #1E1807 !important;
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4) !important;
+  background-color: #A67C00 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(166, 124, 0, 0.4) !important;
 }
 html.gold aside .bg-brand-500 *,
 html.gold aside [class*="bg-brand-500"] * {
-  color: #1E1807 !important;
+  color: #ffffff !important;
 }
 
 /* Active Sidebar Submenu Link */
 html.gold aside a[class*="bg-brand-50"],
 html.gold aside a[class*="dark:bg-brand-500/10"],
 html.gold aside a.bg-brand-50 {
-  background-color: rgba(255, 215, 0, 0.15) !important;
-  color: #FFD700 !important;
+  background-color: rgba(166, 124, 0, 0.2) !important;
+  color: #D4A843 !important;
 }
 html.gold aside a[class*="bg-brand-50"] *,
 html.gold aside a[class*="dark:bg-brand-500/10"] * {
-  color: #FFD700 !important;
+  color: #D4A843 !important;
 }
 
 /* Sidebar Hover Items */
 html.gold aside .text-gray-500:hover,
 html.gold aside [class*="hover:bg-brand-50"]:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: rgba(166, 124, 0, 0.15) !important;
   color: #ffffff !important;
 }
 html.gold aside .text-gray-500:hover *,
@@ -1230,8 +1233,7 @@ html.gold aside [class*="hover:bg-brand-50"]:hover * {
   color: #ffffff !important;
 }
 
-/* Borders in Gold Mode */
-html.gold *,
+/* Borders di Gold Mode → gold tipis */
 html.gold .border,
 html.gold .border-t,
 html.gold .border-b,
@@ -1240,70 +1242,150 @@ html.gold .border-r,
 html.gold [class*="border-gray-"],
 html.gold [class*="border-white/"],
 html.gold hr {
-  border-color: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(166, 124, 0, 0.15) !important;
 }
 
-/* 6. Text Colors in Gold Mode (Full White Overrides for Legibility) */
-/* Apply white to body and everything outside the header and active elements/buttons */
-html.gold body :not(header):not(header *):not(.bg-brand-500):not(.bg-brand-500 *):not(.bg-brand-600):not(.bg-brand-600 *):not(button):not(button *):not(a[class*="bg-brand"]):not(a[class*="bg-brand"] *):not(.text-brand-500):not(.text-brand-500 *) {
-  color: #ffffff !important;
-  fill: #ffffff !important;
+/* 6. Text Colors — Dark navy & abu-abu profesional */
+/* Heading */
+html.gold h1,
+html.gold h2,
+html.gold h3,
+html.gold h4,
+html.gold h5,
+html.gold h6,
+html.gold [class*="text-gray-900"],
+html.gold [class*="text-gray-800"],
+html.gold [class*="dark:text-white"],
+html.gold .dark\:text-white\/90,
+html.gold .dark\:text-white\/80 {
+  color: #1E293B !important;
+  fill: #1E293B !important;
 }
 
-/* Tables in Gold Mode */
+/* Body / General Text */
+html.gold body,
+html.gold p,
+html.gold span,
+html.gold li,
+html.gold td,
+html.gold [class*="text-gray-700"],
+html.gold [class*="text-gray-600"] {
+  color: #475569 !important;
+}
+
+/* Muted / Sub Text */
+html.gold [class*="text-gray-500"],
+html.gold [class*="text-gray-400"],
+html.gold [class*="dark:text-gray-400"],
+html.gold [class*="dark:text-gray-500"] {
+  color: #94A3B8 !important;
+}
+
+/* Gold accent text */
+html.gold .text-brand-500,
+html.gold .text-brand-600,
+html.gold .text-brand-700,
+html.gold .dark\:text-brand-400 {
+  color: #A67C00 !important;
+  fill: #A67C00 !important;
+}
+
+/* Sidebar teks tetap putih */
+html.gold aside,
+html.gold aside p,
+html.gold aside span,
+html.gold aside li,
+html.gold aside a,
+html.gold aside svg,
+html.gold aside div {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Tables di Gold Mode */
 html.gold thead tr,
 html.gold thead th {
-  background-color: #6B4E06 !important;
-  color: #ffffff !important;
-  border-bottom: 1.5px solid rgba(255, 255, 255, 0.2) !important;
+  background-color: #FAF7EE !important;
+  color: #A67C00 !important;
+  border-bottom: 1.5px solid rgba(166, 124, 0, 0.2) !important;
+}
+html.gold thead th {
+  font-weight: 700 !important;
+}
+
+html.gold tbody tr {
+  background-color: #ffffff !important;
+  color: #475569 !important;
+}
+
+html.gold tbody tr:nth-child(even) {
+  background-color: #FDFBF7 !important;
 }
 
 html.gold tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.08) !important;
+  background-color: #FDF8EE !important;
 }
 
-/* Inputs & Textareas in Gold Mode */
+html.gold tbody td {
+  color: #475569 !important;
+  border-color: rgba(166, 124, 0, 0.1) !important;
+}
+
+/* Inputs & Textareas di Gold Mode → putih bersih */
 html.gold input,
 html.gold textarea,
 html.gold select {
-  background-color: #8E690B !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  color: #ffffff !important;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+  background-color: #ffffff !important;
+  border-color: rgba(166, 124, 0, 0.25) !important;
+  color: #1E293B !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04) !important;
 }
 
 html.gold input:focus,
 html.gold textarea:focus,
 html.gold select:focus {
-  border-color: #ffffff !important;
+  border-color: #A67C00 !important;
   outline: none !important;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 0 0 3px rgba(166, 124, 0, 0.12), inset 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+html.gold input::placeholder,
+html.gold textarea::placeholder {
+  color: #94A3B8 !important;
 }
 
 html.gold option {
-  background-color: #8E690B !important;
-  color: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #1E293B !important;
 }
 
-/* Badges and small elements */
+/* Badges → gold soft */
 html.gold .bg-brand-50,
 html.gold .bg-brand-100 {
-  background-color: rgba(255, 255, 255, 0.15) !important;
-  color: #ffffff !important;
-}
-html.gold .text-brand-500,
-html.gold .text-brand-600,
-html.gold .text-brand-700,
-html.gold .dark\:text-brand-400 {
-  color: #ffffff !important;
-  fill: #ffffff !important;
+  background-color: #FAF3DC !important;
+  color: #8B6508 !important;
 }
 
 /* Apex charts tooltips */
 html.gold .apexcharts-tooltip {
-  background-color: #8E690B !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  color: #ffffff !important;
+  background-color: #ffffff !important;
+  border-color: rgba(166, 124, 0, 0.2) !important;
+  color: #1E293B !important;
+  box-shadow: 0 4px 12px rgba(166, 124, 0, 0.12) !important;
+}
+html.gold .apexcharts-tooltip * {
+  color: #475569 !important;
+}
+
+/* Scrollbar untuk Gold Mode (sudah di atas, ini untuk konsistensi) */
+html.gold ::-webkit-scrollbar-track {
+  background: #F0EBE0 !important;
+}
+html.gold ::-webkit-scrollbar-thumb {
+  background: rgba(166, 124, 0, 0.3) !important;
+  border: 1px solid #F0EBE0 !important;
+}
+html.gold ::-webkit-scrollbar-thumb:hover {
+  background: rgba(166, 124, 0, 0.5) !important;
 }
 
 
