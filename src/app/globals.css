@@ -797,16 +797,16 @@ html.dark:not(.gold) ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Scrollbar Gold Mode (Champagne Gold) */
+/* Scrollbar Gold Mode (Dark Gold & White) */
 html.gold ::-webkit-scrollbar-track {
-  background: #F8F7F4;
+  background: #1E1807;
 }
 html.gold ::-webkit-scrollbar-thumb {
-  background: #E3DEC3;
-  border: 1px solid #F8F7F4;
+  background: #3A2E0F;
+  border: 1px solid #1E1807;
 }
 html.gold ::-webkit-scrollbar-thumb:hover {
-  background: #C5A028;
+  background: rgba(255, 255, 255, 0.3);
 }
 
 
@@ -814,12 +814,9 @@ html.gold ::-webkit-scrollbar-thumb:hover {
 
 /* 1. Global Transitions on Interactive and Layout Elements */
 a, button, input, select, textarea, label,
+aside, header, .card, table, tr, td, th,
 .bg-white, .bg-gray-50, .bg-gray-100,
-aside, header, main, nav,
-table, tr, td, th,
-.card,
-.border, .border-t, .border-b, .border-l, .border-r,
-[class*="bg-"], [class*="text-"], [class*="border-"] {
+.border, .border-t, .border-b, .border-l, .border-r {
   transition: background-color 0.22s cubic-bezier(0.4, 0, 0.2, 1), 
               border-color 0.22s cubic-bezier(0.4, 0, 0.2, 1), 
               color 0.18s cubic-bezier(0.4, 0, 0.2, 1), 
@@ -828,19 +825,22 @@ table, tr, td, th,
 }
 
 /* 2. Page/Content Smooth Entry Animation */
-@keyframes formalFadeIn {
-  from {
+@keyframes smoothFadeIn {
+  0% {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(8px);
+    filter: blur(2px);
   }
-  to {
+  100% {
     opacity: 1;
     transform: translateY(0);
+    filter: blur(0);
   }
 }
 
 main, .page-transition, .formal-fade-in {
-  animation: formalFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+  animation: smoothFadeIn 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* 3. Formal Card Hover Animation */
@@ -858,6 +858,15 @@ a.bg-brand-600:active,
 .active-scale:active,
 input[type="submit"]:active {
   transform: scale(0.98) !important;
+}
+
+
+/* ─── UNIFIED HEADER & SIDEBAR BORDERS ─── */
+header {
+  border-bottom: 1px solid !important;
+}
+aside {
+  border-right: 1px solid !important;
 }
 
 
@@ -1032,7 +1041,7 @@ html.dark:not(.gold) .bg-white:hover {
 }
 
 
-/* ─── GOLD THEME OVERRIDES (Formal & Premium Champagne Gold) ─── */
+/* ─── GOLD THEME OVERRIDES (Full Gold, White Accents - Comfortable Dark Mode) ─── */
 html.gold body,
 html.gold main,
 html.gold .min-h-screen,
@@ -1046,41 +1055,40 @@ html.gold .dark\:bg-\[\#101828\],
 html.gold .dark\:bg-\[\#1a1d27\],
 html.gold .dark\:bg-\[\#1a2231\],
 html.gold .dark\:bg-\[\#121824\] {
-  background-color: #F8F7F4 !important;
+  background-color: #1E1807 !important;
   background-image: none !important;
-  color: #4B3704 !important;
 }
 
 /* Clean Sidebar & Header */
 html.gold header,
 html.gold aside {
-  background-color: #F3F1EA !important;
-  border-color: rgba(197, 160, 40, 0.22) !important;
+  background-color: #2C220B !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 html.gold aside * {
-  color: #4B3704 !important;
+  color: #ffffff !important;
 }
 
 html.gold aside .bg-brand-500\/\[0\.12\],
 html.gold aside .bg-white\/\[0\.04\],
 html.gold aside .bg-brand-50,
 html.gold aside [class*="bg-brand-"] {
-  background-color: #E3DEC3 !important;
-  color: #4B3704 !important;
-  border: 1px solid rgba(197, 160, 40, 0.3) !important;
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
-/* Premium Solid White Cards with Subtle Gold Borders */
+/* Dark Gold Cards */
 html.gold .bg-white,
 html.gold [class*="bg-white"],
 html.gold .dark\:bg-\[\#0f1117\],
 html.gold .dark\:bg-white\/\[0\.02\],
 html.gold .dark\:bg-white\/\[0\.01\] {
-  background-color: #ffffff !important;
+  background-color: #3A2E0F !important;
   background-image: none !important;
-  border: 1px solid rgba(197, 160, 40, 0.22) !important;
-  box-shadow: 0 4px 6px -1px rgba(197, 160, 40, 0.05), 0 2px 4px -1px rgba(197, 160, 40, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   border-radius: 0.75rem !important;
@@ -1089,23 +1097,24 @@ html.gold .dark\:bg-white\/\[0\.01\] {
 /* Gold theme specific card shadows on hover */
 html.gold .bg-white:hover,
 html.gold [class*="bg-white"]:hover {
-  box-shadow: 0 8px 16px rgba(197, 160, 40, 0.12) !important;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35) !important;
 }
 
-/* Satin Gold Buttons */
+/* White Buttons (just like Navy dark mode) */
 html.gold .bg-brand-600,
 html.gold button[class*="bg-brand-"],
 html.gold label[class*="bg-brand-"] {
-  background-color: #C5A028 !important;
+  background-color: #ffffff !important;
   background-image: none !important;
-  color: #ffffff !important;
-  border: 1px solid #B49020 !important;
-  box-shadow: 0 2px 4px rgba(197, 160, 40, 0.12) !important;
+  color: #1E1807 !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
 }
 
 html.gold .bg-brand-600:hover,
 html.gold button[class*="bg-brand-"]:hover {
-  background-color: #B49020 !important;
+  background-color: #f3f4f6 !important;
+  color: #1E1807 !important;
 }
 
 /* Borders in Gold Mode */
@@ -1118,10 +1127,11 @@ html.gold .border-r,
 html.gold [class*="border-gray-"],
 html.gold [class*="border-white/"],
 html.gold hr {
-  border-color: rgba(197, 160, 40, 0.22) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
-/* Text Colors in Gold Mode (Royal Dark Gold) */
+/* Text Colors in Gold Mode (White & Muted Gold-Gray) */
+html.gold body,
 html.gold .text-gray-900,
 html.gold .text-gray-800,
 html.gold .text-gray-700,
@@ -1132,54 +1142,56 @@ html.gold h3,
 html.gold h4,
 html.gold h5,
 html.gold h6 {
-  color: #4B3704 !important;
+  color: #ffffff !important;
 }
 
 html.gold .text-gray-500,
 html.gold .text-gray-400 {
-  color: #7B6224 !important;
+  color: #D6C7A1 !important;
 }
 
 /* Tables in Gold Mode */
 html.gold thead tr,
 html.gold thead th {
-  background-color: #F3F1EA !important;
-  color: #4B3704 !important;
-  border-bottom: 1.5px solid rgba(197, 160, 40, 0.3) !important;
+  background-color: #2C220B !important;
+  color: #ffffff !important;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 html.gold tbody tr:hover {
-  background-color: #FAF9F5 !important;
+  background-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 /* Inputs & Textareas in Gold Mode */
 html.gold input,
 html.gold textarea,
 html.gold select {
-  background-color: #ffffff !important;
-  border-color: rgba(197, 160, 40, 0.3) !important;
-  color: #4B3704 !important;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+  background-color: #3A2E0F !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
 html.gold input:focus,
 html.gold textarea:focus,
 html.gold select:focus {
-  border-color: #C5A028 !important;
+  border-color: #ffffff !important;
   outline: none !important;
-  box-shadow: 0 0 0 3px rgba(197, 160, 40, 0.18), inset 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15), inset 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Badges and small elements */
 html.gold .bg-brand-50,
 html.gold .bg-brand-100 {
-  background-color: #FAF5E6 !important;
-  color: #C5A028 !important;
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
 }
 html.gold .text-brand-500,
 html.gold .text-brand-600,
-html.gold .text-brand-700 {
-  color: #C5A028 !important;
+html.gold .text-brand-700,
+html.gold .dark\:text-brand-400 {
+  color: #ffffff !important;
+  fill: #ffffff !important;
 }
 
 
