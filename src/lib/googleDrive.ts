@@ -1,7 +1,36 @@
+import fs from "fs";
+import path from "path";
+
+const TOKEN_FILE_PATH = path.join(process.cwd(), "src/data/gdrive-token.json");
+
+export function getStoredRefreshToken(): string | null {
+  try {
+    if (fs.existsSync(TOKEN_FILE_PATH)) {
+      const data = JSON.parse(fs.readFileSync(TOKEN_FILE_PATH, "utf8"));
+      return data.refreshToken || null;
+    }
+  } catch (e) {
+    console.error("Error reading stored refresh token:", e);
+  }
+  return process.env.GOOGLE_DRIVE_REFRESH_TOKEN || null;
+}
+
+export function storeRefreshToken(token: string) {
+  try {
+    const dir = path.dirname(TOKEN_FILE_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(TOKEN_FILE_PATH, JSON.stringify({ refreshToken: token }), "utf8");
+  } catch (e) {
+    console.error("Error storing refresh token:", e);
+  }
+}
+
 export async function getAccessToken(): Promise<string> {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const refreshToken = process.env.GOOGLE_DRIVE_REFRESH_TOKEN;
+  const refreshToken = getStoredRefreshToken();
 
   if (!clientId || !clientSecret || !refreshToken) {
     throw new Error(

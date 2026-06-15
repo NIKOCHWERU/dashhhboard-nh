@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useUpload } from "@/context/UploadContext";
 
 interface ClientData {
   id: string;
@@ -33,14 +34,66 @@ export default function DokumenPage() {
   const [files, setFiles] = useState<GDriveFile[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
 
-  // Uploading state
-  const [uploading, setUploading] = useState(false);
+  // Uploading state (managed by useUpload)
+  const { uploadFiles, tasks } = useUpload();
+  const [localUploadedTaskIds, setLocalUploadedTaskIds] = useState<Set<string>>(new Set());
   const [previewItem, setPreviewItem] = useState<GDriveFile | null>(null);
   const [repairing, setRepairing] = useState(false);
+  const isUploading = tasks.some((t) => t.folderId === activeFolderId && (t.status === "uploading" || t.status === "pending"));
+
+  // GDrive storage state
+  const [storageInfo, setStorageInfo] = useState<{
+    connected: boolean;
+    user?: { displayName: string; emailAddress: string };
+    storageQuota?: { limit: string; usage: string };
+    error?: string;
+  } | null>(null);
+  const [checkingStorage, setCheckingStorage] = useState(false);
 
   useEffect(() => {
     fetchClients();
+    fetchStorageInfo();
   }, []);
+
+  // Monitor tasks to trigger refreshes when uploads finish
+  useEffect(() => {
+    if (!activeFolderId) return;
+    
+    const currentFolderSuccessTasks = tasks.filter(
+      (t) => t.folderId === activeFolderId && t.status === "success"
+    );
+    
+    let shouldRefresh = false;
+    const newTrackedIds = new Set(localUploadedTaskIds);
+    
+    currentFolderSuccessTasks.forEach((t) => {
+      if (!localUploadedTaskIds.has(t.id)) {
+        shouldRefresh = true;
+        newTrackedIds.add(t.id);
+      }
+    });
+    
+    if (shouldRefresh) {
+      setLocalUploadedTaskIds(newTrackedIds);
+      browseFolder(activeFolderId, activeFolderName, false);
+      fetchStorageInfo(); // refresh storage bar on upload completion
+    }
+  }, [tasks, activeFolderId]);
+
+  const fetchStorageInfo = async () => {
+    try {
+      setCheckingStorage(true);
+      const res = await fetch("/api/gdrive/storage");
+      if (res.ok) {
+        const data = await res.json();
+        setStorageInfo(data);
+      }
+    } catch (err) {
+      console.error("Failed to check storage status:", err);
+    } finally {
+      setCheckingStorage(false);
+    }
+  };
 
   const fetchClients = async () => {
     try {
@@ -172,35 +225,12 @@ export default function DokumenPage() {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (!fileList || fileList.length === 0 || !activeFolderId) return;
 
-    try {
-      setUploading(true);
-      const file = fileList[0];
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folderId", activeFolderId);
-
-      const res = await fetch("/api/gdrive/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to upload file");
-      }
-
-      // Refresh list
-      await browseFolder(activeFolderId, activeFolderName, false);
-    } catch (error: any) {
-      alert(`Gagal mengunggah berkas: ${error.message}`);
-    } finally {
-      setUploading(false);
-      e.target.value = ""; // Reset file input
-    }
+    uploadFiles(fileList, activeFolderId);
+    e.target.value = ""; // Reset file input
   };
 
   const handleFileDelete = async (fileId: string) => {
@@ -303,6 +333,89 @@ export default function DokumenPage() {
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Akses langsung berkas dan arsip perusahaan Anda terintegrasi penuh ke Google Drive.
           </p>
+        </div>
+      </div>
+
+      {/* STORAGE & CONNECTION WIDGET */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-850 dark:bg-gray-900">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className={`h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-xl ${
+              storageInfo?.connected 
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" 
+                : "bg-amber-500/10 text-amber-500"
+            }`}>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-.778.099-1.533.284-2.253" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                Google Drive Perusahaan
+                {checkingStorage ? (
+                  <span className="animate-pulse text-[9px] text-gray-400">Memeriksa...</span>
+                ) : storageInfo?.connected ? (
+                  <span className="text-[9px] bg-emerald-50 text-emerald-600 font-bold px-1.5 py-0.5 rounded dark:bg-emerald-500/10 dark:text-emerald-400 uppercase tracking-wider">Terhubung</span>
+                ) : (
+                  <span className="text-[9px] bg-red-50 text-red-600 font-bold px-1.5 py-0.5 rounded dark:bg-red-500/10 dark:text-red-400 uppercase tracking-wider">Terputus</span>
+                )}
+              </h3>
+              {storageInfo?.connected && storageInfo.user ? (
+                <p className="text-[10px] text-gray-400 font-semibold mt-0.5">
+                  Akun OAuth: <span className="font-bold text-gray-600 dark:text-gray-300">{storageInfo.user.emailAddress}</span> ({storageInfo.user.displayName})
+                </p>
+              ) : (
+                <p className="text-[10px] text-gray-400 mt-0.5">
+                  Hubungkan Google Drive untuk menyimpan arsip dokumen klien dan internal.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Right part: Storage progress or auth button */}
+          <div className="flex items-center gap-4 min-w-[250px]">
+            {storageInfo?.connected && storageInfo.storageQuota ? (() => {
+              const limit = parseInt(storageInfo.storageQuota.limit);
+              const usage = parseInt(storageInfo.storageQuota.usage);
+              const remaining = limit - usage;
+              const percent = Math.min(100, Math.round((usage / limit) * 100)) || 0;
+              
+              const formatSizeLocal = (bytes: number) => {
+                if (bytes === 0) return "0 B";
+                const k = 1024;
+                const sizes = ["B", "KB", "MB", "GB", "TB"];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+              };
+
+              return (
+                <div className="w-full space-y-1.5">
+                  <div className="flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                    <span>Sisa: <span className="text-gray-700 dark:text-gray-200 font-black">{formatSizeLocal(remaining)}</span></span>
+                    <span>{percent}% Terpakai</span>
+                  </div>
+                  <div className="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        percent > 85 ? "bg-red-500" : percent > 60 ? "bg-amber-500" : "bg-brand-500"
+                      }`}
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                  <p className="text-[9px] text-gray-400 font-medium text-right uppercase tracking-wider">
+                    Total kapasitas: {formatSizeLocal(limit)}
+                  </p>
+                </div>
+              );
+            })() : (
+              <a
+                href="/api/gdrive/auth"
+                className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-[10px] font-black uppercase rounded-xl tracking-widest transition-all shadow-sm shadow-brand-500/10 text-center w-full block cursor-pointer"
+              >
+                Hubungkan Google Drive
+              </a>
+            )}
+          </div>
         </div>
       </div>
 
@@ -484,12 +597,12 @@ export default function DokumenPage() {
               {/* UPLOAD BUTTON */}
               {activeFolderId && activeFolderId !== selectedClient.googleFolderId && (
                 <div>
-                  <label className={`px-4 py-2 bg-brand-500 text-white text-xs font-bold rounded-xl hover:bg-brand-600 transition-colors shadow-sm cursor-pointer inline-flex items-center gap-2 ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+                  <label className={`px-4 py-2 bg-brand-500 text-white text-xs font-bold rounded-xl hover:bg-brand-600 transition-colors shadow-sm cursor-pointer inline-flex items-center gap-2 ${isUploading ? "opacity-50 pointer-events-none" : ""}`}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
-                    {uploading ? "Mengunggah..." : "Unggah Berkas"}
-                    <input type="file" onChange={handleFileUpload} className="hidden" disabled={uploading} />
+                    {isUploading ? "Mengunggah..." : "Unggah Berkas"}
+                    <input type="file" onChange={handleFileUpload} className="hidden" disabled={isUploading} />
                   </label>
                 </div>
               )}
