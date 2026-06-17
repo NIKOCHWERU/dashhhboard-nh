@@ -313,7 +313,12 @@ export default function AdminControlPage() {
                       <td className="p-4 pl-6">
                         <div className="flex items-center gap-3">
                           {user.image ? (
-                            <img src={user.image} alt={user.name || ""} className="w-8 h-8 rounded-xl object-cover border border-gray-200 dark:border-gray-700" />
+                            <img
+                              src={user.image}
+                              alt={user.name || ""}
+                              referrerPolicy="no-referrer"
+                              className="w-8 h-8 rounded-xl object-cover border border-gray-200 dark:border-gray-700"
+                            />
                           ) : (
                             <div className="w-8 h-8 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 font-black flex items-center justify-center text-[10px] uppercase border border-brand-500/20">
                               {(user.name || "U").substring(0, 2)}

@@ -28,12 +28,13 @@ export const authOptions: NextAuthOptions = {
     signIn: "/signin",
   },
   callbacks: {
-    async jwt({ token, account }) {
+    async jwt({ token, user, account }) {
       // 1. Initial sign in
-      if (account) {
+      if (account && user) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
         token.expiresAt = account.expires_at; // Expires at in seconds
+        token.sub = user.id;
         return token;
       }
 
@@ -105,37 +106,22 @@ export const authOptions: NextAuthOptions = {
     async createUser({ user }) {
       if (user.image && user.image.startsWith("http")) {
         try {
-          // 1. Pastikan direktori ada
-          const avatarsDir = path.join(process.cwd(), "public", "avatars");
-          if (!fs.existsSync(avatarsDir)) {
-            fs.mkdirSync(avatarsDir, { recursive: true });
+          // Instead of downloading locally, use the direct high-res Google profile photo URL.
+          // This avoids write permission issues on the VPS and Next.js production static assets caching issues.
+          // Support various google usercontent formats (e.g. =s96-c, =s96, or path-based /s96-c/)
+          const hdImageUrl = user.image
+            .replace(/=s\d+(-c)?/, "=s400-c")
+            .replace(/\/s\d+-c\//, "/s400-c/");
+
+          if (hdImageUrl !== user.image) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { image: hdImageUrl },
+            });
+            console.log(`Successfully updated user avatar to high-res Google URL: ${hdImageUrl}`);
           }
-
-          // 2. Request HD version (replace s96-c with s400-c)
-          const hdImageUrl = user.image.replace(/s\d+-c/, "s400-c");
-          const res = await fetch(hdImageUrl);
-          
-          if (!res.ok) throw new Error(`Failed to fetch image: ${res.statusText}`);
-
-          const arrayBuffer = await res.arrayBuffer();
-          const buffer = Buffer.from(arrayBuffer);
-
-          const fileName = `${user.id}.jpg`;
-          const filePath = path.join(avatarsDir, fileName);
-
-          // 3. Simpan file
-          fs.writeFileSync(filePath, buffer);
-
-          // 4. Update database dengan path lokal
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { image: `/avatars/${fileName}` },
-          });
-          
-          console.log(`Successfully downloaded avatar for user ${user.id}`);
         } catch (error) {
-          console.error("Failed to download avatar:", error);
-          // Jika gagal, biarkan user.image tetap menggunakan URL Google (default dari adapter)
+          console.error("Failed to update user avatar to HD URL:", error);
         }
       }
     },
