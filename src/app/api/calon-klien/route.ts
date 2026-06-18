@@ -4,8 +4,24 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   try {
     const data = await prisma.calonKlien.findMany({ orderBy: { createdAt: "desc" } });
-    return NextResponse.json(data);
+    
+    // Fetch creator user details dynamically
+    const creatorIds = Array.from(new Set(data.map(item => item.createdBy).filter(Boolean))) as string[];
+    const creators = await prisma.user.findMany({
+      where: { id: { in: creatorIds } },
+      select: { id: true, name: true, image: true }
+    });
+    
+    const creatorMap = new Map(creators.map(u => [u.id, u]));
+    
+    const combinedData = data.map(item => ({
+      ...item,
+      creator: item.createdBy ? creatorMap.get(item.createdBy) || null : null
+    }));
+
+    return NextResponse.json(combinedData);
   } catch (error) {
+    console.error("Failed to fetch calon-klien:", error);
     return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
   }
 }

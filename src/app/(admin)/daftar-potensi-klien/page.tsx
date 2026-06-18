@@ -30,6 +30,11 @@ interface CalonKlien {
   informasiPenting: string;
   keterangan: string;
   catatan: string;
+  creator?: {
+    id: string;
+    name: string;
+    image?: string;
+  } | null;
 }
 
 interface Klien {
@@ -854,6 +859,7 @@ export default function DaftarCalonKlienPage() {
     if (!q) return true;
     return (
       (row.namaProspek && row.namaProspek.toLowerCase().includes(q)) ||
+      (row.creator && row.creator.name && row.creator.name.toLowerCase().includes(q)) ||
       (row.potensiPekerjaan && row.potensiPekerjaan.toLowerCase().includes(q)) ||
       (row.domisili && row.domisili.toLowerCase().includes(q)) ||
       (row.email && row.email.toLowerCase().includes(q)) ||
@@ -1364,6 +1370,7 @@ export default function DaftarCalonKlienPage() {
     const cols = [
       { key: 'tanggal', label: 'Tanggal' },
       { key: 'namaProspek', label: 'Nama Prospek' },
+      { key: 'creator', label: 'Pengisi Data' },
       { key: 'potensiPekerjaan', label: 'Potensi Pekerjaan/Perkara' },
       { key: 'domisili', label: 'Domisili' },
       { key: 'email', label: 'Email' },
@@ -1404,6 +1411,37 @@ export default function DaftarCalonKlienPage() {
               <TdSticky className={rowBg(i)}>{i + 1}</TdSticky>
               <td className={tdClass}>{formatDateIndo(row.tanggal)}</td>
               <td className={`${tdClass} font-semibold text-gray-800 dark:text-white`}>{row.namaProspek || '—'}</td>
+              <td className={tdClass}>
+                {row.creator ? (
+                  <div className="flex items-center gap-2">
+                    <span className="overflow-hidden rounded-full h-7 w-7 bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 border border-gray-200 dark:border-gray-700">
+                      {row.creator.image ? (
+                        <img
+                          width={28}
+                          height={28}
+                          src={row.creator.image}
+                          alt={row.creator.name}
+                          referrerPolicy="no-referrer"
+                          className="rounded-full object-cover w-full h-full"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(row.creator?.name || "U")}&background=EBF4FF&color=4F46E5`;
+                          }}
+                        />
+                      ) : (
+                        <span className="text-[10px] text-brand-500 font-bold">
+                          {row.creator.name?.[0] || "U"}
+                        </span>
+                      )}
+                    </span>
+                    <span className="font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                      {row.creator.name}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
+              </td>
               <td className={tdClass}>{row.potensiPekerjaan || '—'}</td>
               <td className={tdClass}>{row.domisili || '—'}</td>
               <td className={tdClass}>{row.email || '—'}</td>
