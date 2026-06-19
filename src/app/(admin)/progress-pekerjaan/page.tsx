@@ -53,6 +53,13 @@ export default function ProgressPekerjaanPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string | null>(null);
+  const [selectedChartStatus, setSelectedChartStatus] = useState<string | null>(null);
+
+  const handleStatusFilterClick = (statusKey: string) => {
+    const nextStatus = selectedStatusFilter === statusKey ? null : statusKey;
+    setSelectedStatusFilter(nextStatus);
+    setSelectedChartStatus(nextStatus);
+  };
   
   // Selections for form updates
   const [users, setUsers] = useState<User[]>([]);
@@ -600,59 +607,63 @@ export default function ProgressPekerjaanPage() {
   const activeStats = getActiveTabStats();
 
   // Column definitions for spreadsheet headers mapping
-  const getColumns = (): { key: keyof ProgressRow; label: string }[] => {
+  const getColumns = (): { key: keyof ProgressRow; label: string; width: string }[] => {
     switch (activeTab) {
       case "RETAINER":
         return [
-          { key: "tanggal", label: "HARI / TANGGAL" },
-          { key: "waktu", label: "WAKTU" },
-          { key: "namaKlien", label: "NAMA PERUSAHAAN / KLIEN" },
-          { key: "quadran", label: "QUADRAN" },
-          { key: "deskripsi", label: "DESKRIPSI" },
-          { key: "tugas", label: "TUGAS" },
-          { key: "area", label: "AREA" },
-          { key: "status", label: "STATUS" },
-          { key: "keterangan", label: "KETERANGAN" },
-          { key: "catatan", label: "CATATAN" },
-          { key: "penanggungJawab", label: "PENANGGUNG JAWAB" },
+          { key: "no", label: "NO", width: "70px" },
+          { key: "tanggal", label: "HARI / TANGGAL", width: "160px" },
+          { key: "waktu", label: "WAKTU", width: "85px" },
+          { key: "namaKlien", label: "NAMA PERUSAHAAN / KLIEN", width: "230px" },
+          { key: "quadran", label: "QUADRAN", width: "100px" },
+          { key: "deskripsi", label: "DESKRIPSI PEKERJAAN", width: "320px" },
+          { key: "tugas", label: "TUGAS / INSTRUKSI", width: "320px" },
+          { key: "area", label: "AREA", width: "120px" },
+          { key: "status", label: "STATUS", width: "155px" },
+          { key: "keterangan", label: "KETERANGAN", width: "260px" },
+          { key: "catatan", label: "CATATAN", width: "260px" },
+          { key: "penanggungJawab", label: "PENANGGUNG JAWAB", width: "200px" },
         ];
       case "NON_RETAINER":
         return [
-          { key: "tanggal", label: "TANGGAL" },
-          { key: "quadran", label: "QUADRAN" },
-          { key: "status", label: "STATUS" },
-          { key: "kategori", label: "KATEGORI" },
-          { key: "deskripsi", label: "DESKRIPSI" },
-          { key: "area", label: "AREA" },
-          { key: "tugas", label: "TUGAS" },
-          { key: "keterangan", label: "KETERANGAN" },
-          { key: "catatan", label: "CATATAN" },
-          { key: "penanggungJawab", label: "PENANGGUNG JAWAB" },
+          { key: "no", label: "NO", width: "70px" },
+          { key: "tanggal", label: "TANGGAL", width: "160px" },
+          { key: "quadran", label: "QUADRAN", width: "100px" },
+          { key: "status", label: "STATUS", width: "155px" },
+          { key: "kategori", label: "KATEGORI", width: "160px" },
+          { key: "deskripsi", label: "DESKRIPSI PEKERJAAN", width: "350px" },
+          { key: "area", label: "AREA", width: "120px" },
+          { key: "tugas", label: "TUGAS / INSTRUKSI", width: "350px" },
+          { key: "keterangan", label: "KETERANGAN", width: "260px" },
+          { key: "catatan", label: "CATATAN", width: "260px" },
+          { key: "penanggungJawab", label: "PENANGGUNG JAWAB", width: "200px" },
         ];
       case "INTERNAL":
         return [
-          { key: "tanggal", label: "TANGGAL" },
-          { key: "quadran", label: "QUADRAN" },
-          { key: "status", label: "STATUS" },
-          { key: "deskripsi", label: "DESKRIPSI" },
-          { key: "area", label: "AREA" },
-          { key: "tugas", label: "TUGAS" },
-          { key: "keterangan", label: "KETERANGAN" },
-          { key: "catatan", label: "CATATAN" },
-          { key: "penanggungJawab", label: "PENANGGUNG JAWAB" },
+          { key: "no", label: "NO", width: "70px" },
+          { key: "tanggal", label: "TANGGAL", width: "160px" },
+          { key: "quadran", label: "QUADRAN", width: "100px" },
+          { key: "status", label: "STATUS", width: "155px" },
+          { key: "deskripsi", label: "DESKRIPSI PEKERJAAN", width: "400px" },
+          { key: "area", label: "AREA", width: "120px" },
+          { key: "tugas", label: "TUGAS / INSTRUKSI", width: "400px" },
+          { key: "keterangan", label: "KETERANGAN", width: "260px" },
+          { key: "catatan", label: "CATATAN", width: "260px" },
+          { key: "penanggungJawab", label: "PENANGGUNG JAWAB", width: "200px" },
         ];
       case "LAPORAN_BERKALA":
         return [
-          { key: "tanggal", label: "HARI / TANGGAL" },
-          { key: "waktu", label: "WAKTU" },
-          { key: "namaKlien", label: "NAMA PERUSAHAAN / KLIEN" },
-          { key: "deskripsi", label: "DESKRIPSI" },
-          { key: "tugas", label: "TUGAS" },
-          { key: "area", label: "AREA" },
-          { key: "status", label: "STATUS" },
-          { key: "keterangan", label: "KETERANGAN" },
-          { key: "catatan", label: "CATATAN" },
-          { key: "penanggungJawab", label: "PENANGGUNG JAWAB" },
+          { key: "no", label: "NO", width: "70px" },
+          { key: "tanggal", label: "HARI / TANGGAL", width: "160px" },
+          { key: "waktu", label: "WAKTU", width: "85px" },
+          { key: "namaKlien", label: "NAMA PERUSAHAAN / KLIEN", width: "230px" },
+          { key: "deskripsi", label: "DESKRIPSI PEKERJAAN", width: "350px" },
+          { key: "tugas", label: "TUGAS / INSTRUKSI", width: "350px" },
+          { key: "area", label: "AREA", width: "120px" },
+          { key: "status", label: "STATUS", width: "155px" },
+          { key: "keterangan", label: "KETERANGAN", width: "260px" },
+          { key: "catatan", label: "CATATAN", width: "260px" },
+          { key: "penanggungJawab", label: "PENANGGUNG JAWAB", width: "200px" },
         ];
     }
   };
@@ -693,7 +704,7 @@ export default function ProgressPekerjaanPage() {
           return (
             <div
               key={meta.key}
-              onClick={() => setSelectedStatusFilter(isActiveFilter ? null : meta.key)}
+              onClick={() => handleStatusFilterClick(meta.key)}
               className={`p-4 border rounded-2xl shadow-sm transition-all duration-200 cursor-pointer flex flex-col justify-between ${
                 isActiveFilter
                   ? "bg-brand-500 text-white border-brand-500 shadow-md ring-2 ring-brand-500/20 scale-102"
@@ -750,6 +761,7 @@ export default function ProgressPekerjaanPage() {
               onClick={() => {
                 setActiveTab(tab);
                 setSelectedStatusFilter(null);
+                setSelectedChartStatus(null);
                 setColumnFilters({});
                 setSearchQuery("");
               }}
@@ -765,6 +777,228 @@ export default function ProgressPekerjaanPage() {
           );
         })}
       </div>
+
+      {/* ─── CHARTS & GRAPHS SECTION ───────────────────────────────────────── */}
+      {(() => {
+        const chartDataList = STATUS_METADATA.map((meta) => {
+          const count = data.filter((row) => row.status.toUpperCase() === meta.key).length;
+          return { ...meta, count };
+        });
+        const maxCount = Math.max(...chartDataList.map((d) => d.count), 1);
+        const totalChartCount = data.length;
+
+        const renderChartDetails = (chartType: "grafik" | "chart") => {
+          const matchingData = selectedChartStatus
+            ? data.filter((row) => row.status.toUpperCase() === selectedChartStatus.toUpperCase())
+            : [];
+
+          return (
+            <div className="flex-1 flex flex-col justify-between border-l border-gray-150 dark:border-gray-800/80 pl-5 h-40">
+              {selectedChartStatus ? (
+                <div className="flex flex-col h-full justify-between">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-brand-500">
+                        Detail: {selectedChartStatus}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedChartStatus(null);
+                          setSelectedStatusFilter(null);
+                        }}
+                        className="text-[9px] font-black text-red-500 hover:underline uppercase tracking-wide cursor-pointer"
+                      >
+                        Tutup [x]
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-gray-400 font-semibold mt-0.5">
+                      Ditemukan {matchingData.length} pekerjaan
+                    </p>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto mt-2 space-y-1.5 pr-1 no-scrollbar max-h-24">
+                    {matchingData.length === 0 ? (
+                      <p className="text-[11px] text-gray-400 italic">Tidak ada data.</p>
+                    ) : (
+                      matchingData.map((item, idx) => (
+                        <div
+                          key={item.id}
+                          onClick={() => setDetailRow(item)}
+                          className="p-1.5 bg-gray-50/50 dark:bg-white/[0.01] hover:bg-brand-500/[0.03] dark:hover:bg-brand-500/[0.03] rounded-lg border border-gray-150/50 dark:border-white/[0.02] cursor-pointer transition-all flex justify-between items-center group text-[11px]"
+                        >
+                          <span className="truncate font-bold text-gray-700 dark:text-gray-300 max-w-[130px] group-hover:text-brand-500">
+                            {idx + 1}. {item.namaKlien || item.deskripsi || "Pekerjaan"}
+                          </span>
+                          <span className="text-[9px] font-black uppercase text-gray-400 whitespace-nowrap">
+                            Detail &rarr;
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col h-full justify-between">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">
+                      {chartType === "grafik" ? "Grafik Kuantitas" : "Proporsi Persentase"}
+                    </span>
+                    <p className="text-[10px] text-gray-400 font-semibold mt-0.5 leading-relaxed">
+                      {chartType === "grafik"
+                        ? "Bagan batang menampilkan jumlah pekerjaan pada masing-masing status. Klik batang untuk filter data."
+                        : "Bagan donat memperlihatkan persentase kontribusi status. Klik irisan untuk melihat detail."}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-[9px] font-bold text-gray-500 dark:text-gray-400">
+                    {chartDataList.slice(0, 4).map((item) => (
+                      <div
+                        key={item.key}
+                        onClick={() => handleStatusFilterClick(item.key)}
+                        className="flex items-center gap-1.5 cursor-pointer hover:text-brand-500 transition-colors"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color }}></span>
+                        <span className="truncate max-w-[70px]">{item.key}</span>
+                        <span className="text-gray-400">({item.count})</span>
+                      </div>
+                    ))}
+                    <div className="col-span-2 text-[9px] text-brand-500 italic font-bold mt-0.5 animate-pulse">
+                      Klik grafik/chart untuk detail...
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        };
+
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:hidden">
+            {/* Grafik Card */}
+            <div className="bg-white dark:bg-white/[0.02] border border-gray-255 dark:border-gray-800 p-5 rounded-2xl shadow-sm flex flex-col sm:flex-row gap-5 items-center">
+              <div className="w-full sm:w-1/2 flex justify-center">
+                <svg viewBox="0 0 300 160" className="w-full max-w-[240px] h-40">
+                  {chartDataList.map((item, idx) => {
+                    const x = 15 + idx * 48;
+                    const barWidth = 26;
+                    const barHeight = (item.count / maxCount) * 110;
+                    const y = 130 - barHeight;
+                    const isSelected = selectedChartStatus === item.key;
+                    const isAnySelected = selectedChartStatus !== null;
+                    const opacity = isAnySelected ? (isSelected ? 1.0 : 0.25) : 1.0;
+                    
+                    return (
+                      <g
+                        key={item.key}
+                        className="cursor-pointer group transition-all duration-300"
+                        onClick={() => handleStatusFilterClick(item.key)}
+                        style={{ opacity }}
+                      >
+                        <rect x={x} y={10} width={barWidth} height={120} fill="currentColor" className="text-gray-100/50 dark:text-white/[0.01]" rx="3" />
+                        <rect
+                          x={x}
+                          y={y}
+                          width={barWidth}
+                          height={barHeight}
+                          fill={item.color}
+                          className="transition-all duration-500"
+                          rx="3"
+                        />
+                        {item.count > 0 && (
+                          <text
+                            x={x + barWidth / 2}
+                            y={y - 6}
+                            textAnchor="middle"
+                            fill="currentColor"
+                            className="text-[9px] font-black text-gray-700 dark:text-gray-300"
+                          >
+                            {item.count}
+                          </text>
+                        )}
+                        <text
+                          x={x + barWidth / 2}
+                          y={145}
+                          textAnchor="middle"
+                          fill="currentColor"
+                          className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase"
+                        >
+                          {item.key.split(" ")[0].substring(0, 5)}
+                        </text>
+                      </g>
+                    );
+                  })}
+                  <line x1="10" y1="130" x2="290" y2="130" stroke="currentColor" className="text-gray-200 dark:text-gray-800" strokeWidth="1" />
+                </svg>
+              </div>
+              <div className="w-full sm:w-1/2">
+                {renderChartDetails("grafik")}
+              </div>
+            </div>
+
+            {/* Chart Card */}
+            <div className="bg-white dark:bg-white/[0.02] border border-gray-255 dark:border-gray-800 p-5 rounded-2xl shadow-sm flex flex-col sm:flex-row gap-5 items-center">
+              <div className="w-full sm:w-1/2 flex justify-center">
+                {(() => {
+                  let accumulatedLength = 0;
+                  const radius = 55;
+                  const cx = 80;
+                  const cy = 80;
+                  const strokeWidth = 14;
+                  const circumference = 2 * Math.PI * radius;
+                  
+                  return (
+                    <svg viewBox="0 0 160 160" className="w-full max-w-[160px] h-40">
+                      {totalChartCount === 0 ? (
+                        <circle cx={cx} cy={cy} r={radius} fill="transparent" stroke="currentColor" strokeWidth={strokeWidth} className="text-gray-100 dark:text-gray-800" />
+                      ) : (
+                        chartDataList.map((item) => {
+                          if (item.count === 0) return null;
+                          const percentage = item.count / totalChartCount;
+                          const strokeLength = percentage * circumference;
+                          const strokeOffset = -accumulatedLength;
+                          accumulatedLength += strokeLength;
+                          
+                          const isSelected = selectedChartStatus === item.key;
+                          const isAnySelected = selectedChartStatus !== null;
+                          const opacity = isAnySelected ? (isSelected ? 1.0 : 0.25) : 1.0;
+                          
+                          return (
+                            <circle
+                              key={item.key}
+                              cx={cx}
+                              cy={cy}
+                              r={radius}
+                              fill="transparent"
+                              stroke={item.color}
+                              strokeWidth={isSelected ? strokeWidth + 4 : strokeWidth}
+                              strokeDasharray={`${strokeLength} ${circumference - strokeLength}`}
+                              strokeDashoffset={strokeOffset}
+                              transform="rotate(-90 80 80)"
+                              className="cursor-pointer transition-all duration-300"
+                              style={{ opacity }}
+                              onClick={() => handleStatusFilterClick(item.key)}
+                            />
+                          );
+                        })
+                      )}
+                      <text x={cx} y={cy - 4} textAnchor="middle" fill="currentColor" className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                        Total
+                      </text>
+                      <text x={cx} y={cy + 12} textAnchor="middle" fill="currentColor" className="text-base font-black text-black dark:text-white">
+                        {totalChartCount}
+                      </text>
+                    </svg>
+                  );
+                })()}
+              </div>
+              <div className="w-full sm:w-1/2">
+                {renderChartDetails("chart")}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ─── FILTERS & DATA ACTIONS ────────────────────────────────────────── */}
       <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 p-4 rounded-2xl shadow-sm print:hidden">
@@ -796,6 +1030,7 @@ export default function ProgressPekerjaanPage() {
             <button
               onClick={() => {
                 setSelectedStatusFilter(null);
+                setSelectedChartStatus(null);
                 setColumnFilters({});
               }}
               className="px-3 py-2 border border-dashed border-red-500/30 text-red-500 hover:bg-red-500/5 transition-all text-xs font-bold uppercase tracking-wider rounded-xl cursor-pointer"
@@ -880,14 +1115,9 @@ export default function ProgressPekerjaanPage() {
           </div>
         ) : (
           <div className="overflow-x-auto text-[13px] relative max-h-[70vh] no-scrollbar">
-            <table className="w-full text-left border-collapse min-w-[1200px] print:min-w-full">
+            <table className="w-full text-left border-collapse table-fixed min-w-[2500px] print:min-w-full">
               <thead>
                 <tr className="border-b border-gray-100 dark:border-gray-800 text-[10px] font-bold text-gray-450 uppercase tracking-wider bg-gray-50/20 dark:bg-white/[0.01]">
-                  {/* Sticky left NO */}
-                  <th className="p-4 pl-6 sticky left-0 z-30 bg-gray-50 dark:bg-[#151722] border-r border-gray-100 dark:border-gray-800 w-16">
-                    NO
-                  </th>
-                  
                   {/* Dynamic Columns with Google Sheets Filters */}
                   {columns.map((col) => {
                     const isFiltered = (columnFilters[col.key] || []).length > 0;
@@ -896,6 +1126,7 @@ export default function ProgressPekerjaanPage() {
                       <th
                         key={col.key}
                         className="p-4 relative whitespace-nowrap"
+                        style={{ width: col.width }}
                       >
                         <div className="flex items-center gap-1.5">
                           <span>{col.label}</span>
@@ -1015,16 +1246,17 @@ export default function ProgressPekerjaanPage() {
                       key={item.id}
                       className={`${rowBgClass} hover:bg-brand-500/[0.02] transition-colors`}
                     >
-                      {/* Sticky left cell */}
-                      <td className={`p-4 pl-6 font-bold text-black dark:text-white sticky left-0 z-20 border-r border-gray-100 dark:border-gray-800 ${rowBgClass}`}>
-                        {item.no || index + 1}
-                      </td>
-
                       {/* Dynamic Columns cells */}
                       {columns.map((col) => {
                         let content: React.ReactNode = "—";
                         
-                        if (col.key === "tanggal") {
+                        if (col.key === "no") {
+                          content = (
+                            <span className="font-bold text-black dark:text-white">
+                              {item.no || index + 1}
+                            </span>
+                          );
+                        } else if (col.key === "tanggal") {
                           content = formatDateString(item.tanggal);
                         } else if (col.key === "status") {
                           content = getStatusBadge(item.status);
@@ -1055,7 +1287,7 @@ export default function ProgressPekerjaanPage() {
                         } else if (col.key === "deskripsi" || col.key === "tugas" || col.key === "keterangan" || col.key === "catatan") {
                           const val = item[col.key];
                           content = val ? (
-                            <div className="max-w-[200px] truncate" title={val}>
+                            <div className="truncate" title={val}>
                               {val}
                             </div>
                           ) : "—";
@@ -1064,7 +1296,7 @@ export default function ProgressPekerjaanPage() {
                         }
 
                         return (
-                          <td key={col.key} className="p-4">
+                          <td key={col.key} className="p-4" style={{ width: col.width }}>
                             {content}
                           </td>
                         );
