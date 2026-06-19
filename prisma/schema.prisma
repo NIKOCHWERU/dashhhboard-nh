@@ -441,3 +441,27 @@ model SuratIntroduksi {
 
   @@map("surat_introduksi")
 }
+
+model ProgressPekerjaan {
+  id              String    @id @default(cuid())
+  type            String    // RETAINER, NON_RETAINER, INTERNAL, LAPORAN_BERKALA
+  no              String?
+  tanggal         DateTime?
+  waktu           String?
+  namaKlien       String?
+  quadran         String?
+  kategori        String?
+  deskripsi       String?   @db.Text
+  tugas           String?   @db.Text
+  area            String?
+  status          String    @default("ON PROGRESS") // SELESAI, KONFIRMASI INTERNAL, KONFIRMASI PERUSAHAAN, ON PROGRESS, PENDING, CANCEL
+  keterangan      String?   @db.Text
+  catatan         String?   @db.Text
+  penanggungJawab String?   // Comma-separated list of names/emails
+  attachments     String?   @db.Text // JSON array: [{ name, url, fileId }]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("progress_pekerjaan")
+}
+
