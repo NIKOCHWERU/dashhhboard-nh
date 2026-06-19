@@ -30,7 +30,7 @@ export async function GET(req: Request) {
     }
 
     if (data.refresh_token) {
-      storeRefreshToken(data.refresh_token);
+      await storeRefreshToken(data.refresh_token);
       return NextResponse.redirect(`${origin}/dokumen?gdrive_connected=success`);
     } else {
       // If no new refresh token returned, they might have approved before.

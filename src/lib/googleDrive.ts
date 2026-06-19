@@ -1,36 +1,84 @@
 import fs from "fs";
 import path from "path";
+import { prisma } from "./prisma";
 
 const TOKEN_FILE_PATH = path.join(process.cwd(), "src/data/gdrive-token.json");
 
-export function getStoredRefreshToken(): string | null {
+export async function getStoredRefreshToken(): Promise<string | null> {
+  try {
+    const account = await prisma.account.findUnique({
+      where: {
+        provider_providerAccountId: {
+          provider: "company_gdrive",
+          providerAccountId: "company_gdrive_account",
+        },
+      },
+    });
+    if (account?.refresh_token) {
+      return account.refresh_token;
+    }
+  } catch (e) {
+    console.error("Error reading stored refresh token from database:", e);
+  }
+
   try {
     if (fs.existsSync(TOKEN_FILE_PATH)) {
       const data = JSON.parse(fs.readFileSync(TOKEN_FILE_PATH, "utf8"));
       return data.refreshToken || null;
     }
   } catch (e) {
-    console.error("Error reading stored refresh token:", e);
+    console.error("Error reading stored refresh token from file:", e);
   }
   return process.env.GOOGLE_DRIVE_REFRESH_TOKEN || null;
 }
 
-export function storeRefreshToken(token: string) {
+export async function storeRefreshToken(token: string): Promise<void> {
   try {
+    const systemUserId = "system_company_gdrive";
+    await prisma.user.upsert({
+      where: { id: systemUserId },
+      update: {},
+      create: {
+        id: systemUserId,
+        name: "Company Google Drive",
+        email: "company-gdrive@narasumberhukum.online",
+        role: "admin",
+      },
+    });
+
+    await prisma.account.upsert({
+      where: {
+        provider_providerAccountId: {
+          provider: "company_gdrive",
+          providerAccountId: "company_gdrive_account",
+        },
+      },
+      update: {
+        refresh_token: token,
+      },
+      create: {
+        userId: systemUserId,
+        type: "oauth",
+        provider: "company_gdrive",
+        providerAccountId: "company_gdrive_account",
+        refresh_token: token,
+      },
+    });
+
     const dir = path.dirname(TOKEN_FILE_PATH);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
     fs.writeFileSync(TOKEN_FILE_PATH, JSON.stringify({ refreshToken: token }), "utf8");
   } catch (e) {
-    console.error("Error storing refresh token:", e);
+    console.error("Error storing refresh token in database/file:", e);
   }
 }
 
 export async function getAccessToken(): Promise<string> {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const refreshToken = getStoredRefreshToken();
+  const refreshToken = await getStoredRefreshToken();
 
   if (!clientId || !clientSecret || !refreshToken) {
     throw new Error(

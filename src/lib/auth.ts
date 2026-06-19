@@ -28,6 +28,27 @@ export const authOptions: NextAuthOptions = {
     signIn: "/signin",
   },
   callbacks: {
+    async signIn({ account, user }) {
+      if (account && account.provider === "google") {
+        if (!account.refresh_token) {
+          try {
+            const existingAccount = await prisma.account.findFirst({
+              where: {
+                userId: user.id,
+                provider: "google",
+                refresh_token: { not: null }
+              }
+            });
+            if (existingAccount?.refresh_token) {
+              account.refresh_token = existingAccount.refresh_token;
+            }
+          } catch (e) {
+            console.error("Error restoring Google refresh token on signIn:", e);
+          }
+        }
+      }
+      return true;
+    },
     async jwt({ token, user, account }) {
       // 1. Initial sign in
       if (account && user) {
