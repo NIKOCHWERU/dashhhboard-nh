@@ -1001,19 +1001,22 @@ export default function ProgressPekerjaanPage() {
                   })}
                   
                   {/* Sticky right AKSI */}
-                  <th className="p-4 text-right sticky right-0 z-30 bg-gray-50 dark:bg-[#151722] border-l border-gray-100 dark:border-gray-800 print:hidden w-40">
+                  <th
+                    className="p-4 text-right sticky right-0 z-30 bg-gray-50 dark:bg-[#151722] border-l border-gray-100 dark:border-gray-800 print:hidden w-40"
+                    style={{ width: "160px" }}
+                  >
                     AKSI
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-xs text-gray-700 dark:text-gray-300">
                 {filteredData.map((item, index) => {
-                  const rowBgClass = index % 2 === 0 ? "bg-white dark:bg-[#0c0d14]" : "bg-gray-50/30 dark:bg-[#0f1118]";
+                  const rowBgClass = index % 2 === 0 ? "bg-white dark:bg-[#0c0d14]" : "bg-gray-50 dark:bg-[#0f1118]";
                   
                   return (
                     <tr
                       key={item.id}
-                      className={`${rowBgClass} hover:bg-brand-500/[0.02] transition-colors`}
+                      className={`group ${rowBgClass} hover:bg-brand-500/[0.02] transition-colors`}
                     >
                       {/* Dynamic Columns cells */}
                       {columns.map((col) => {
@@ -1072,7 +1075,7 @@ export default function ProgressPekerjaanPage() {
                       })}
 
                       {/* Sticky right Actions cell */}
-                      <td className={`p-4 text-right sticky right-0 z-20 border-l border-gray-100 dark:border-gray-800 print:hidden ${rowBgClass}`}>
+                      <td className={`p-4 text-right sticky right-0 z-20 border-l border-gray-100 dark:border-gray-800 print:hidden ${rowBgClass} group-hover:bg-gray-100 dark:group-hover:bg-[#13151f]`}>
                         <div className="flex items-center justify-end gap-1.5">
                           {/* Detail */}
                           <button
