@@ -54,6 +54,7 @@ export default function ProgressPekerjaanPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string | null>(null);
   const [selectedChartStatus, setSelectedChartStatus] = useState<string | null>(null);
+  const [selectedStockDate, setSelectedStockDate] = useState<string | null>(null);
 
   const handleStatusFilterClick = (statusKey: string) => {
     const nextStatus = selectedStatusFilter === statusKey ? null : statusKey;
@@ -611,59 +612,59 @@ export default function ProgressPekerjaanPage() {
     switch (activeTab) {
       case "RETAINER":
         return [
-          { key: "no", label: "NO", width: "70px" },
-          { key: "tanggal", label: "HARI / TANGGAL", width: "160px" },
-          { key: "waktu", label: "WAKTU", width: "85px" },
-          { key: "namaKlien", label: "NAMA PERUSAHAAN / KLIEN", width: "230px" },
-          { key: "quadran", label: "QUADRAN", width: "100px" },
-          { key: "deskripsi", label: "DESKRIPSI PEKERJAAN", width: "320px" },
-          { key: "tugas", label: "TUGAS / INSTRUKSI", width: "320px" },
-          { key: "area", label: "AREA", width: "120px" },
-          { key: "status", label: "STATUS", width: "155px" },
-          { key: "keterangan", label: "KETERANGAN", width: "260px" },
-          { key: "catatan", label: "CATATAN", width: "260px" },
-          { key: "penanggungJawab", label: "PENANGGUNG JAWAB", width: "200px" },
+          { key: "no", label: "NO", width: "50px" },
+          { key: "tanggal", label: "HARI / TANGGAL", width: "140px" },
+          { key: "waktu", label: "WAKTU", width: "70px" },
+          { key: "namaKlien", label: "NAMA PERUSAHAAN / KLIEN", width: "180px" },
+          { key: "quadran", label: "QUADRAN", width: "80px" },
+          { key: "deskripsi", label: "DESKRIPSI PEKERJAAN", width: "260px" },
+          { key: "tugas", label: "TUGAS / INSTRUKSI", width: "260px" },
+          { key: "area", label: "AREA", width: "100px" },
+          { key: "status", label: "STATUS", width: "135px" },
+          { key: "keterangan", label: "KETERANGAN", width: "220px" },
+          { key: "catatan", label: "CATATAN", width: "220px" },
+          { key: "penanggungJawab", label: "PENANGGUNG JAWAB", width: "160px" },
         ];
       case "NON_RETAINER":
         return [
-          { key: "no", label: "NO", width: "70px" },
-          { key: "tanggal", label: "TANGGAL", width: "160px" },
-          { key: "quadran", label: "QUADRAN", width: "100px" },
-          { key: "status", label: "STATUS", width: "155px" },
-          { key: "kategori", label: "KATEGORI", width: "160px" },
-          { key: "deskripsi", label: "DESKRIPSI PEKERJAAN", width: "350px" },
-          { key: "area", label: "AREA", width: "120px" },
-          { key: "tugas", label: "TUGAS / INSTRUKSI", width: "350px" },
-          { key: "keterangan", label: "KETERANGAN", width: "260px" },
-          { key: "catatan", label: "CATATAN", width: "260px" },
-          { key: "penanggungJawab", label: "PENANGGUNG JAWAB", width: "200px" },
+          { key: "no", label: "NO", width: "50px" },
+          { key: "tanggal", label: "TANGGAL", width: "140px" },
+          { key: "quadran", label: "QUADRAN", width: "80px" },
+          { key: "status", label: "STATUS", width: "135px" },
+          { key: "kategori", label: "KATEGORI", width: "130px" },
+          { key: "deskripsi", label: "DESKRIPSI PEKERJAAN", width: "300px" },
+          { key: "area", label: "AREA", width: "100px" },
+          { key: "tugas", label: "TUGAS / INSTRUKSI", width: "300px" },
+          { key: "keterangan", label: "KETERANGAN", width: "220px" },
+          { key: "catatan", label: "CATATAN", width: "220px" },
+          { key: "penanggungJawab", label: "PENANGGUNG JAWAB", width: "160px" },
         ];
       case "INTERNAL":
         return [
-          { key: "no", label: "NO", width: "70px" },
-          { key: "tanggal", label: "TANGGAL", width: "160px" },
-          { key: "quadran", label: "QUADRAN", width: "100px" },
-          { key: "status", label: "STATUS", width: "155px" },
-          { key: "deskripsi", label: "DESKRIPSI PEKERJAAN", width: "400px" },
-          { key: "area", label: "AREA", width: "120px" },
-          { key: "tugas", label: "TUGAS / INSTRUKSI", width: "400px" },
-          { key: "keterangan", label: "KETERANGAN", width: "260px" },
-          { key: "catatan", label: "CATATAN", width: "260px" },
-          { key: "penanggungJawab", label: "PENANGGUNG JAWAB", width: "200px" },
+          { key: "no", label: "NO", width: "50px" },
+          { key: "tanggal", label: "TANGGAL", width: "140px" },
+          { key: "quadran", label: "QUADRAN", width: "80px" },
+          { key: "status", label: "STATUS", width: "135px" },
+          { key: "deskripsi", label: "DESKRIPSI PEKERJAAN", width: "350px" },
+          { key: "area", label: "AREA", width: "100px" },
+          { key: "tugas", label: "TUGAS / INSTRUKSI", width: "350px" },
+          { key: "keterangan", label: "KETERANGAN", width: "220px" },
+          { key: "catatan", label: "CATATAN", width: "220px" },
+          { key: "penanggungJawab", label: "PENANGGUNG JAWAB", width: "160px" },
         ];
       case "LAPORAN_BERKALA":
         return [
-          { key: "no", label: "NO", width: "70px" },
-          { key: "tanggal", label: "HARI / TANGGAL", width: "160px" },
-          { key: "waktu", label: "WAKTU", width: "85px" },
-          { key: "namaKlien", label: "NAMA PERUSAHAAN / KLIEN", width: "230px" },
-          { key: "deskripsi", label: "DESKRIPSI PEKERJAAN", width: "350px" },
-          { key: "tugas", label: "TUGAS / INSTRUKSI", width: "350px" },
-          { key: "area", label: "AREA", width: "120px" },
-          { key: "status", label: "STATUS", width: "155px" },
-          { key: "keterangan", label: "KETERANGAN", width: "260px" },
-          { key: "catatan", label: "CATATAN", width: "260px" },
-          { key: "penanggungJawab", label: "PENANGGUNG JAWAB", width: "200px" },
+          { key: "no", label: "NO", width: "50px" },
+          { key: "tanggal", label: "HARI / TANGGAL", width: "140px" },
+          { key: "waktu", label: "WAKTU", width: "70px" },
+          { key: "namaKlien", label: "NAMA PERUSAHAAN / KLIEN", width: "180px" },
+          { key: "deskripsi", label: "DESKRIPSI PEKERJAAN", width: "300px" },
+          { key: "tugas", label: "TUGAS / INSTRUKSI", width: "300px" },
+          { key: "area", label: "AREA", width: "100px" },
+          { key: "status", label: "STATUS", width: "135px" },
+          { key: "keterangan", label: "KETERANGAN", width: "220px" },
+          { key: "catatan", label: "CATATAN", width: "220px" },
+          { key: "penanggungJawab", label: "PENANGGUNG JAWAB", width: "160px" },
         ];
     }
   };
@@ -762,6 +763,7 @@ export default function ProgressPekerjaanPage() {
                 setActiveTab(tab);
                 setSelectedStatusFilter(null);
                 setSelectedChartStatus(null);
+                setSelectedStockDate(null);
                 setColumnFilters({});
                 setSearchQuery("");
               }}
@@ -787,7 +789,151 @@ export default function ProgressPekerjaanPage() {
         const maxCount = Math.max(...chartDataList.map((d) => d.count), 1);
         const totalChartCount = data.length;
 
+        // Stock chart calculations
+        const stockChartData = (() => {
+          const rowsWithDates = data
+            .filter((r) => r.tanggal)
+            .map((r) => ({
+              ...r,
+              dateObj: new Date(r.tanggal!)
+            }))
+            .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
+
+          if (rowsWithDates.length === 0) return [];
+
+          const dateMap: { [key: string]: { dateStr: string; dateObj: Date; count: number; completedCount: number } } = {};
+          
+          rowsWithDates.forEach((row) => {
+            const dateKey = row.tanggal!.split("T")[0];
+            if (!dateMap[dateKey]) {
+              dateMap[dateKey] = {
+                dateStr: dateKey,
+                dateObj: row.dateObj,
+                count: 0,
+                completedCount: 0
+              };
+            }
+            dateMap[dateKey].count++;
+            if (row.status.toUpperCase() === "SELESAI") {
+              dateMap[dateKey].completedCount++;
+            }
+          });
+
+          const sortedDates = Object.values(dateMap).sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
+
+          let cumulativeTotal = 0;
+          let cumulativeCompleted = 0;
+          
+          return sortedDates.map((d) => {
+            cumulativeTotal += d.count;
+            cumulativeCompleted += d.completedCount;
+            return {
+              dateStr: d.dateStr,
+              displayDate: d.dateObj.toLocaleDateString("id-ID", { day: "numeric", month: "short" }),
+              total: cumulativeTotal,
+              completed: cumulativeCompleted,
+              count: d.count,
+              completedCount: d.completedCount
+            };
+          });
+        })();
+
+        const points = (() => {
+          if (stockChartData.length === 0) return [];
+          const maxVal = Math.max(...stockChartData.map(d => d.completed), 1);
+          const len = stockChartData.length;
+          
+          return stockChartData.map((item, idx) => {
+            const x = len > 1 ? 20 + (idx / (len - 1)) * 260 : 150;
+            const y = 120 - (item.completed / maxVal) * 90;
+            return { x, y, data: item };
+          });
+        })();
+
+        let pathD = "";
+        let areaD = "";
+        if (points.length > 0) {
+          pathD = "M " + points.map(p => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" L ");
+          areaD = `${pathD} L ${points[points.length - 1].x.toFixed(1)} 130 L ${points[0].x.toFixed(1)} 130 Z`;
+        }
+
         const renderChartDetails = (chartType: "grafik" | "chart") => {
+          if (chartType === "grafik") {
+            const selectedPoint = selectedStockDate 
+              ? stockChartData.find(d => d.dateStr === selectedStockDate) 
+              : null;
+            const matchingJobs = selectedStockDate
+              ? data.filter(r => r.tanggal && r.tanggal.split("T")[0] === selectedStockDate)
+              : [];
+
+            return (
+              <div className="flex-1 flex flex-col justify-between border-l border-gray-150 dark:border-gray-800/80 pl-5 h-40">
+                {selectedStockDate && selectedPoint ? (
+                  <div className="flex flex-col h-full justify-between">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-brand-500">
+                          Tanggal: {selectedPoint.displayDate}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedStockDate(null)}
+                          className="text-[9px] font-black text-red-500 hover:underline uppercase tracking-wide cursor-pointer"
+                        >
+                          Tutup [x]
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-gray-400 font-semibold mt-0.5">
+                        {matchingJobs.length} pekerjaan ditambahkan &bull; {selectedPoint.completed} akumulasi selesai
+                      </p>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto mt-2 space-y-1.5 pr-1 no-scrollbar max-h-24">
+                      {matchingJobs.length === 0 ? (
+                        <p className="text-[11px] text-gray-400 italic">Tidak ada data.</p>
+                      ) : (
+                        matchingJobs.map((item, idx) => (
+                          <div
+                            key={item.id}
+                            onClick={() => setDetailRow(item)}
+                            className="p-1.5 bg-gray-50/50 dark:bg-white/[0.01] hover:bg-brand-500/[0.03] dark:hover:bg-brand-500/[0.03] rounded-lg border border-gray-150/50 dark:border-white/[0.02] cursor-pointer transition-all flex justify-between items-center group text-[11px]"
+                          >
+                            <span className="truncate font-bold text-gray-700 dark:text-gray-300 max-w-[130px] group-hover:text-brand-500">
+                              {idx + 1}. {item.namaKlien || item.deskripsi || "Pekerjaan"}
+                            </span>
+                            <span className="text-[9px] font-black uppercase text-gray-400 whitespace-nowrap">
+                              Detail &rarr;
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col h-full justify-between">
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">
+                        Tren Kecepatan Kerja (Stock Velocity)
+                      </span>
+                      <p className="text-[10px] text-gray-400 font-semibold mt-1 leading-relaxed">
+                        Kurva area di sebelah kiri melacak pertumbuhan kumulatif pekerjaan selesai dari waktu ke waktu layaknya bursa saham. Klik titik data untuk melihat pekerjaan pada tanggal tersebut.
+                      </p>
+                    </div>
+
+                    <div className="text-[10px] font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+                      <span>Total Kumulatif Selesai: </span>
+                      <span className="text-brand-500 font-black">
+                        {stockChartData.length > 0 ? stockChartData[stockChartData.length - 1].completed : 0} Pekerjaan
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          // Donut chart details
           const matchingData = selectedChartStatus
             ? data.filter((row) => row.status.toUpperCase() === selectedChartStatus.toUpperCase())
             : [];
@@ -842,12 +988,10 @@ export default function ProgressPekerjaanPage() {
                 <div className="flex flex-col h-full justify-between">
                   <div>
                     <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">
-                      {chartType === "grafik" ? "Grafik Kuantitas" : "Proporsi Persentase"}
+                      Proporsi Persentase Status
                     </span>
-                    <p className="text-[10px] text-gray-400 font-semibold mt-0.5 leading-relaxed">
-                      {chartType === "grafik"
-                        ? "Bagan batang menampilkan jumlah pekerjaan pada masing-masing status. Klik batang untuk filter data."
-                        : "Bagan donat memperlihatkan persentase kontribusi status. Klik irisan untuk melihat detail."}
+                    <p className="text-[10px] text-gray-400 font-semibold mt-1 leading-relaxed">
+                      Bagan donat memperlihatkan persentase kontribusi status pekerjaan saat ini. Klik irisan untuk memfilter data pada tabel dan melihat detail.
                     </p>
                   </div>
 
@@ -864,7 +1008,7 @@ export default function ProgressPekerjaanPage() {
                       </div>
                     ))}
                     <div className="col-span-2 text-[9px] text-brand-500 italic font-bold mt-0.5 animate-pulse">
-                      Klik grafik/chart untuk detail...
+                      Klik chart/donat untuk filter status...
                     </div>
                   </div>
                 </div>
@@ -875,61 +1019,62 @@ export default function ProgressPekerjaanPage() {
 
         return (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:hidden">
-            {/* Grafik Card */}
-            <div className="bg-white dark:bg-white/[0.02] border border-gray-255 dark:border-gray-800 p-5 rounded-2xl shadow-sm flex flex-col sm:flex-row gap-5 items-center">
+            {/* Grafik Card - Stock/Currency Trend Style */}
+            <div className="bg-white dark:bg-white/[0.02] border border-gray-250 dark:border-gray-800 p-5 rounded-2xl shadow-sm flex flex-col sm:flex-row gap-5 items-center">
               <div className="w-full sm:w-1/2 flex justify-center">
-                <svg viewBox="0 0 300 160" className="w-full max-w-[240px] h-40">
-                  {chartDataList.map((item, idx) => {
-                    const x = 15 + idx * 48;
-                    const barWidth = 26;
-                    const barHeight = (item.count / maxCount) * 110;
-                    const y = 130 - barHeight;
-                    const isSelected = selectedChartStatus === item.key;
-                    const isAnySelected = selectedChartStatus !== null;
-                    const opacity = isAnySelected ? (isSelected ? 1.0 : 0.25) : 1.0;
+                {stockChartData.length === 0 ? (
+                  <div className="text-[10px] text-gray-400 italic">Belum ada data tanggal.</div>
+                ) : (
+                  <svg viewBox="0 0 300 160" className="w-full max-w-[240px] h-40">
+                    <defs>
+                      <linearGradient id="stockAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#B88A16" stopOpacity="0.3" />
+                        <stop offset="100%" stopColor="#B88A16" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
                     
-                    return (
-                      <g
-                        key={item.key}
-                        className="cursor-pointer group transition-all duration-300"
-                        onClick={() => handleStatusFilterClick(item.key)}
-                        style={{ opacity }}
-                      >
-                        <rect x={x} y={10} width={barWidth} height={120} fill="currentColor" className="text-gray-100/50 dark:text-white/[0.01]" rx="3" />
-                        <rect
-                          x={x}
-                          y={y}
-                          width={barWidth}
-                          height={barHeight}
-                          fill={item.color}
-                          className="transition-all duration-500"
-                          rx="3"
-                        />
-                        {item.count > 0 && (
-                          <text
-                            x={x + barWidth / 2}
-                            y={y - 6}
-                            textAnchor="middle"
-                            fill="currentColor"
-                            className="text-[9px] font-black text-gray-700 dark:text-gray-300"
-                          >
-                            {item.count}
-                          </text>
-                        )}
-                        <text
-                          x={x + barWidth / 2}
-                          y={145}
-                          textAnchor="middle"
-                          fill="currentColor"
-                          className="text-[8px] font-black text-gray-400 dark:text-gray-500 uppercase"
-                        >
-                          {item.key.split(" ")[0].substring(0, 5)}
-                        </text>
-                      </g>
-                    );
-                  })}
-                  <line x1="10" y1="130" x2="290" y2="130" stroke="currentColor" className="text-gray-200 dark:text-gray-800" strokeWidth="1" />
-                </svg>
+                    {/* Area path */}
+                    <path d={areaD} fill="url(#stockAreaGrad)" className="transition-all duration-500" />
+                    
+                    {/* Grid Lines */}
+                    <line x1="20" y1="30" x2="280" y2="30" stroke="currentColor" className="text-gray-100 dark:text-gray-900" strokeWidth="0.5" strokeDasharray="3 3" />
+                    <line x1="20" y1="75" x2="280" y2="75" stroke="currentColor" className="text-gray-100 dark:text-gray-900" strokeWidth="0.5" strokeDasharray="3 3" />
+                    
+                    {/* Base line */}
+                    <line x1="20" y1="130" x2="280" y2="130" stroke="currentColor" className="text-gray-250 dark:text-gray-800" strokeWidth="1" />
+
+                    {/* Stock Trend Line */}
+                    <path d={pathD} fill="none" stroke="#B88A16" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="transition-all duration-500" />
+
+                    {/* Interactive points */}
+                    {points.map((p) => {
+                      const isSelected = selectedStockDate === p.data.dateStr;
+                      return (
+                        <g key={p.data.dateStr} className="cursor-pointer group">
+                          <circle
+                            cx={p.x}
+                            cy={p.y}
+                            r={isSelected ? 6 : 4}
+                            fill={isSelected ? "#B88A16" : "#ffffff"}
+                            stroke="#B88A16"
+                            strokeWidth={isSelected ? 3 : 2.5}
+                            onClick={() => setSelectedStockDate(isSelected ? null : p.data.dateStr)}
+                            className="transition-all duration-200"
+                          />
+                          <title>{`${p.data.displayDate}: ${p.data.completed} selesai`}</title>
+                        </g>
+                      );
+                    })}
+
+                    {/* Left & Right Date labels */}
+                    <text x="20" y="145" fill="currentColor" className="text-[8px] font-bold text-gray-400 dark:text-gray-500" textAnchor="start">
+                      {stockChartData[0].displayDate}
+                    </text>
+                    <text x="280" y="145" fill="currentColor" className="text-[8px] font-bold text-gray-400 dark:text-gray-500" textAnchor="end">
+                      {stockChartData[stockChartData.length - 1].displayDate}
+                    </text>
+                  </svg>
+                )}
               </div>
               <div className="w-full sm:w-1/2">
                 {renderChartDetails("grafik")}
@@ -1026,11 +1171,12 @@ export default function ProgressPekerjaanPage() {
           </div>
 
           {/* Reset Filters Option if filters active */}
-          {(selectedStatusFilter || Object.keys(columnFilters).length > 0) && (
+          {(selectedStatusFilter || Object.keys(columnFilters).length > 0 || selectedStockDate) && (
             <button
               onClick={() => {
                 setSelectedStatusFilter(null);
                 setSelectedChartStatus(null);
+                setSelectedStockDate(null);
                 setColumnFilters({});
               }}
               className="px-3 py-2 border border-dashed border-red-500/30 text-red-500 hover:bg-red-500/5 transition-all text-xs font-bold uppercase tracking-wider rounded-xl cursor-pointer"
@@ -1114,8 +1260,8 @@ export default function ProgressPekerjaanPage() {
             Belum ada data progress pekerjaan yang sesuai filter.
           </div>
         ) : (
-          <div className="overflow-x-auto text-[13px] relative max-h-[70vh] no-scrollbar">
-            <table className="w-full text-left border-collapse table-fixed min-w-[2500px] print:min-w-full">
+          <div className="overflow-x-auto text-[13px] relative max-h-[70vh] no-scrollbar rounded-2xl border border-gray-250 dark:border-gray-800">
+            <table className="w-full text-left border-collapse table-fixed min-w-[1900px] print:min-w-full">
               <thead>
                 <tr className="border-b border-gray-100 dark:border-gray-800 text-[10px] font-bold text-gray-450 uppercase tracking-wider bg-gray-50/20 dark:bg-white/[0.01]">
                   {/* Dynamic Columns with Google Sheets Filters */}
