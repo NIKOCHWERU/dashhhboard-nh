@@ -15,8 +15,7 @@ import {
 // Auto-initialization of default categories and PT folders
 async function initializeNarasumberHukumFolders() {
   const accessToken = await getAccessToken();
-  const nhFolderId = await getGlobalFolderId("Narasumber Hukum");
-  if (!nhFolderId) throw new Error("Failed to initialize Narasumber Hukum folder");
+  const nhFolderId = "1mIfFQSMviTEO8wCm8YXWAMKLMjA1jRoq";
 
   // 1. Create default category folders
   const categories = ["Drafting Kontrak", "Legal Opinion", "Somasi / Peringatan", "Arsip Umum"];
