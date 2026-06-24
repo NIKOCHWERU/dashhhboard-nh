@@ -498,17 +498,33 @@ export default function NarasumberHukumPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => setFolderModalOpen(true)}
-            className="px-4 py-2.5 border border-gray-200 dark:border-gray-800 bg-white text-gray-700 hover:border-brand-500 outline-none dark:bg-gray-900 dark:text-white transition-colors cursor-pointer text-xs font-black uppercase tracking-wider rounded-xl shadow-sm"
+            onClick={() => {
+              if (!storageInfo?.connected) {
+                alert("Google Drive terputus. Silakan hubungkan kembali akun Google Drive Anda terlebih dahulu.");
+                return;
+              }
+              setFolderModalOpen(true);
+            }}
+            disabled={!storageInfo?.connected}
+            className={`px-4 py-2.5 border border-gray-200 dark:border-gray-800 bg-white text-gray-700 hover:border-brand-500 outline-none dark:bg-gray-900 dark:text-white transition-colors cursor-pointer text-xs font-black uppercase tracking-wider rounded-xl shadow-sm ${
+              !storageInfo?.connected ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
             + Buat Folder
           </button>
           <button
             onClick={() => {
+              if (!storageInfo?.connected) {
+                alert("Google Drive terputus. Silakan hubungkan kembali akun Google Drive Anda terlebih dahulu.");
+                return;
+              }
               setSelectedPICs([]);
               setUploadModalOpen(true);
             }}
-            className="px-4 py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 outline-none transition-colors cursor-pointer text-xs font-black uppercase tracking-wider shadow-md shadow-brand-500/10"
+            disabled={!storageInfo?.connected}
+            className={`px-4 py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 outline-none transition-colors cursor-pointer text-xs font-black uppercase tracking-wider shadow-md shadow-brand-500/10 ${
+              !storageInfo?.connected ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
             + Unggah Berkas
           </button>
@@ -690,6 +706,26 @@ export default function NarasumberHukumPage() {
               </div>
             </div>
           ))}
+        </div>
+      ) : !storageInfo?.connected ? (
+        <div className="text-center py-16 px-6 bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 rounded-2xl flex flex-col items-center justify-center space-y-4">
+          <div className="h-16 w-16 bg-amber-500/10 text-amber-500 flex items-center justify-center rounded-2xl">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div className="max-w-md">
+            <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Koneksi Google Drive Terputus</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Sistem tidak dapat terhubung ke Google Drive Anda. Silakan hubungkan kembali akun Google Drive perusahaan terlebih dahulu menggunakan tombol di atas untuk mengakses dan mengelola berkas arsip.
+            </p>
+          </div>
+          <a
+            href="/api/gdrive/auth"
+            className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white text-[10px] font-black uppercase rounded-xl tracking-widest transition-all shadow-sm shadow-brand-500/10 cursor-pointer"
+          >
+            Hubungkan Google Drive Sekarang
+          </a>
         </div>
       ) : filteredFolders.length === 0 && filteredFiles.length === 0 ? (
         <div className="text-center py-24 text-xs text-gray-400 italic bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 rounded-2xl">
