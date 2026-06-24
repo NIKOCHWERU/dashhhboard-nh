@@ -48,7 +48,7 @@ export const APP_LABELS = {
       berkas: "Berkas",
       dokumentasi: "Dokumentasi",
       pengumuman: "Pengumuman",
-      arsipDokumen: "Arsip Dokumen",
+      arsipDokumen: "Arsip",
       laporanOperasional: "Laporan Operasional",
       retainer: "Retainer",
       perorangan: "Perorangan",

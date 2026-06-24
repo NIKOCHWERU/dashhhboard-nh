@@ -41,7 +41,6 @@ const staticMenuGroups: MenuGroups[] = [
     items: [
       { name: "Dashboard Utama", icon: <GridIcon />, path: "/" },
       { name: "Kalender", icon: <CalenderIcon />, path: "/calendar" },
-      { name: "Berkas", icon: <DokumenIcon />, path: "/dokumen" },
       { name: "Dokumentasi", icon: <DokumentasiIcon />, path: "/dokumentasi" },
       { name: "Pengumuman", icon: <PengumumanIcon />, path: "/pengumuman" },
     ],
@@ -49,8 +48,7 @@ const staticMenuGroups: MenuGroups[] = [
   {
     title: "Manajemen Arsip",
     items: [
-      { name: "Arsip Dokumen", icon: <DokumenIcon />, path: "/narasumber-hukum" },
-      { name: "Laporan Operasional", icon: <SkalaPrioritasIcon />, path: "/laporan-operasional" },
+      { name: "Arsip", icon: <DokumenIcon />, path: "/narasumber-hukum" },
     ],
   },
   {
@@ -113,7 +111,6 @@ const AppSidebar: React.FC = () => {
       { name: APP_LABELS.sidebar.items.calendar, icon: <CalenderIcon />, path: "/calendar" },
       { name: APP_LABELS.sidebar.items.tasks, icon: <CatatanIcon />, path: "/daftar-potensi-klien" },
       { name: "Progress Pekerjaan", icon: <SkalaPrioritasIcon />, path: "/progress-pekerjaan" },
-      { name: APP_LABELS.sidebar.items.berkas, icon: <DokumenIcon />, path: "/dokumen" },
       { name: APP_LABELS.sidebar.items.dokumentasi, icon: <DokumentasiIcon />, path: "/dokumentasi" },
       { name: APP_LABELS.sidebar.items.pengumuman, icon: <PengumumanIcon />, path: "/pengumuman" }
     ];
@@ -123,8 +120,7 @@ const AppSidebar: React.FC = () => {
     groups.push({
       title: APP_LABELS.sidebar.groups.archiveManagement,
       items: [
-        { name: APP_LABELS.sidebar.items.arsipDokumen, icon: <DokumenIcon />, path: "/narasumber-hukum" },
-        { name: APP_LABELS.sidebar.items.laporanOperasional, icon: <SkalaPrioritasIcon />, path: "/laporan-operasional" }
+        { name: APP_LABELS.sidebar.items.arsipDokumen, icon: <DokumenIcon />, path: "/narasumber-hukum" }
       ]
     });
 

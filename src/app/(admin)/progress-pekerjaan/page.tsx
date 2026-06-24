@@ -89,6 +89,16 @@ export default function ProgressPekerjaanPage() {
   useEffect(() => {
     fetchUsers();
     fetchSummary();
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (tabParam) {
+        const upper = tabParam.toUpperCase();
+        if (upper === "RETAINER" || upper === "NON_RETAINER" || upper === "INTERNAL" || upper === "LAPORAN_BERKALA") {
+          setActiveTab(upper as ActiveTab);
+        }
+      }
+    }
   }, []);
 
   useEffect(() => {

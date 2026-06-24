@@ -582,7 +582,7 @@ export default function RetainerPage() {
                 <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">G-Drive Folder</span>
                 {viewItem.googleFolderId ? (
                   <a
-                    href={`/dokumen`}
+                    href={`/narasumber-hukum`}
                     className="text-xs font-bold text-brand-500 hover:underline uppercase tracking-wide"
                   >
                     📂 Buka Google Drive

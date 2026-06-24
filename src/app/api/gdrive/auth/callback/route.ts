@@ -8,7 +8,7 @@ export async function GET(req: Request) {
   const redirectUri = `${origin}/api/gdrive/auth/callback`;
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/dokumen?gdrive_connected=no_code`);
+    return NextResponse.redirect(`${origin}/narasumber-hukum?gdrive_connected=no_code`);
   }
 
   try {
@@ -31,16 +31,16 @@ export async function GET(req: Request) {
 
     if (data.refresh_token) {
       await storeRefreshToken(data.refresh_token);
-      return NextResponse.redirect(`${origin}/dokumen?gdrive_connected=success`);
+      return NextResponse.redirect(`${origin}/narasumber-hukum?gdrive_connected=success`);
     } else {
       // If no new refresh token returned, they might have approved before.
       // But since we specify prompt=consent, it should return a refresh token.
-      return NextResponse.redirect(`${origin}/dokumen?gdrive_connected=no_refresh_token`);
+      return NextResponse.redirect(`${origin}/narasumber-hukum?gdrive_connected=no_refresh_token`);
     }
   } catch (error: any) {
     console.error("OAuth callback error:", error);
     return NextResponse.redirect(
-      `${origin}/dokumen?gdrive_connected=error&message=${encodeURIComponent(error.message)}`
+      `${origin}/narasumber-hukum?gdrive_connected=error&message=${encodeURIComponent(error.message)}`
     );
   }
 }

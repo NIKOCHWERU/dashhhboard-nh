@@ -214,7 +214,7 @@ export default function DokumenPelamar() {
                     </td>
 
                     <td className="px-5 py-3 text-right">
-                      <a href={`/dokumen`} className="px-2.5 py-1.5 border border-stroke dark:border-strokedark text-[9px] font-black uppercase text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-500/10 rounded-none transition-colors">
+                      <a href={`/narasumber-hukum`} className="px-2.5 py-1.5 border border-stroke dark:border-strokedark text-[9px] font-black uppercase text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-500/10 rounded-none transition-colors">
                         Buka Explorer Berkas
                       </a>
                     </td>

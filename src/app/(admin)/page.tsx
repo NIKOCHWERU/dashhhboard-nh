@@ -297,7 +297,7 @@ export default function Dashboard() {
       {/* SECTION 1: Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" suppressHydrationWarning>
         {/* Card 1: Pekerjaan Aktif */}
-        <Link href="/laporan-operasional?status=Aktif" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-850 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer">
+        <Link href="/progress-pekerjaan" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-850 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer">
           <div className="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 transition-colors group-hover:bg-brand-500 group-hover:text-white">
             <RetainerIcon />
           </div>
@@ -308,7 +308,7 @@ export default function Dashboard() {
         </Link>
 
         {/* Card 2: Non Retainer */}
-        <Link href="/laporan-operasional?tab=NON_RETAINER" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-850 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer">
+        <Link href="/progress-pekerjaan?tab=NON_RETAINER" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-850 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer">
           <div className="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-blue-500/10 text-blue-500 transition-colors group-hover:bg-blue-500 group-hover:text-white">
             <PageIcon />
           </div>
@@ -319,7 +319,7 @@ export default function Dashboard() {
         </Link>
 
         {/* Card 3: Retainer */}
-        <Link href="/laporan-operasional?tab=RETAINER" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-850 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer">
+        <Link href="/progress-pekerjaan?tab=RETAINER" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-850 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer">
           <div className="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-amber-500/10 text-amber-500 transition-colors group-hover:bg-amber-500 group-hover:text-white">
             <RetainerIcon />
           </div>
@@ -330,7 +330,7 @@ export default function Dashboard() {
         </Link>
 
         {/* Card 4: INTERNAL */}
-        <Link href="/laporan-operasional?tab=INTERNAL" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-850 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer">
+        <Link href="/progress-pekerjaan?tab=INTERNAL" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-850 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer">
           <div className="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 transition-colors group-hover:bg-emerald-500 group-hover:text-white">
             <GroupIcon />
           </div>

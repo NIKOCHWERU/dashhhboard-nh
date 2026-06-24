@@ -79,7 +79,12 @@ export async function GET(req: Request) {
       });
     } else {
       if (!targetFolderId) {
-        targetFolderId = "1mIfFQSMviTEO8wCm8YXWAMKLMjA1jRoq";
+        try {
+          targetFolderId = await initializeNarasumberHukumFolders();
+        } catch (initErr) {
+          console.error("Failed to initialize folders, using fallback:", initErr);
+          targetFolderId = "1mIfFQSMviTEO8wCm8YXWAMKLMjA1jRoq";
+        }
       }
       gdriveItems = await listFiles(targetFolderId!);
       dbFiles = await prisma.narasumberHukum.findMany({

@@ -307,7 +307,7 @@ export default function InternalDocumentsPage() {
                     <td className="p-4 whitespace-nowrap">
                       {item.googleFolderId ? (
                         <a
-                          href={`/dokumen`}
+                          href={`/narasumber-hukum`}
                           className="text-brand-500 hover:text-brand-600 font-black uppercase text-[10px] tracking-wider flex items-center gap-1.5"
                         >
                           📂 Buka Folder G-Drive
@@ -509,7 +509,7 @@ export default function InternalDocumentsPage() {
                 <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Arsip Google Drive</span>
                 {viewItem.googleFolderId ? (
                   <a
-                    href={`/dokumen`}
+                    href={`/narasumber-hukum`}
                     className="text-brand-500 hover:underline font-bold flex items-center gap-1.5 uppercase text-[10px] tracking-wider"
                   >
                     📂 Buka Folder G-Drive

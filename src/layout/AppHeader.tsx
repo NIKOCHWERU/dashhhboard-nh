@@ -11,14 +11,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { APP_LABELS } from "../config/app-labels";
 
 const STATIC_MENUS = [
-  { name: "Dashboard Utama", category: "Menu", path: "/", description: "Ringkasan aktivitas operasional kantor hari ini" },
+  { name: "Dashboard Utama", category: "Menu", path: "/", description: "Ringkasan kegiatan operasional kantor hari ini" },
   { name: "Kalender", category: "Menu", path: "/calendar", description: "Atur dan lihat kegiatan atau agenda kerja anda" },
   { name: "Daftar Potensi Klien", category: "Menu", path: "/daftar-potensi-klien", description: "Daftar prospek, klien, dan interaksi klien" },
-  { name: "Berkas / Dokumen", category: "Menu", path: "/dokumen", description: "Arsip berkas, template, dan link Google Drive" },
   { name: "Dokumentasi", category: "Menu", path: "/dokumentasi", description: "Panduan operasional dan dokumentasi sistem" },
   { name: "Pengumuman", category: "Menu", path: "/pengumuman", description: "Daftar pengumuman internal kantor hukum" },
-  { name: "Arsip Dokumen", category: "Manajemen Arsip", path: "/narasumber-hukum", description: "Manajemen folder dan arsip dokumen Google Drive" },
-  { name: "Laporan Operasional", category: "Manajemen Arsip", path: "/laporan-operasional", description: "Tabel monitoring Retainer, Non-Retainer, dan Internal" },
+  { name: "Arsip", category: "Manajemen Arsip", path: "/narasumber-hukum", description: "Manajemen folder dan arsip dokumen Google Drive" },
   { name: "Pekerjaan Retainer", category: "Pekerjaan", path: "/retainer", description: "Daftar pekerjaan berstatus Retainer" },
   { name: "Pekerjaan Perorangan", category: "Pekerjaan", path: "/perorangan", description: "Daftar pekerjaan perorangan (Non-Retainer)" },
   { name: "Daftar Karyawan", category: "Karyawan", path: "/karyawan", description: "Daftar karyawan dan tim resmi Narasumber Hukum" },
@@ -120,7 +118,6 @@ const AppHeader: React.FC = () => {
     switch (pathname) {
       case "/": return APP_LABELS.header.titles.dashboard;
       case "/calendar": return APP_LABELS.header.titles.calendar;
-      case "/dokumen": return APP_LABELS.header.titles.berkas;
       case "/dokumentasi": return APP_LABELS.header.titles.dokumentasi;
       case "/pengumuman": return APP_LABELS.header.titles.pengumuman;
       case "/retainer": return APP_LABELS.header.titles.retainer;
@@ -128,7 +125,7 @@ const AppHeader: React.FC = () => {
       case "/karyawan": return APP_LABELS.header.titles.daftarKaryawan;
       case "/skala-prioritas": return APP_LABELS.header.titles.skalaPrioritas;
       case "/internal": return APP_LABELS.header.titles.suratInternal;
-      case "/laporan-operasional": return APP_LABELS.header.titles.laporanOperasional;
+      case "/narasumber-hukum": return "Arsip";
       case "/progress-pekerjaan": return "Progress Pekerjaan";
       default: return APP_LABELS.header.titles.default;
     }
