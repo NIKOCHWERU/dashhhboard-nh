@@ -1813,7 +1813,7 @@ const Calendar: React.FC = () => {
                 </div>
 
                 {/* Peserta (Multi-select) */}
-                <div ref={pesertaDropdownRef} className="md:col-span-2 relative">
+                <div ref={pesertaDropdownRef} className="md:col-span-2 relative z-50">
                   <label className="block text-sm font-bold text-black dark:text-white mb-2">Peserta</label>
                   <button
                     type="button"
