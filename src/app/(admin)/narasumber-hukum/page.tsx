@@ -101,6 +101,10 @@ export default function NarasumberHukumPage() {
   const [recentDrafts, setRecentDrafts] = useState<any[]>([]);
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
 
+  // Right sidebar layout states
+  const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
+  const [rightPanelTab, setRightPanelTab] = useState<"activity" | "details">("activity");
+
   // Fetch initial data
   useEffect(() => {
     fetchPTs();
@@ -294,6 +298,7 @@ export default function NarasumberHukumPage() {
     try {
       setLoading(true);
       setActiveMenuId(null);
+      setSelectedItem(null);
       
       let url = "/api/narasumber-hukum";
       if (folderId) {
@@ -630,79 +635,30 @@ export default function NarasumberHukumPage() {
             Dokumentasi berkas hukum, somasi, dan surat kontrak diatur secara dinamis dan aman.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => {
-              if (!storageInfo?.connected) {
-                alert("Google Drive terputus. Silakan hubungkan kembali akun Google Drive Anda terlebih dahulu.");
-                return;
-              }
-              setFolderModalOpen(true);
-            }}
-            disabled={!storageInfo?.connected}
-            className={`px-4 py-2.5 border border-gray-200 dark:border-gray-800 bg-white text-gray-700 hover:border-brand-500 outline-none dark:bg-gray-900 dark:text-white transition-colors cursor-pointer text-xs font-black uppercase tracking-wider rounded-xl shadow-sm ${
-              !storageInfo?.connected ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-          >
-            + Buat Folder
-          </button>
-          <button
-            onClick={() => {
-              if (!storageInfo?.connected) {
-                alert("Google Drive terputus. Silakan hubungkan kembali akun Google Drive Anda terlebih dahulu.");
-                return;
-              }
-              setSelectedPICs([]);
-              setUploadModalOpen(true);
-            }}
-            disabled={!storageInfo?.connected}
-            className={`px-4 py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 outline-none transition-colors cursor-pointer text-xs font-black uppercase tracking-wider shadow-md shadow-brand-500/10 ${
-              !storageInfo?.connected ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-          >
-            + Unggah Berkas
-          </button>
-        </div>
       </div>
 
-      {/* STORAGE & CONNECTION BAR */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-white/[0.03]">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <div className={`h-11 w-11 flex-shrink-0 flex items-center justify-center rounded-2xl ${
-              storageInfo?.connected 
-                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" 
-                : "bg-amber-500/10 text-amber-500"
-            }`}>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-.778.099-1.533.284-2.253" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
-                Google Drive Perusahaan
-                {checkingStorage ? (
-                  <span className="animate-pulse text-[9px] text-gray-400">Memeriksa...</span>
-                ) : storageInfo?.connected ? (
-                  <span className="text-[9px] bg-emerald-500/10 text-emerald-600 font-bold px-1.5 py-0.5 rounded-md dark:text-emerald-400 uppercase tracking-wider">Terhubung</span>
-                ) : (
-                  <span className="text-[9px] bg-red-500/10 text-red-600 font-bold px-1.5 py-0.5 rounded-md dark:text-red-400 uppercase tracking-wider">Terputus</span>
-                )}
-              </h3>
-              {storageInfo?.connected && storageInfo.user ? (
-                <p className="text-[10px] text-gray-400 font-semibold mt-0.5">
-                  Akun Authorized: <span className="font-bold text-gray-600 dark:text-gray-300">{storageInfo.user.emailAddress}</span> ({storageInfo.user.displayName})
-                </p>
+      {/* THREE COLUMN EXPLORER LAYOUT */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* LEFT COLUMN: Subfolder Hierarchy & Storage Info */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* STORAGE INFO CARD */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-white/[0.03] space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black text-gray-450 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5 text-brand-500" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-1.5V9a3 3 0 0 0-3-3h-3.382l-.528-1.056A3 3 0 0 0 8.418 3H4.5A3 3 0 0 0 1.5 6v12a3 3 0 0 0 3 3h15z" />
+                </svg>
+                Google Drive
+              </span>
+              {checkingStorage ? (
+                <span className="animate-pulse text-[8px] text-gray-400 font-bold uppercase">Memeriksa...</span>
+              ) : storageInfo?.connected ? (
+                <span className="text-[8px] bg-emerald-500/10 text-emerald-600 font-bold px-1.5 py-0.5 rounded dark:text-emerald-400 uppercase tracking-wider">Terhubung</span>
               ) : (
-                <p className="text-[10px] text-gray-400 mt-0.5 font-semibold">
-                  Hubungkan Google Drive untuk menyimpan arsip dokumen.
-                </p>
+                <span className="text-[8px] bg-red-500/10 text-red-600 font-bold px-1.5 py-0.5 rounded dark:text-red-400 uppercase tracking-wider">Terputus</span>
               )}
             </div>
-          </div>
 
-          {/* Right part: Storage progress or auth button */}
-          <div className="flex items-center gap-4 min-w-[280px] w-full md:w-auto">
             {storageInfo?.connected && storageInfo.storageQuota ? (() => {
               const limit = parseInt(storageInfo.storageQuota.limit);
               const usage = parseInt(storageInfo.storageQuota.usage);
@@ -718,12 +674,8 @@ export default function NarasumberHukumPage() {
               };
 
               return (
-                <div className="w-full space-y-1.5">
-                  <div className="flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                    <span>Sisa: <span className="text-gray-700 dark:text-gray-200 font-black">{formatSizeLocal(remaining)}</span></span>
-                    <span>{percent}% Terpakai</span>
-                  </div>
-                  <div className="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div className="space-y-2">
+                  <div className="h-1.5 w-full bg-gray-150 dark:bg-gray-800 rounded-full overflow-hidden">
                     <div 
                        className={`h-full rounded-full transition-all duration-500 ${
                         percent > 85 ? "bg-red-500" : percent > 60 ? "bg-amber-500" : "bg-brand-500"
@@ -731,157 +683,254 @@ export default function NarasumberHukumPage() {
                       style={{ width: `${percent}%` }}
                     />
                   </div>
-                  <p className="text-[9px] text-gray-400 font-medium text-right uppercase tracking-wider">
-                    Total kapasitas: {formatSizeLocal(limit)}
-                  </p>
+                  <div className="flex justify-between items-center text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+                    <span>{percent}% Terpakai</span>
+                    <span>Sisa {formatSizeLocal(remaining)}</span>
+                  </div>
+                  {storageInfo.user && (
+                    <p className="text-[9px] text-gray-400 truncate border-t border-gray-100 dark:border-gray-800/60 pt-1.5 mt-1 font-semibold" title={storageInfo.user.emailAddress}>
+                      Akun: {storageInfo.user.emailAddress}
+                    </p>
+                  )}
                 </div>
               );
             })() : (
               <a
                 href="/api/gdrive/auth"
-                className="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white text-[10px] font-black uppercase rounded-xl tracking-widest transition-all shadow-sm shadow-brand-500/10 text-center w-full block cursor-pointer"
+                className="px-3 py-2 bg-brand-500 hover:bg-brand-600 text-white text-[9px] font-black uppercase rounded-lg tracking-widest transition-all text-center w-full block cursor-pointer"
               >
-                Hubungkan Google Drive
+                Hubungkan Drive
               </a>
             )}
           </div>
-        </div>
-      </div>
 
-      {/* TWO COLUMN EXPLORER LAYOUT */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* LEFT COLUMN: Subfolder Hierarchy (3 cols on lg) */}
-        <div className="lg:col-span-3 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-white/[0.03] space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-gray-150 dark:border-gray-800">
-            <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider font-bold">Subfolder Hierarki</h3>
-            {isAdmin && storageInfo?.connected && (
-              <button
-                type="button"
-                onClick={() => {
-                  setNewFolderName("");
-                  setActiveFolderId("1mIfFQSMviTEO8wCm8YXWAMKLMjA1jRoq"); // Create folder at root
-                  setFolderModalOpen(true);
-                }}
-                className="p-1 text-gray-400 hover:text-brand-500 rounded-md transition-colors cursor-pointer"
-                title="Create New Folder"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-              </button>
-            )}
-          </div>
-          
-          <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
-            {storageInfo?.connected ? (
-              <div className="space-y-1">
-                {/* Root Arsip Node */}
-                <div 
-                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
-                    activeFolderId === null || activeFolderId === "1mIfFQSMviTEO8wCm8YXWAMKLMjA1jRoq"
-                      ? "bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/30"
-                      : "text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                  }`}
-                  onClick={() => browseFolder(null, "Arsip")}
-                >
-                  <svg className="w-4.5 h-4.5 text-brand-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-1.5V9a3 3 0 0 0-3-3h-3.382l-.528-1.056A3 3 0 0 0 8.418 3H4.5A3 3 0 0 0 1.5 6v12a3 3 0 0 0 3 3h15z" />
-                  </svg>
-                  <span>Arsip</span>
-                </div>
-                
-                {/* Render root folders tree recursively */}
-                {renderFolderTree("1mIfFQSMviTEO8wCm8YXWAMKLMjA1jRoq")}
-              </div>
-            ) : (
-              <p className="text-[10px] text-gray-400 italic">Google Drive terputus.</p>
-            )}
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN: Main Explorer & Subfolder Grid (9 cols on lg) */}
-        <div className="lg:col-span-9 space-y-6">
-          {/* SEARCH AND BREADCRUMBS ROW */}
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 p-4 rounded-2xl shadow-sm">
-            {/* Navigation Breadcrumbs */}
-            <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-black text-gray-450 dark:text-gray-400 uppercase tracking-wider">
-          {folderHistory.length > 1 && (
-            <button
-              onClick={handleBack}
-              className="mr-2 p-1.5 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-            >
-              <svg className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </button>
-          )}
-          <span
-            className="cursor-pointer hover:text-brand-500 text-gray-500"
-            onClick={() => browseFolder(null, "Arsip", true)}
-          >
-            Arsip
-          </span>
-          {folderHistory.map((hist, idx) => {
-            if (idx === 0) return null; // Skip HOME
-            return (
-              <React.Fragment key={hist.id}>
-                <span className="text-gray-300 dark:text-gray-700">/</span>
-                <span
-                  className={`cursor-pointer hover:text-brand-500 truncate max-w-[150px] ${idx === folderHistory.length - 1 ? "text-brand-500 font-bold" : "text-gray-500"}`}
+          {/* FOLDER TREE CARD */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-white/[0.03] space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-150 dark:border-gray-800">
+              <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider font-bold">Subfolder Hierarki</h3>
+              {isAdmin && storageInfo?.connected && (
+                <button
+                  type="button"
                   onClick={() => {
-                    if (idx === folderHistory.length - 1) return;
-                    const newHist = folderHistory.slice(0, idx + 1);
-                    setFolderHistory(newHist);
-                    browseFolder(hist.id, hist.name, false);
+                    setNewFolderName("");
+                    setActiveFolderId("1mIfFQSMviTEO8wCm8YXWAMKLMjA1jRoq"); // Create folder at root
+                    setFolderModalOpen(true);
                   }}
+                  className="p-1 text-gray-400 hover:text-brand-500 rounded-md transition-colors cursor-pointer"
+                  title="Create New Folder"
                 >
-                  {hist.name}
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            
+            {/* FOLDER TREE HEADER BANNER (Clickable to go back to root) */}
+            <div 
+              onClick={() => browseFolder(null, "Arsip")}
+              className={`px-3 py-2.5 bg-gray-100 dark:bg-gray-800/80 hover:bg-gray-200 dark:hover:bg-gray-700/50 rounded-xl text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2 cursor-pointer transition-all ${
+                activeFolderId === null || activeFolderId === "1mIfFQSMviTEO8wCm8YXWAMKLMjA1jRoq"
+                  ? "border border-brand-500/30 text-brand-600 dark:text-brand-400"
+                  : ""
+              }`}
+            >
+              <svg className="w-3.5 h-3.5 text-brand-500" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-1.5V9a3 3 0 0 0-3-3h-3.382l-.528-1.056A3 3 0 0 0 8.418 3H4.5A3 3 0 0 0 1.5 6v12a3 3 0 0 0 3 3h15z" />
+              </svg>
+              <span>Folder Tree</span>
+            </div>
+
+            <div className="max-h-[500px] overflow-y-auto custom-scrollbar pt-2">
+              {storageInfo?.connected ? (
+                <div className="space-y-1">
+                  {/* Render root folders tree recursively */}
+                  {renderFolderTree("1mIfFQSMviTEO8wCm8YXWAMKLMjA1jRoq")}
+                </div>
+              ) : (
+                <p className="text-[10px] text-gray-400 italic">Google Drive terputus.</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* MIDDLE COLUMN: Main Explorer (Dynamic grid span) */}
+        <div className={`${isRightPanelOpen ? "lg:col-span-6" : "lg:col-span-9"} space-y-6`}>
+          {/* SEARCH AND TOOLBAR SECTION */}
+          <div className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 p-4 rounded-2xl shadow-sm space-y-4">
+            {/* Navigation Breadcrumbs & Controls */}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 dark:border-gray-800/60 pb-3">
+              {/* Navigation Breadcrumbs */}
+              <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-black text-gray-450 dark:text-gray-400 uppercase tracking-wider">
+                {folderHistory.length > 1 && (
+                  <button
+                    onClick={handleBack}
+                    className="mr-2 p-1.5 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                  >
+                    <svg className="w-3.5 h-3.5 text-gray-605 dark:text-gray-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                  </button>
+                )}
+                <span
+                  className="cursor-pointer hover:text-brand-500 text-gray-500"
+                  onClick={() => browseFolder(null, "Arsip", true)}
+                >
+                  Arsip
                 </span>
-              </React.Fragment>
-            );
-          })}
-        </div>
+                {folderHistory.map((hist, idx) => {
+                  if (idx === 0) return null; // Skip HOME
+                  return (
+                    <React.Fragment key={hist.id}>
+                      <span className="text-gray-300 dark:text-gray-700">/</span>
+                      <span
+                        className={`cursor-pointer hover:text-brand-500 truncate max-w-[150px] ${idx === folderHistory.length - 1 ? "text-brand-500 font-bold" : "text-gray-500"}`}
+                        onClick={() => {
+                          if (idx === folderHistory.length - 1) return;
+                          const newHist = folderHistory.slice(0, idx + 1);
+                          setFolderHistory(newHist);
+                          browseFolder(hist.id, hist.name, false);
+                        }}
+                      >
+                        {hist.name}
+                      </span>
+                    </React.Fragment>
+                  );
+                })}
+              </div>
 
-        {/* View Toggles & Search Bar */}
-        <div className="flex items-center gap-3 w-full lg:w-auto">
-          <div className="relative w-full sm:w-72">
-            <input
-              type="text"
-              placeholder="Cari nama, keterangan, PT..."
-              className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl bg-transparent text-gray-700 dark:text-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors text-xs font-semibold"
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-            />
-            <svg className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+              {/* Control Buttons */}
+              <div className="flex items-center gap-2">
+                {/* Toggle Right Panel Button */}
+                <button
+                  onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
+                  className={`p-2 border rounded-xl transition-all cursor-pointer ${
+                    isRightPanelOpen 
+                      ? "border-brand-500/30 bg-brand-500/10 text-brand-500 shadow-sm" 
+                      : "border-gray-250 dark:border-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  }`}
+                  title={isRightPanelOpen ? "Tutup Panel Rincian & Aktivitas" : "Buka Panel Rincian & Aktivitas"}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 111.063.854l-.018.04A2.25 2.25 0 0012 17h.25m-2.25-3H12m0-6.75H12.008v.008H12V7.25zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
+
+                {/* Toggle View Mode */}
+                <div className="flex border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden p-0.5 bg-gray-50 dark:bg-gray-950 flex-shrink-0">
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    className={`p-2 transition-colors cursor-pointer rounded-lg ${viewMode === "grid" ? "bg-white dark:bg-gray-800 text-brand-500 shadow-sm" : "text-gray-400 hover:text-gray-650"}`}
+                    title="Grid View"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={`p-2 transition-colors cursor-pointer rounded-lg ${viewMode === "list" ? "bg-white dark:bg-gray-800 text-brand-500 shadow-sm" : "text-gray-400 hover:text-gray-650"}`}
+                    title="List View"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Search Input and Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 justify-between">
+              <div className="relative w-full sm:flex-1">
+                <input
+                  type="text"
+                  placeholder="Cari nama, keterangan, PT..."
+                  className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl bg-transparent text-gray-700 dark:text-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors text-xs font-semibold"
+                  value={searchTerm}
+                  onChange={(e) => handleSearch(e.target.value)}
+                />
+                <svg className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+
+              <div className="flex w-full sm:w-auto gap-2">
+                <button
+                  onClick={() => {
+                    if (!storageInfo?.connected) {
+                      alert("Google Drive terputus. Silakan hubungkan kembali akun Google Drive Anda terlebih dahulu.");
+                      return;
+                    }
+                    setFolderModalOpen(true);
+                  }}
+                  disabled={!storageInfo?.connected}
+                  className={`flex-1 sm:flex-none px-4 py-2 border border-gray-250 dark:border-gray-850 bg-white text-gray-700 hover:border-brand-500 outline-none dark:bg-gray-900 dark:text-white transition-colors cursor-pointer text-[10px] font-black uppercase tracking-wider rounded-xl shadow-sm ${
+                    !storageInfo?.connected ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
+                  + Folder
+                </button>
+                <button
+                  onClick={() => {
+                    if (!storageInfo?.connected) {
+                      alert("Google Drive terputus. Silakan hubungkan kembali akun Google Drive Anda terlebih dahulu.");
+                      return;
+                    }
+                    setSelectedPICs([]);
+                    setUploadModalOpen(true);
+                  }}
+                  disabled={!storageInfo?.connected}
+                  className={`flex-1 sm:flex-none px-4 py-2 bg-brand-500 text-white rounded-xl hover:bg-brand-600 outline-none transition-colors cursor-pointer text-[10px] font-black uppercase tracking-wider shadow-md shadow-brand-500/10 ${
+                    !storageInfo?.connected ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
+                  + Berkas
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Toggle View Mode */}
-          <div className="flex border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden p-0.5 bg-gray-50 dark:bg-gray-950 flex-shrink-0">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-2 transition-colors cursor-pointer rounded-lg ${viewMode === "grid" ? "bg-white dark:bg-gray-800 text-brand-500 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
-              title="Grid View"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-              </svg>
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-2 transition-colors cursor-pointer rounded-lg ${viewMode === "list" ? "bg-white dark:bg-gray-800 text-brand-500 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
-              title="List View"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
+          {/* QUICK ACCESS / RECENT DRAFTS SECTION */}
+          {recentDrafts.length > 0 && (activeFolderId === null || activeFolderId === "1mIfFQSMviTEO8wCm8YXWAMKLMjA1jRoq") && (
+            <div className="space-y-3">
+              <h4 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">AKSES CEPAT (DRAFTS TERBARU)</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {recentDrafts.map((draft) => (
+                  <div 
+                    key={draft.id} 
+                    className="group flex items-center justify-between p-3.5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.02] hover:border-brand-500 hover:shadow-md transition-all cursor-pointer"
+                    onClick={() => {
+                      if (draft.webViewLink) {
+                        window.open(draft.webViewLink, "_blank");
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex-shrink-0">
+                        {getFileIcon(draft.mimeType || "application/pdf")}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-gray-900 dark:text-white truncate" title={draft.fileName || draft.name}>
+                          {draft.fileName || draft.name}
+                        </p>
+                        <p className="text-[9px] text-gray-450 font-medium mt-0.5">
+                          {draft.size ? formatSize(draft.size) : "0 B"} • {draft.createdTime ? new Date(draft.createdTime).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : "-"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="p-1.5 rounded-xl bg-gray-55 dark:bg-gray-800/40 text-gray-450 hover:text-brand-500 group-hover:bg-brand-500/10 group-hover:text-brand-500 transition-colors ml-2 flex-shrink-0">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+                      </svg>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-      {/* EXPLORER AREA */}
+          {/* EXPLORER AREA */}
       {loading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
@@ -923,7 +972,7 @@ export default function NarasumberHukumPage() {
           {/* FOLDERS GRID */}
           {filteredFolders.length > 0 && (
             <div className="space-y-3">
-              <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Subfolder ({filteredFolders.length})</h4>
+              <h4 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">SUBFOLDER ({filteredFolders.length})</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredFolders.map((folder) => (
                   <div
@@ -986,7 +1035,7 @@ export default function NarasumberHukumPage() {
           {/* FILES GRID */}
           {filteredFiles.length > 0 && (
             <div className="space-y-3">
-              <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Berkas ({filteredFiles.length})</h4>
+              <h4 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">BERKAS ({filteredFiles.length})</h4>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {filteredFiles.map((file) => {
                   const hasThumb = !!file.thumbnailLink;
@@ -995,8 +1044,13 @@ export default function NarasumberHukumPage() {
                   return (
                     <div
                       key={file.id}
-                      onClick={() => setPreviewItem(file)}
-                      className="group border border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.02] rounded-2xl hover:border-brand-500 hover:shadow-lg transition-all flex flex-col justify-between overflow-hidden cursor-pointer select-none"
+                      onClick={() => {
+                        setSelectedItem(file);
+                        setPreviewItem(file);
+                      }}
+                      className={`group border bg-white dark:bg-white/[0.02] rounded-2xl hover:border-brand-500 hover:shadow-lg transition-all flex flex-col justify-between overflow-hidden cursor-pointer select-none ${
+                        selectedItem?.id === file.id ? "border-brand-500 shadow-md ring-2 ring-brand-500/10" : "border-gray-200 dark:border-gray-800"
+                      }`}
                     >
                       {/* Image Thumbnail or File Icon */}
                       <div className="flex-1 min-h-[110px] flex items-center justify-center bg-gray-50/50 dark:bg-white/[0.01] border-b border-gray-100 dark:border-gray-800/60 p-4 relative">
@@ -1054,7 +1108,8 @@ export default function NarasumberHukumPage() {
                                 <button
                                   onClick={() => {
                                     setSelectedItem(file);
-                                    setDetailModalOpen(true);
+                                    setRightPanelTab("details");
+                                    setIsRightPanelOpen(true);
                                     setActiveMenuId(null);
                                   }}
                                   className="w-full text-left px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-900 cursor-pointer"
@@ -1207,7 +1262,10 @@ export default function NarasumberHukumPage() {
                   <tr key={file.id} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors">
                     <td className="p-4 pl-6">
                       <div
-                        onClick={() => setPreviewItem(file)}
+                        onClick={() => {
+                          setSelectedItem(file);
+                          setPreviewItem(file);
+                        }}
                         className="flex items-center gap-3 font-semibold text-black dark:text-white cursor-pointer hover:text-brand-500"
                       >
                         {getFileIcon(file.mimeType)}
@@ -1247,7 +1305,8 @@ export default function NarasumberHukumPage() {
                       <button
                         onClick={() => {
                           setSelectedItem(file);
-                          setDetailModalOpen(true);
+                          setRightPanelTab("details");
+                          setIsRightPanelOpen(true);
                         }}
                         className="px-2.5 py-1 bg-brand-500/10 text-brand-700 hover:bg-brand-500/20 text-[10px] font-black rounded-lg uppercase transition-colors"
                       >
@@ -1294,56 +1353,57 @@ export default function NarasumberHukumPage() {
           </div>
         </div>
       )}
+    </div>
 
-          {/* SPLIT BOTTOM SECTION (Shown only when browsing root/Arsip) */}
-          {(activeFolderId === null || activeFolderId === "1mIfFQSMviTEO8wCm8YXWAMKLMjA1jRoq") && (
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-5 pt-4">
-              {/* Drafts Terbaru (7 cols) */}
-              <div className="md:col-span-7 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-white/[0.03] space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-gray-150 dark:border-gray-800">
-                  <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider font-bold">Drafts Terbaru</h3>
-                </div>
-                <div className="space-y-3">
-                  {recentDrafts.length > 0 ? (
-                    recentDrafts.map((draft) => (
-                      <div key={draft.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.01] hover:border-brand-500/30 transition-all">
-                        <div className="flex items-center gap-3 min-w-0">
-                          {getFileIcon(draft.mimeType || "application/pdf")}
-                          <div className="min-w-0">
-                            <p className="text-xs font-bold text-gray-900 dark:text-white truncate" title={draft.fileName || draft.name}>
-                              {draft.fileName || draft.name}
-                            </p>
-                            <p className="text-[9px] text-gray-400 font-medium">
-                              {draft.size ? formatSize(draft.size) : "0 B"} • {draft.createdTime ? new Date(draft.createdTime).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "-"}
-                            </p>
-                          </div>
-                        </div>
-                        <a
-                          href={draft.webViewLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-2.5 py-1 bg-brand-500 hover:bg-brand-600 text-white text-[9px] font-black uppercase rounded-lg tracking-widest transition-all cursor-pointer flex items-center gap-1"
-                        >
-                          Lihat
-                        </a>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-[10px] text-gray-400 italic text-center py-6">Tidak ada berkas draf baru.</p>
-                  )}
-                </div>
+        {/* RIGHT SIDEBAR: Info & Activity Pane */}
+        {isRightPanelOpen && (
+          <div className="lg:col-span-3 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-white/[0.03] space-y-4">
+            {/* Header Tabs */}
+            <div className="flex items-center justify-between border-b border-gray-150 dark:border-gray-800 pb-2">
+              <div className="flex border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden p-0.5 bg-gray-50 dark:bg-gray-950">
+                <button
+                  onClick={() => setRightPanelTab("activity")}
+                  className={`px-3 py-1.5 text-[10px] font-black uppercase rounded-lg tracking-wider transition-all cursor-pointer ${
+                    rightPanelTab === "activity"
+                      ? "bg-white dark:bg-gray-800 text-brand-500 shadow-sm"
+                      : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-305"
+                  }`}
+                >
+                  Aktivitas
+                </button>
+                <button
+                  onClick={() => setRightPanelTab("details")}
+                  className={`px-3 py-1.5 text-[10px] font-black uppercase rounded-lg tracking-wider transition-all cursor-pointer ${
+                    rightPanelTab === "details"
+                      ? "bg-white dark:bg-gray-800 text-brand-500 shadow-sm"
+                      : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-305"
+                  }`}
+                >
+                  Rincian
+                </button>
               </div>
+              
+              <button
+                onClick={() => setIsRightPanelOpen(false)}
+                className="p-1.5 text-gray-400 hover:text-gray-650 dark:hover:text-gray-300 rounded-lg hover:bg-gray-55 dark:hover:bg-gray-800 cursor-pointer"
+                title="Tutup Panel"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-              {/* Aktivitas Terakhir (5 cols) */}
-              <div className="md:col-span-5 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-white/[0.03] space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-gray-150 dark:border-gray-800">
-                  <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider font-bold">Aktivitas Terakhir</h3>
-                </div>
-                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+            {/* Tab Contents */}
+            <div className="space-y-4">
+              {rightPanelTab === "activity" ? (
+                /* Recent Activities List */
+                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
+                  <h4 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest pb-1 border-b border-gray-100 dark:border-gray-800/40">Log Aktivitas Terbaru</h4>
                   {recentActivities.length > 0 ? (
                     recentActivities.map((act, idx) => (
-                      <div key={act.id || idx} className="flex gap-3 text-xs">
-                        <div className="w-7 h-7 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center flex-shrink-0 font-bold uppercase text-[9px] border border-brand-500/20">
+                      <div key={act.id || idx} className="flex gap-2.5 text-xs">
+                        <div className="w-6.5 h-6.5 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center flex-shrink-0 font-bold uppercase text-[8px] border border-brand-500/20">
                           {act.userName ? act.userName.substring(0, 2) : "US"}
                         </div>
                         <div className="min-w-0 space-y-0.5">
@@ -1351,9 +1411,9 @@ export default function NarasumberHukumPage() {
                             {act.userName || "Sistem"}
                           </p>
                           <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
-                            {act.action} <span className="font-semibold text-gray-700 dark:text-gray-300">{act.target}</span>
+                            {act.action} <span className="font-semibold text-gray-750 dark:text-gray-300">{act.target}</span>
                           </p>
-                          <p className="text-[8px] text-gray-400 font-medium">
+                          <p className="text-[8px] text-gray-450 font-medium">
                             {act.createdAt ? new Date(act.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "-"}
                           </p>
                         </div>
@@ -1363,10 +1423,172 @@ export default function NarasumberHukumPage() {
                     <p className="text-[10px] text-gray-400 italic text-center py-6">Tidak ada aktivitas tercatat.</p>
                   )}
                 </div>
-              </div>
+              ) : (
+                /* Metadata Details Panel */
+                <div className="space-y-4 max-h-[550px] overflow-y-auto pr-1 custom-scrollbar">
+                  {selectedItem ? (
+                    <div className="space-y-4">
+                      {/* Big Icon & Info */}
+                      <div className="flex flex-col items-center text-center p-4 bg-gray-50/50 dark:bg-white/[0.01] border border-gray-100 dark:border-gray-800/60 rounded-2xl relative overflow-hidden">
+                        {selectedItem.thumbnailLink ? (
+                          <img
+                            src={selectedItem.thumbnailLink.replace(/=s\d+$/, "=s320")}
+                            alt={selectedItem.name}
+                            className="max-h-[100px] object-contain rounded shadow-sm border border-gray-150 dark:border-gray-800 mb-3"
+                          />
+                        ) : (
+                          <div className="mb-2">{getFileIcon(selectedItem.mimeType)}</div>
+                        )}
+                        <h4 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider truncate max-w-full px-2" title={selectedItem.customName || selectedItem.name}>
+                          {selectedItem.customName || selectedItem.name}
+                        </h4>
+                        <span className="text-[8px] text-gray-450 font-bold uppercase tracking-wider mt-1 bg-gray-150 dark:bg-gray-800 px-2 py-0.5 rounded">
+                          {selectedItem.mimeType.split("/")[1] || "Format Lain"}
+                        </span>
+                      </div>
+
+                      {/* Detail list */}
+                      <div className="space-y-3.5 text-xs">
+                        <div>
+                          <span className="block text-[8.5px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Keterangan</span>
+                          <p className="font-semibold text-gray-700 dark:text-gray-200 mt-1 break-words">
+                            {selectedItem.description || "Tidak ada keterangan."}
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <span className="block text-[8.5px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Ukuran</span>
+                            <span className="block font-bold text-gray-700 dark:text-gray-300 mt-0.5">
+                              {selectedItem.isFolder ? "Folder" : formatSize(selectedItem.size)}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="block text-[8.5px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Tanggal</span>
+                            <span className="block font-bold text-gray-700 dark:text-gray-300 mt-0.5">
+                              {selectedItem.createdTime ? new Date(selectedItem.createdTime).toLocaleDateString("id-ID", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              }) : "-"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <span className="block text-[8.5px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">PT / Klien Asosiasi</span>
+                          <span className="block mt-1">
+                            {selectedItem.pt ? (
+                              <span className="px-2 py-0.5 bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold uppercase text-[9px] tracking-wider rounded border border-brand-500/20">
+                                {selectedItem.pt}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-gray-400 italic">Tidak terikat PT</span>
+                            )}
+                          </span>
+                        </div>
+
+                        <div>
+                          <span className="block text-[8.5px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Keamanan PIC</span>
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {selectedItem.pic ? (
+                              selectedItem.pic.split(",").map((pId) => {
+                                const cleaned = pId.trim();
+                                const empObj = employees.find((e) => e.email === cleaned || e.name === cleaned);
+                                return (
+                                  <span key={cleaned} className="px-2 py-0.5 bg-red-500/10 text-red-600 dark:text-red-400 font-bold text-[9px] rounded border border-red-500/25">
+                                    {empObj ? empObj.name : cleaned}
+                                  </span>
+                                );
+                              })
+                            ) : (
+                              <span className="px-2 py-0.5 bg-green-500/10 text-green-700 dark:text-green-400 font-bold uppercase text-[9px] tracking-wider rounded border border-green-500/25">
+                                Publik (Semua Staf)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action buttons list */}
+                      <div className="flex flex-col gap-2 pt-3 border-t border-gray-150 dark:border-gray-800">
+                        {selectedItem.webViewLink && (
+                          <a
+                            href={selectedItem.webViewLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-full py-2 bg-brand-500 text-white rounded-xl hover:bg-brand-600 text-xs font-black uppercase text-center cursor-pointer transition-all"
+                          >
+                            Buka di Google Drive
+                          </a>
+                        )}
+                        {selectedItem.webContentLink && !selectedItem.isFolder && (
+                          <a
+                            href={selectedItem.webContentLink}
+                            download
+                            className="w-full py-2 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-xl hover:bg-emerald-500/10 text-xs font-black uppercase text-center cursor-pointer transition-all"
+                          >
+                            Unduh Berkas
+                          </a>
+                        )}
+                        {isAdmin && (
+                          <div className="grid grid-cols-2 gap-2 mt-1">
+                            <button
+                              onClick={() => {
+                                if (selectedItem.isFolder) {
+                                  setEditingFolderItem(selectedItem);
+                                  setEditFolderName(selectedItem.name);
+                                  setEditFolderModalOpen(true);
+                                } else {
+                                  setEditingFileItem(selectedItem);
+                                  setEditFileName(selectedItem.customName || selectedItem.name);
+                                  setEditDescription(selectedItem.description || "");
+                                  setEditPT(selectedItem.pt || "");
+                                  setSelectedPICs(selectedItem.pic ? selectedItem.pic.split(",").map((p) => p.trim()).filter(Boolean) : []);
+                                  setEditFileModalOpen(true);
+                                }
+                              }}
+                              className="py-2 border border-amber-500/30 hover:bg-amber-500/10 text-amber-600 dark:text-amber-500 text-[10px] font-black uppercase rounded-xl transition-all cursor-pointer"
+                            >
+                              Ubah Detail
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (selectedItem.isFolder) {
+                                  handleDeleteFolder(selectedItem.id);
+                                } else {
+                                  handleDeleteFile(selectedItem.id);
+                                }
+                              }}
+                              className="py-2 border border-red-500/30 hover:bg-red-500/10 text-red-600 dark:text-red-500 text-[10px] font-black uppercase rounded-xl transition-all cursor-pointer"
+                            >
+                              Hapus Berkas
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    /* Blank state */
+                    <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
+                      <div className="p-4 bg-gray-50 dark:bg-gray-800/40 rounded-full text-gray-405 border border-gray-150 dark:border-gray-850">
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-6H15m-4.5 3H15m-9-3.847V16.5a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25V7.5L13.5 3H6.75A2.25 2.25 0 004.5 5.25v10.5h.001z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-black uppercase tracking-wider text-gray-400">Pilih Berkas</p>
+                        <p className="text-[10px] text-gray-400 font-semibold mt-1 max-w-[150px] mx-auto leading-normal">
+                          Klik menu rincian di berkas atau folder untuk melihat metadata lengkapnya.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* CREATE FOLDER MODAL */}
