@@ -52,6 +52,15 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
+    const getRecent = searchParams.get("recent");
+    if (getRecent === "true") {
+      const recentDbFiles = await prisma.narasumberHukum.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      });
+      return NextResponse.json(recentDbFiles);
+    }
+
     const folderId = searchParams.get("folderId");
     const search = searchParams.get("search");
 

@@ -95,12 +95,20 @@ export default function NarasumberHukumPage() {
   const [selectedItem, setSelectedItem] = useState<GDriveItem | null>(null);
   const [previewItem, setPreviewItem] = useState<GDriveItem | null>(null);
 
+  // Subfolder tree & activity states
+  const [treeData, setTreeData] = useState<Record<string, GDriveItem[]>>({});
+  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
+  const [recentDrafts, setRecentDrafts] = useState<any[]>([]);
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+
   // Fetch initial data
   useEffect(() => {
     fetchPTs();
     fetchEmployees();
     browseFolder(null, "Arsip", true);
     fetchStorageInfo();
+    fetchRecentDrafts();
+    fetchRecentActivities();
   }, []);
 
   // Handle click outside PIC dropdown and Grid Item options menu
@@ -161,6 +169,127 @@ export default function NarasumberHukumPage() {
     }
   };
 
+  const fetchRecentDrafts = async () => {
+    try {
+      const res = await fetch("/api/narasumber-hukum?recent=true");
+      if (res.ok) {
+        const data = await res.json();
+        setRecentDrafts(data || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch recent drafts:", e);
+    }
+  };
+
+  const fetchRecentActivities = async () => {
+    try {
+      const res = await fetch("/api/admin/activities");
+      if (res.ok) {
+        const data = await res.json();
+        setRecentActivities(data.slice(0, 5) || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch recent activities:", e);
+    }
+  };
+
+  const toggleFolderNode = async (folderId: string, folderName: string) => {
+    const isExpanded = expandedFolders[folderId];
+    setExpandedFolders((prev) => ({ ...prev, [folderId]: !isExpanded }));
+
+    if (!isExpanded && !treeData[folderId]) {
+      try {
+        const res = await fetch(`/api/narasumber-hukum?folderId=${folderId}`);
+        if (res.ok) {
+          const data = await res.json();
+          const subfolders = (data.items || []).filter((item: GDriveItem) => item.isFolder);
+          setTreeData((prev) => ({ ...prev, [folderId]: subfolders }));
+        }
+      } catch (e) {
+        console.error("Failed to load subfolder nodes:", e);
+      }
+    }
+  };
+
+  const renderFolderTree = (parentId: string, level: number = 0) => {
+    const subfolders = treeData[parentId] || [];
+    return (
+      <div className={`space-y-1 ${level > 0 ? "ml-4 pl-2 border-l border-gray-150 dark:border-gray-800" : ""}`}>
+        {subfolders.map((folder) => {
+          const isExpanded = expandedFolders[folder.id];
+          const isActive = activeFolderId === folder.id;
+
+          return (
+            <div key={folder.id} className="space-y-1">
+              <div 
+                className={`group/node flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold select-none transition-all cursor-pointer ${
+                  isActive 
+                    ? "bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/30 font-bold" 
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                }`}
+                onClick={() => {
+                  browseFolder(folder.id, folder.name);
+                }}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  {/* Expand/Collapse Chevron */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFolderNode(folder.id, folder.name);
+                    }}
+                    className="p-1 -ml-1 text-gray-400 hover:text-gray-600 rounded-md transition-transform"
+                  >
+                    <svg 
+                      className={`w-3 h-3 transform transition-transform ${isExpanded ? "rotate-90" : ""}`} 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2.5" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+
+                  {/* Folder Icon */}
+                  <svg className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-brand-500" : "text-gray-400 dark:text-gray-500"}`} fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-1.5V9a3 3 0 0 0-3-3h-3.382l-.528-1.056A3 3 0 0 0 8.418 3H4.5A3 3 0 0 0 1.5 6v12a3 3 0 0 0 3 3h15z" />
+                  </svg>
+
+                  {/* Folder Name */}
+                  <span className="truncate">{folder.name}</span>
+                </div>
+
+                {/* Inline Action Buttons (visible on hover) */}
+                {isAdmin && storageInfo?.connected && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setNewFolderName("");
+                      setActiveFolderId(folder.id);
+                      setFolderModalOpen(true);
+                    }}
+                    className="opacity-0 group-hover/node:opacity-100 p-0.5 text-gray-400 hover:text-brand-500 hover:bg-white dark:hover:bg-gray-800 rounded transition-all cursor-pointer"
+                    title="Tambah Subfolder"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+
+              {/* Subfolders container */}
+              {isExpanded && renderFolderTree(folder.id, level + 1)}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   const browseFolder = async (folderId: string | null, folderName: string, pushHistory = true) => {
     try {
       setLoading(true);
@@ -178,6 +307,11 @@ export default function NarasumberHukumPage() {
       setActiveFolderId(data.folderId);
       setActiveFolderName(folderName);
       setItems(data.items || []);
+
+      if (data.folderId) {
+        const subfolders = (data.items || []).filter((item: GDriveItem) => item.isFolder);
+        setTreeData((prev) => ({ ...prev, [data.folderId]: subfolders }));
+      }
 
       if (pushHistory) {
         if (folderId === null) {
@@ -614,10 +748,63 @@ export default function NarasumberHukumPage() {
         </div>
       </div>
 
-      {/* SEARCH AND BREADCRUMBS ROW */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 p-4 rounded-2xl shadow-sm">
-        {/* Navigation Breadcrumbs */}
-        <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-black text-gray-450 dark:text-gray-400 uppercase tracking-wider">
+      {/* TWO COLUMN EXPLORER LAYOUT */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* LEFT COLUMN: Subfolder Hierarchy (3 cols on lg) */}
+        <div className="lg:col-span-3 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-white/[0.03] space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-gray-150 dark:border-gray-800">
+            <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider font-bold">Subfolder Hierarki</h3>
+            {isAdmin && storageInfo?.connected && (
+              <button
+                type="button"
+                onClick={() => {
+                  setNewFolderName("");
+                  setActiveFolderId("1mIfFQSMviTEO8wCm8YXWAMKLMjA1jRoq"); // Create folder at root
+                  setFolderModalOpen(true);
+                }}
+                className="p-1 text-gray-400 hover:text-brand-500 rounded-md transition-colors cursor-pointer"
+                title="Create New Folder"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+              </button>
+            )}
+          </div>
+          
+          <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
+            {storageInfo?.connected ? (
+              <div className="space-y-1">
+                {/* Root Arsip Node */}
+                <div 
+                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                    activeFolderId === null || activeFolderId === "1mIfFQSMviTEO8wCm8YXWAMKLMjA1jRoq"
+                      ? "bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/30"
+                      : "text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                  }`}
+                  onClick={() => browseFolder(null, "Arsip")}
+                >
+                  <svg className="w-4.5 h-4.5 text-brand-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-1.5V9a3 3 0 0 0-3-3h-3.382l-.528-1.056A3 3 0 0 0 8.418 3H4.5A3 3 0 0 0 1.5 6v12a3 3 0 0 0 3 3h15z" />
+                  </svg>
+                  <span>Arsip</span>
+                </div>
+                
+                {/* Render root folders tree recursively */}
+                {renderFolderTree("1mIfFQSMviTEO8wCm8YXWAMKLMjA1jRoq")}
+              </div>
+            ) : (
+              <p className="text-[10px] text-gray-400 italic">Google Drive terputus.</p>
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: Main Explorer & Subfolder Grid (9 cols on lg) */}
+        <div className="lg:col-span-9 space-y-6">
+          {/* SEARCH AND BREADCRUMBS ROW */}
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 p-4 rounded-2xl shadow-sm">
+            {/* Navigation Breadcrumbs */}
+            <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-black text-gray-450 dark:text-gray-400 uppercase tracking-wider">
           {folderHistory.length > 1 && (
             <button
               onClick={handleBack}
@@ -1107,6 +1294,80 @@ export default function NarasumberHukumPage() {
           </div>
         </div>
       )}
+
+          {/* SPLIT BOTTOM SECTION (Shown only when browsing root/Arsip) */}
+          {(activeFolderId === null || activeFolderId === "1mIfFQSMviTEO8wCm8YXWAMKLMjA1jRoq") && (
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-5 pt-4">
+              {/* Drafts Terbaru (7 cols) */}
+              <div className="md:col-span-7 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-white/[0.03] space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-gray-150 dark:border-gray-800">
+                  <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider font-bold">Drafts Terbaru</h3>
+                </div>
+                <div className="space-y-3">
+                  {recentDrafts.length > 0 ? (
+                    recentDrafts.map((draft) => (
+                      <div key={draft.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.01] hover:border-brand-500/30 transition-all">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {getFileIcon(draft.mimeType || "application/pdf")}
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-gray-900 dark:text-white truncate" title={draft.fileName || draft.name}>
+                              {draft.fileName || draft.name}
+                            </p>
+                            <p className="text-[9px] text-gray-400 font-medium">
+                              {draft.size ? formatSize(draft.size) : "0 B"} • {draft.createdTime ? new Date(draft.createdTime).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "-"}
+                            </p>
+                          </div>
+                        </div>
+                        <a
+                          href={draft.webViewLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2.5 py-1 bg-brand-500 hover:bg-brand-600 text-white text-[9px] font-black uppercase rounded-lg tracking-widest transition-all cursor-pointer flex items-center gap-1"
+                        >
+                          Lihat
+                        </a>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-[10px] text-gray-400 italic text-center py-6">Tidak ada berkas draf baru.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Aktivitas Terakhir (5 cols) */}
+              <div className="md:col-span-5 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-white/[0.03] space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-gray-150 dark:border-gray-800">
+                  <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider font-bold">Aktivitas Terakhir</h3>
+                </div>
+                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                  {recentActivities.length > 0 ? (
+                    recentActivities.map((act, idx) => (
+                      <div key={act.id || idx} className="flex gap-3 text-xs">
+                        <div className="w-7 h-7 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center flex-shrink-0 font-bold uppercase text-[9px] border border-brand-500/20">
+                          {act.userName ? act.userName.substring(0, 2) : "US"}
+                        </div>
+                        <div className="min-w-0 space-y-0.5">
+                          <p className="font-bold text-gray-900 dark:text-white truncate">
+                            {act.userName || "Sistem"}
+                          </p>
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
+                            {act.action} <span className="font-semibold text-gray-700 dark:text-gray-300">{act.target}</span>
+                          </p>
+                          <p className="text-[8px] text-gray-400 font-medium">
+                            {act.createdAt ? new Date(act.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "-"}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-[10px] text-gray-400 italic text-center py-6">Tidak ada aktivitas tercatat.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* CREATE FOLDER MODAL */}
       <FeatureModal
