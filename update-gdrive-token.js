@@ -19,41 +19,46 @@ async function main() {
   console.log("Memulai proses update Refresh Token...");
 
   // 1. Update/Simpan ke database
-  const systemUserId = "system_company_gdrive";
-  
-  // Pastikan user sistem ada
-  await prisma.user.upsert({
-    where: { id: systemUserId },
-    update: {},
-    create: {
-      id: systemUserId,
-      name: "Company Google Drive",
-      email: "company-gdrive@narasumberhukum.online",
-      role: "admin",
-    },
-  });
+  try {
+    const systemUserId = "system_company_gdrive";
+    
+    // Pastikan user sistem ada
+    await prisma.user.upsert({
+      where: { id: systemUserId },
+      update: {},
+      create: {
+        id: systemUserId,
+        name: "Company Google Drive",
+        email: "company-gdrive@narasumberhukum.online",
+        role: "admin",
+      },
+    });
 
-  // Simpan/Update token di tabel Account
-  await prisma.account.upsert({
-    where: {
-      provider_providerAccountId: {
+    // Simpan/Update token di tabel Account
+    await prisma.account.upsert({
+      where: {
+        provider_providerAccountId: {
+          provider: "company_gdrive",
+          providerAccountId: "company_gdrive_account",
+        },
+      },
+      update: {
+        refresh_token: cleanToken,
+      },
+      create: {
+        userId: systemUserId,
+        type: "oauth",
         provider: "company_gdrive",
         providerAccountId: "company_gdrive_account",
+        refresh_token: cleanToken,
       },
-    },
-    update: {
-      refresh_token: cleanToken,
-    },
-    create: {
-      userId: systemUserId,
-      type: "oauth",
-      provider: "company_gdrive",
-      providerAccountId: "company_gdrive_account",
-      refresh_token: cleanToken,
-    },
-  });
+    });
 
-  console.log("✔ Sukses menyimpan token baru ke Database.");
+    console.log("✔ Sukses menyimpan token baru ke Database.");
+  } catch (dbErr) {
+    console.warn("⚠ Peringatan: Gagal menyimpan ke Database (mungkin tabel belum dibuat/di-sync):", dbErr.message);
+    console.warn("Melanjutkan penyimpanan ke file konfigurasi lokal...");
+  }
 
   // 2. Simpan ke fallback file JSON
   try {
@@ -68,7 +73,7 @@ async function main() {
     );
     console.log(`✔ Sukses menyimpan token baru ke file lokal: ${TOKEN_FILE_PATH}`);
   } catch (fileErr) {
-    console.error("⚠ Gagal menulis file token lokal (tapi database berhasil):", fileErr);
+    console.error("❌ Gagal menulis file token lokal:", fileErr);
   }
 
   console.log("\nProses selesai. Google Drive sekarang sudah terhubung dengan token baru.");
