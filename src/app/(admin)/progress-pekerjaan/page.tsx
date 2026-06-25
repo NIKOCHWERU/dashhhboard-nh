@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import * as xlsx from "xlsx";
+import { animateStagger } from "@/hooks/useAnime";
 
 type ActiveTab = "RETAINER" | "NON_RETAINER" | "INTERNAL" | "LAPORAN_BERKALA";
 
@@ -104,6 +105,12 @@ export default function ProgressPekerjaanPage() {
   useEffect(() => {
     fetchData();
   }, [activeTab]);
+
+  useEffect(() => {
+    if (!loading) {
+      animateStagger(".animate-fade-in-up", 35, 750);
+    }
+  }, [loading, activeTab]);
 
   // Handle clicking outside column filter popover to close it
   useEffect(() => {
@@ -675,18 +682,35 @@ export default function ProgressPekerjaanPage() {
 
   return (
     <div className="space-y-6 print:space-y-0 print:p-0">
-      {/* ─── OFFICIAL PRINTING LOGO ────────────────────────────────────────────── */}
-      <div className="hidden print:flex items-center justify-between pb-6 border-b-2 border-brand-500 mb-8">
-        <div>
-          <h1 className="text-xl font-black text-black uppercase tracking-wider">Laporan Progress Pekerjaan</h1>
-          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">
-            Kategori: {activeTab.replace("_", " ")} &bull; Tanggal Rekap: {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+      {/* ─── KOP SURAT RESMI (PRINT ONLY) ─────────────────────────────────── */}
+      <div className="hidden print:flex items-center gap-6 pb-4 border-b-4 border-double border-black mb-6 w-full text-black">
+        <img
+          src="/images/logo/logo-law.png"
+          alt="Logo Kantor Hukum"
+          className="h-20 w-auto object-contain flex-shrink-0"
+        />
+        <div className="flex-1 text-center pr-20">
+          <h1 className="text-xl font-black tracking-wide leading-tight uppercase">
+            KANTOR HUKUM NARASUMBER HUKUM
+          </h1>
+          <p className="text-[10px] font-bold text-gray-700 uppercase tracking-widest mt-0.5">
+            Advokat, Konsultan Hukum & Penasihat Hukum
+          </p>
+          <p className="text-[9px] text-gray-500 font-medium mt-1">
+            Jl. Braga No. 123, Bandung, Jawa Barat
+          </p>
+          <p className="text-[8px] text-gray-400 font-medium mt-0.5">
+            Telp: +62 811-2345-6789 &bull; Email: info@narasumberhukum.online &bull; Website: narasumberhukum.online
           </p>
         </div>
-        <div className="text-right">
-          <h2 className="text-sm font-black text-brand-600">NARASUMBER HUKUM</h2>
-          <p className="text-[8px] text-gray-400 font-semibold">dashboard.narasumberhukum.online</p>
-        </div>
+      </div>
+      <div className="hidden print:block text-center mb-6 text-black">
+        <h2 className="text-sm font-black uppercase tracking-wider">
+          Laporan Progress Pekerjaan ({activeTab.replace("_", " ")})
+        </h2>
+        <p className="text-[9px] text-gray-555 uppercase font-bold tracking-widest mt-1">
+          Tanggal Rekap: {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+        </p>
       </div>
 
       {/* ─── STATS SUMMARY PANELS ────────────────────────────────────────────── */}
@@ -696,7 +720,7 @@ export default function ProgressPekerjaanPage() {
           if (activeStats) {
             if (meta.key === "SELESAI") count = activeStats.selesai;
             else if (meta.key === "KONFIRMASI INTERNAL") count = activeStats.internalConf;
-            else if (meta.key === "KONFIRMASI PERUSAHAAN") count = activeStats.companyConf;
+            else if (meta.key === "KONFIRASI PERUSAHAAN" || meta.key === "KONFIRMASI PERUSAHAAN") count = activeStats.companyConf;
             else if (meta.key === "ON PROGRESS") count = activeStats.progress;
             else if (meta.key === "PENDING") count = activeStats.pending;
             else if (meta.key === "CANCEL") count = activeStats.cancel;
@@ -708,7 +732,7 @@ export default function ProgressPekerjaanPage() {
             <div
               key={meta.key}
               onClick={() => setSelectedStatusFilter(isActiveFilter ? null : meta.key)}
-              className={`p-4 border rounded-2xl shadow-sm transition-all duration-200 cursor-pointer flex flex-col justify-between ${
+              className={`animate-fade-in-up opacity-0 p-4 border rounded-2xl shadow-sm transition-all duration-200 cursor-pointer flex flex-col justify-between ${
                 isActiveFilter
                   ? "bg-brand-500 text-white border-brand-500 shadow-md ring-2 ring-brand-500/20 scale-102"
                   : "bg-white dark:bg-white/[0.03] border-gray-200 dark:border-gray-800 hover:border-brand-500/50"
@@ -893,7 +917,7 @@ export default function ProgressPekerjaanPage() {
             Belum ada data progress pekerjaan yang sesuai filter.
           </div>
         ) : (
-          <div className="overflow-x-auto text-[13px] relative max-h-[70vh] no-scrollbar rounded-2xl border border-gray-250 dark:border-gray-800">
+          <div className="overflow-x-auto text-[13px] relative max-h-[70vh] no-scrollbar rounded-2xl border border-gray-250 dark:border-gray-800 print:max-h-none print:overflow-visible print:border-none">
             <table className="w-full text-left border-collapse table-fixed min-w-[1900px] print:min-w-full">
               <thead>
                 <tr className="border-b border-gray-100 dark:border-gray-800 text-[10px] font-bold text-gray-450 uppercase tracking-wider bg-gray-50/20 dark:bg-white/[0.01]">
@@ -1026,7 +1050,7 @@ export default function ProgressPekerjaanPage() {
                   return (
                     <tr
                       key={item.id}
-                      className={`group ${rowBgClass} hover:bg-brand-500/[0.02] transition-colors`}
+                      className={`animate-fade-in-up opacity-0 group ${rowBgClass} hover:bg-brand-500/[0.02] transition-colors`}
                     >
                       {/* Dynamic Columns cells */}
                       {columns.map((col) => {
@@ -1078,7 +1102,7 @@ export default function ProgressPekerjaanPage() {
                         }
 
                         return (
-                          <td key={col.key} className="p-4" style={{ width: col.width }}>
+                          <td key={col.key} className="p-4 print:whitespace-normal print:max-w-none print:text-black print:text-xs" style={{ width: col.width }}>
                             {content}
                           </td>
                         );
@@ -1144,7 +1168,7 @@ export default function ProgressPekerjaanPage() {
 
       {/* ─── MODAL: DETIL PEKERJAAN & LAMPIRAN ────────────────────────────────── */}
       {detailRow && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-[8px] animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-[12px] animate-in fade-in duration-200">
           <div className="relative w-full max-w-2xl bg-white dark:bg-[#0f1117] border border-gray-250 dark:border-white/[0.08] rounded-2xl shadow-2xl flex flex-col max-h-[85vh] animate-in slide-in-from-bottom-4 duration-300">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-150 dark:border-white/[0.05]">
@@ -1268,7 +1292,7 @@ export default function ProgressPekerjaanPage() {
 
       {/* ─── MODAL: TAMBAH / UPDATE ─────────────────────────────────────────── */}
       {formRow && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-[8px] animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-[12px] animate-in fade-in duration-200">
           <form
             onSubmit={handleSaveRow}
             className="relative w-full max-w-2xl bg-white dark:bg-[#0f1117] border border-gray-250 dark:border-white/[0.08] rounded-2xl shadow-2xl flex flex-col max-h-[85vh] animate-in slide-in-from-bottom-4 duration-300"
@@ -1407,7 +1431,7 @@ export default function ProgressPekerjaanPage() {
 
       {/* ─── MODAL: UNGGAH DOKUMEN GOOGLE DRIVE ────────────────────────────────── */}
       {uploadRow && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-[8px] animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-[12px] animate-in fade-in duration-205">
           <form
             onSubmit={handleUploadFiles}
             className="relative w-full max-w-md bg-white dark:bg-[#0f1117] border border-gray-250 dark:border-white/[0.08] rounded-2xl shadow-2xl flex flex-col max-h-[80vh] animate-in slide-in-from-bottom-4 duration-300"
@@ -1512,7 +1536,7 @@ export default function ProgressPekerjaanPage() {
 
       {/* ─── MODAL: PASSWORD AUTHORIZATION LOCK FOR PERIODIC REPORT ──────────── */}
       {showPasswordModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-[10px] animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-[12px] animate-in fade-in duration-200">
           <form
             onSubmit={handlePasswordSubmit}
             className="relative w-full max-w-sm bg-white dark:bg-[#0f1117] border border-red-500/20 rounded-2xl shadow-2xl p-6 flex flex-col space-y-4 animate-in zoom-in-95 duration-200"

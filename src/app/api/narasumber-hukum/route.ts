@@ -52,6 +52,14 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
+
+    // Check if summary count is requested
+    const getSummary = searchParams.get("summary");
+    if (getSummary === "true") {
+      const totalCount = await prisma.narasumberHukum.count();
+      return NextResponse.json({ total: totalCount });
+    }
+
     const getRecent = searchParams.get("recent");
     if (getRecent === "true") {
       const recentDbFiles = await prisma.narasumberHukum.findMany({

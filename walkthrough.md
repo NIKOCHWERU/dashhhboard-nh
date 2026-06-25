@@ -60,4 +60,25 @@ Filter pemilihan PT (Perusahaan) pada **Summary Dashboard HRM** (`/hrm`) sekaran
 6. **Data Pelamar Component**: [DataPelamar.tsx](file:///c:/Users/NIKO/Desktop/React/Dashboard-Next-JS/src/components/hrm/DataPelamar.tsx) (Tombol & modal detail kandidat pelamar).
 7. **Halaman Project Retainer**: [page.tsx](file:///c:/Users/NIKO/Desktop/React/Dashboard-Next-JS/src/app/(admin)/retainer/page.tsx) (Tombol & modal detail proyek retainer).
 8. **Halaman Perorangan**: [page.tsx](file:///c:/Users/NIKO/Desktop/React/Dashboard-Next-JS/src/app/(admin)/perorangan/page.tsx) (Fungsionalitas modal detail kasus perorangan).
-9. **Halaman Skala Prioritas**: [page.tsx](file:///c:/Users/NIKO/Desktop/React/Dashboard-Next-JS/src/app/(admin)/skala-prioritas/page.tsx) (Fungsionalitas modal detail tugas prioritas).
+63: 9. **Halaman Skala Prioritas**: [page.tsx](file:///c:/Users/NIKO/Desktop/React/Dashboard-Next-JS/src/app/(admin)/skala-prioritas/page.tsx) (Fungsionalitas modal detail tugas prioritas).
+64: 
+65: ---
+66: 
+67: ## 4. Pembaruan Hari Libur Kalender 2026 & Perbaikan Animasi Anime.js
+68: 
+69: Saya telah melakukan sinkronisasi serta visualisasi Hari Libur Nasional Indonesia Tahun 2026 di seluruh komponen kalender, serta merombak integrasi Anime.js agar sesuai dengan standar modular versi terbaru (v4.5.0).
+70: 
+71: ### 📅 Hari Libur Nasional & Sinkronisasi Kalender:
+72: - **Daftar Hari Libur 2026 Resmi**: Memastikan 17 hari libur nasional 2026 (seperti Tahun Baru Masehi, Isra Mi'raj, Imlek, Hari Suci Nyepi, Idul Fitri, Wafat & Kebangkitan Yesus Kristus, Hari Buruh, Kenaikan Yesus Kristus, Idul Adha, Waisak, Hari Lahir Pancasila, Tahun Baru Islam, Proklamasi Kemerdekaan, Maulid Nabi, dan Natal) terdaftar dengan benar.
+73: - **Integrasi Kalender Utama (`/calendar`)**: 
+74:   - Hari libur kini di-inject ke dalam event list kalender utama secara otomatis.
+75:   - Ditampilkan dengan warna aksen merah lembut (`border-rose-500 bg-rose-50`) di grid bulanan/mingguan agar terlihat jelas.
+76:   - Membuka modal detail hari libur dalam format read-only (tombol Edit & Hapus disembunyikan secara otomatis) dengan detail cakupan "Semua Karyawan" dan badge kategori "Hari Libur Nasional".
+77: - **Visualisasi YearView**: Seluruh tanggal hari libur nasional dan hari Minggu pada tampilan grid mini setahun (`YearView`) sekarang diwarnai merah (`text-rose-500 bg-rose-500/5`), seragam dengan mini-calendar di dashboard utama.
+78: - **Penyaringan Pintar**: Hari libur akan tetap muncul di kalender bagi seluruh akun tanpa terpengaruh oleh filter status PIC, admin, atau preferensi visualisasi agenda kerja personal.
+79: 
+80: ### ⚡ Perbaikan Compiling & Animasi (Anime.js v4.5.0):
+81: - **Named Exports**: Menyesuaikan [useAnime.ts](file:///home/niko/Desktop/Kantor/Aplikasi/NH/Dashboard/src/hooks/useAnime.ts) dengan standard ES Modules animejs v4.5.0 (`import { animate, stagger } from "animejs"`).
+82: - **Perubahan Parameter**: Memperbaiki pemanggilan fungsi agar sesuai dengan signatur v4 `animate(targets, parameters)`.
+83: - **TypeScript & Build Clean**: Kode Next.js berhasil dikompilasi (build) dan di-lint dengan sukses 100% tanpa kendala tipe atau modul missing.
+84: 

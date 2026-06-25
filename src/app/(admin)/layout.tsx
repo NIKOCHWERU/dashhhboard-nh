@@ -82,14 +82,14 @@ export default function AdminLayout({
         <Backdrop />
         {/* Main Content Area */}
         <div
-          className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}
+          className={`flex-1 transition-all duration-300 ease-in-out print:ml-0 ${mainContentMargin}`}
           suppressHydrationWarning
         >
           {/* Header */}
           <AppHeader />
           
           {/* Page Content Guard */}
-          <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6" suppressHydrationWarning>
+          <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6 print:p-0" suppressHydrationWarning>
             {isAllowed ? (
               <AnimatePresence mode="wait">
                 <motion.div

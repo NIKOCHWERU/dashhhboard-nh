@@ -2,7 +2,7 @@ import GoogleLogin from "@/components/auth/GoogleLogin";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Login | DASHBOARD NH",
+  title: "Login",
   description: "Login untuk melanjutkan",
 };
 

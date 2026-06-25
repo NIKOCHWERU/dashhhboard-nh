@@ -185,6 +185,8 @@ export async function GET(req: NextRequest) {
 
     const status = searchParams.get("status");
     const search = searchParams.get("search");
+    const limitParam = searchParams.get("limit");
+    const limit = limitParam ? parseInt(limitParam) : undefined;
 
     // Dynamic filters
     const where: any = { type };
@@ -210,6 +212,7 @@ export async function GET(req: NextRequest) {
     const data = await prisma.progressPekerjaan.findMany({
       where,
       orderBy: { createdAt: "desc" },
+      take: limit,
     });
 
     return NextResponse.json(data);

@@ -14,6 +14,7 @@ import { useModal } from "@/hooks/useModal";
 import { Modal } from "@/components/ui/modal";
 import { useSession } from "next-auth/react";
 import { CalenderIcon } from "@/icons";
+import { HOLIDAYS_2026 } from "@/components/dashboard/DashboardWidgets";
 
 
 interface AgendaEvent extends EventInput {
@@ -22,7 +23,7 @@ interface AgendaEvent extends EventInput {
     scale: string;
     description: string;
     notes: string;
-    type: "google" | "local" | "Tim WFO";
+    type: "google" | "local" | "Tim WFO" | "holiday";
     status?: string;
     kategori?: string;
     lokasi?: string;
@@ -102,14 +103,20 @@ const YearView: React.FC<{
                 });
                 
                 const hasEvents = dayEvents.length > 0;
+                // Exclude holidays from hasEvents count check if they are the only event, or show it differently
+                // Actually, hasEvents includes holidays, which is correct.
                 const isToday = new Date().toDateString() === new Date(year, monthIdx, day).toDateString();
+                const isSunday = new Date(year, monthIdx, day).getDay() === 0;
+                const isHoliday = dayEvents.some(ev => ev.extendedProps?.type === "holiday");
+                const hasRealEvents = dayEvents.some(ev => ev.extendedProps?.type !== "holiday");
 
                 let indicatorColor = "bg-brand-500";
-                if (hasEvents) {
-                  const containsQ1 = dayEvents.some(ev => ev.extendedProps?.scale === "Q1" && ev.extendedProps?.status !== "Selesai");
-                  const containsQ2 = dayEvents.some(ev => ev.extendedProps?.scale === "Q2" && ev.extendedProps?.status !== "Selesai");
-                  const containsQ3 = dayEvents.some(ev => ev.extendedProps?.scale === "Q3" && ev.extendedProps?.status !== "Selesai");
-                  const allSelesai = dayEvents.every(ev => ev.extendedProps?.status === "Selesai");
+                if (hasRealEvents) {
+                  const realEvents = dayEvents.filter(ev => ev.extendedProps?.type !== "holiday");
+                  const containsQ1 = realEvents.some(ev => ev.extendedProps?.scale === "Q1" && ev.extendedProps?.status !== "Selesai");
+                  const containsQ2 = realEvents.some(ev => ev.extendedProps?.scale === "Q2" && ev.extendedProps?.status !== "Selesai");
+                  const containsQ3 = realEvents.some(ev => ev.extendedProps?.scale === "Q3" && ev.extendedProps?.status !== "Selesai");
+                  const allSelesai = realEvents.every(ev => ev.extendedProps?.status === "Selesai");
 
                   if (containsQ1) {
                     indicatorColor = "bg-brand-500";         // Q1: Penting & Mendesak
@@ -128,11 +135,13 @@ const YearView: React.FC<{
                     className={`relative flex flex-col items-center justify-center h-6 w-full rounded transition-all ${
                       isToday
                         ? "bg-brand-500 text-white font-black"
-                        : "text-gray-700 dark:text-gray-300"
+                        : (isSunday || isHoliday)
+                        ? "text-rose-500 bg-rose-500/5 dark:bg-rose-500/10 font-bold"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                     }`}
                   >
                     <span>{day}</span>
-                    {hasEvents && !isToday && (
+                    {hasRealEvents && !isToday && (
                       <span className={`absolute bottom-0.5 w-1 h-1 rounded-full ${indicatorColor}`}></span>
                     )}
                   </div>
@@ -205,6 +214,7 @@ const Calendar: React.FC = () => {
 
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isGoogleEvent, setIsGoogleEvent] = useState(false);
+  const [isHolidayEvent, setIsHolidayEvent] = useState(false);
   const [karyawanList, setKaryawanList] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const lastClickRef = useRef<{ dateStr: string; time: number } | null>(null);
@@ -249,6 +259,9 @@ const Calendar: React.FC = () => {
     const userName = userObj?.name || "";
     const isAdminUser = userObj?.role === "admin";
     
+    const isHoliday = ev.extendedProps?.type === "holiday";
+    if (isHoliday) return true;
+
     if (isAdminUser && showAllAgenda) {
       return true;
     }
@@ -326,6 +339,7 @@ const Calendar: React.FC = () => {
 
   const renderAgendaItem = (ev: AgendaEvent) => {
     const isGoogle = ev.extendedProps?.type === "Tim WFO";
+    const isHoliday = ev.extendedProps?.type === "holiday";
     const startStr = ev.start ? new Date(ev.start as any).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "";
     const endStr = ev.end ? new Date(ev.end as any).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "";
     const timeRange = endStr ? `${startStr} - ${endStr}` : startStr;
@@ -343,7 +357,10 @@ const Calendar: React.FC = () => {
     let priorityText = "Rendah";
     let priorityColorClass = "bg-brand-500/10 text-brand-600 border border-brand-200/30 dark:border-brand-800/30";
     
-    if (isSelesai) {
+    if (isHoliday) {
+      priorityText = "Libur";
+      priorityColorClass = "bg-rose-500/10 text-rose-600 border border-rose-200/30 dark:border-rose-850/45";
+    } else if (isSelesai) {
       priorityText = "Selesai";
       priorityColorClass = "bg-brand-500/10 text-brand-600 border border-brand-200/30 dark:border-brand-800/30";
     } else if (scale === "Q1") {
@@ -365,7 +382,12 @@ const Calendar: React.FC = () => {
     return (
       <div
         key={ev.id}
-        className="border border-gray-150 dark:border-gray-800 bg-white dark:bg-white/[0.01] hover:border-brand-500/30 dark:hover:border-brand-500/20 rounded-xl flex flex-col gap-0 transition-all duration-200 group relative shadow-sm hover:shadow overflow-hidden"
+        className={`border rounded-xl flex flex-col gap-0 transition-all duration-200 group relative shadow-sm hover:shadow overflow-hidden
+          ${isHoliday 
+            ? "border-rose-150 dark:border-rose-900/30 bg-rose-500/[0.02] dark:bg-rose-950/[0.05] hover:border-rose-500/30" 
+            : "border-gray-150 dark:border-gray-800 bg-white dark:bg-white/[0.01] hover:border-brand-500/30 dark:hover:border-brand-500/20"
+          }
+        `}
       >
         {/* Top clickable area */}
         <div
@@ -378,7 +400,7 @@ const Calendar: React.FC = () => {
               <svg className="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {timeRange || "All Day"}
+              {isHoliday ? "All Day" : (timeRange || "All Day")}
             </span>
             {/* Badge */}
             <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${priorityColorClass}`}>
@@ -387,18 +409,28 @@ const Calendar: React.FC = () => {
           </div>
 
           {/* Judul */}
-          <h4 className="text-xs font-bold text-gray-800 dark:text-gray-200 leading-snug group-hover:text-brand-500 transition-colors line-clamp-2">
+          <h4 className={`text-xs font-bold leading-snug group-hover:text-brand-500 transition-colors line-clamp-2
+            ${isHoliday ? "text-rose-950 dark:text-rose-250 group-hover:text-rose-600 dark:group-hover:text-rose-400" : "text-gray-800 dark:text-gray-200"}
+          `}>
             {ev.title}
           </h4>
 
-          {/* PIC */}
-          <span className="text-[10px] text-gray-400 font-medium truncate" title={ev.extendedProps?.pic}>
-            PIC: <span className="font-bold text-gray-600 dark:text-gray-300">{ev.extendedProps?.pic || "WFO"}</span>
+          {/* PIC / Kategori */}
+          <span className="text-[10px] text-gray-400 font-medium truncate" title={isHoliday ? "Hari Libur Nasional" : ev.extendedProps?.pic}>
+            {isHoliday ? "Kategori: " : "PIC: "}
+            <span className={`font-bold ${isHoliday ? "text-rose-700/80 dark:text-rose-400/80" : "text-gray-600 dark:text-gray-300"}`}>
+              {isHoliday ? "Hari Libur Nasional" : (ev.extendedProps?.pic || "WFO")}
+            </span>
           </span>
         </div>
 
         {/* Action Bar */}
-        <div className="flex items-center border-t border-gray-100 dark:border-gray-800/50 divide-x divide-gray-100 dark:divide-gray-800/50">
+        <div className={`flex items-center border-t divide-x
+          ${isHoliday 
+            ? "border-rose-100 dark:border-rose-900/20 divide-rose-100 dark:divide-rose-900/20" 
+            : "border-gray-100 dark:border-gray-800/50 divide-gray-100 dark:divide-gray-800/50"
+          }
+        `}>
           {/* Lihat Dokumen - jika ada file */}
           {evFileLink ? (
             <a
@@ -419,7 +451,12 @@ const Calendar: React.FC = () => {
           {/* Detail */}
           <button
             onClick={(e) => { e.stopPropagation(); handleEventClickFromList(ev); }}
-            className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[9px] font-black uppercase tracking-wider text-gray-500 hover:text-brand-500 hover:bg-brand-500/5 transition-colors"
+            className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-[9px] font-black uppercase tracking-wider transition-colors
+              ${isHoliday 
+                ? "text-rose-600 hover:text-rose-800 hover:bg-rose-500/5" 
+                : "text-gray-500 hover:text-brand-500 hover:bg-brand-500/5"
+              }
+            `}
             title="Detail Agenda"
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -429,8 +466,8 @@ const Calendar: React.FC = () => {
             Detail
           </button>
 
-          {/* Edit - hanya creator/admin */}
-          {isCreatorOrAdmin && !isGoogle && (
+          {/* Edit - hanya creator/admin (bukan holiday) */}
+          {isCreatorOrAdmin && !isGoogle && !isHoliday && (
             <button
               onClick={(e) => { e.stopPropagation(); handleEditDirect(ev); }}
               className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[9px] font-black uppercase tracking-wider text-brand-500 hover:bg-brand-500/5 transition-colors"
@@ -443,8 +480,8 @@ const Calendar: React.FC = () => {
             </button>
           )}
 
-          {/* Hapus - hanya creator/admin */}
-          {isCreatorOrAdmin && !isGoogle && (
+          {/* Hapus - hanya creator/admin (bukan holiday) */}
+          {isCreatorOrAdmin && !isGoogle && !isHoliday && (
             <button
               onClick={(e) => { e.stopPropagation(); handleDeleteDirect(ev); }}
               className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[9px] font-black uppercase tracking-wider text-brand-500 hover:bg-brand-500/5 transition-colors"
@@ -583,7 +620,28 @@ const Calendar: React.FC = () => {
           borderColor: "transparent",
         }));
 
-      setEvents([...formattedLocal, ...formattedGoogle]);
+      const formattedHolidays = HOLIDAYS_2026.map((h) => ({
+        id: `holiday-${h.date}`,
+        title: h.name,
+        start: h.date,
+        allDay: true,
+        extendedProps: {
+          pic: "Semua",
+          scale: "Libur",
+          description: h.name,
+          notes: h.name,
+          type: "holiday" as const,
+          status: "Libur",
+          kategori: "Hari Libur Nasional",
+          lokasi: "Indonesia",
+          fileLink: "",
+          userId: "system",
+        },
+        backgroundColor: "#EF4444",
+        borderColor: "transparent",
+      }));
+
+      setEvents([...formattedLocal, ...formattedGoogle, ...formattedHolidays]);
 
     } catch (error) {
       console.error("Failed to fetch events:", error);
@@ -647,17 +705,33 @@ const Calendar: React.FC = () => {
   const handleEventClick = (clickInfo: EventClickArg) => {
     const event = clickInfo.event;
     const isGoogle = event.extendedProps.type === "Tim WFO";
+    const isHoliday = event.extendedProps.type === "holiday";
     setIsGoogleEvent(isGoogle);
+    setIsHolidayEvent(isHoliday);
 
     setViewMode("view");
     setSelectedEventId(event.id);
     setTitle(event.title);
     setStartDate(event.start?.toISOString().split("T")[0] || "");
-    setStartTime(event.start?.toTimeString().slice(0, 5) || "09:00");
+    setStartTime(event.start?.toTimeString().slice(0, 5) || "00:00");
     setEndDate(event.end?.toISOString().split("T")[0] || "");
-    setEndTime(event.end?.toTimeString().slice(0, 5) || "10:00");
+    setEndTime(event.end?.toTimeString().slice(0, 5) || "23:59");
     
-    if (isGoogle) {
+    if (isHoliday) {
+      setPic("Semua");
+      setScale("Libur");
+      setDescription(event.title);
+      setNotes("Hari Libur Nasional");
+      setKategori("Hari Libur Nasional");
+      setKategoriLainnya("");
+      setLokasi("Indonesia");
+      setReminderEnabled(false);
+      setPengingatWaktu("09:00");
+      setPengingatHari("0");
+      setPengingatPengulangan("none");
+      setSelectedPeserta([]);
+      setFileLink("");
+    } else if (isGoogle) {
       setPic("Google Sync");
       setScale("Google Sync");
       setDescription(event.extendedProps.description || "");
@@ -875,6 +949,7 @@ const Calendar: React.FC = () => {
     setIsPesertaDropdownOpen(false);
     setSelectedEventId(null);
     setIsGoogleEvent(false);
+    setIsHolidayEvent(false);
     setStatus("Aktif");
   };
 
@@ -1447,12 +1522,25 @@ const Calendar: React.FC = () => {
                   </h2>
                   <div className="flex flex-wrap gap-2 items-center">
                     {/* Badge Kategori */}
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20">
-                      Kategori: {kategori === "Lainnya" ? (kategoriLainnya || "Lainnya") : kategori}
-                    </span>
+                    {isHolidayEvent ? (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500/10 text-rose-600 dark:text-rose-450 border border-rose-500/20">
+                        Kategori: Hari Libur Nasional
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20">
+                        Kategori: {kategori === "Lainnya" ? (kategoriLainnya || "Lainnya") : kategori}
+                      </span>
+                    )}
 
                     {/* Badge Skala Prioritas */}
                     {(() => {
+                      if (isHolidayEvent) {
+                        return (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500/10 text-rose-600 dark:text-rose-450 border border-rose-500/20">
+                            Libur
+                          </span>
+                        );
+                      }
                       let priorityLabel = "Q3 — Rendah";
                       let priorityClass = "bg-brand-500/10 text-brand-600 border border-brand-500/20";
                       if (scale === "Q1") {
@@ -1474,6 +1562,13 @@ const Calendar: React.FC = () => {
 
                     {/* Badge Status */}
                     {(() => {
+                      if (isHolidayEvent) {
+                        return (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500/10 text-rose-600 dark:text-rose-450 border border-rose-500/20">
+                            Status: Libur
+                          </span>
+                        );
+                      }
                       let statusClass = "bg-brand-500/10 text-brand-600 border border-brand-500/20";
                       if (status === "Selesai") statusClass = "bg-brand-500/10 text-brand-600 border border-brand-500/20";
                       else if (status === "Ditunda") statusClass = "bg-brand-500/10 text-brand-600 border border-brand-500/20";
@@ -1535,8 +1630,13 @@ const Calendar: React.FC = () => {
                       <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider block mb-1">PIC & Peserta</span>
                       <div className="flex flex-wrap gap-1.5">
                         {pic && (
-                          <span className="inline-flex items-center px-2.5 py-1 bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[10px] font-black uppercase tracking-wide rounded border border-brand-500/20">
-                            PIC: {pic}
+                          <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-black uppercase tracking-wide rounded border
+                            ${isHolidayEvent 
+                              ? "bg-rose-500/10 text-rose-600 dark:text-rose-450 border-rose-500/20" 
+                              : "bg-brand-500/10 text-brand-600 dark:text-brand-400 border-brand-500/20"
+                            }
+                          `}>
+                            {isHolidayEvent ? "Cakupan: Semua Karyawan" : `PIC: ${pic}`}
                           </span>
                         )}
                         {selectedPeserta.map((name) => (
@@ -2088,7 +2188,7 @@ const Calendar: React.FC = () => {
           {/* Footer Modern */}
           <div className="px-8 py-6 bg-white dark:bg-boxdark border-t border-stroke dark:border-strokedark flex justify-between items-center">
             <div>
-              {selectedEventId && isCreatorOrAdminForSelected && (
+              {selectedEventId && isCreatorOrAdminForSelected && !isHolidayEvent && (
                 <button
                   onClick={handleDelete}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-none text-sm font-bold text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all"
@@ -2106,7 +2206,7 @@ const Calendar: React.FC = () => {
                 {viewMode === "view" ? "Tutup" : "Batal"}
               </button>
               {viewMode === "view" ? (
-                isCreatorOrAdminForSelected && !isGoogleEvent && (
+                isCreatorOrAdminForSelected && !isGoogleEvent && !isHolidayEvent && (
                   <button
                     onClick={() => setViewMode("edit")}
                     className="px-8 py-2.5 rounded-none text-sm font-black bg-brand-500 text-white shadow-lg shadow-brand-500/25 hover:bg-brand-600 hover:shadow-brand-500/40 transition-all active:scale-95"
@@ -2301,6 +2401,16 @@ const Calendar: React.FC = () => {
 
 const renderEventContent = (eventInfo: EventContentArg) => {
   const type = eventInfo.event.extendedProps.type;
+  if (type === 'holiday') {
+    return (
+      <div className="flex flex-col p-1.5 rounded-lg overflow-hidden border-l-4 border-rose-500 bg-rose-50 dark:bg-rose-950/20">
+        <div className="flex items-center gap-1.5">
+          <span className="px-1 bg-rose-500 text-white text-[9px] rounded font-black uppercase tracking-wider scale-90 origin-left">Libur</span>
+        </div>
+        <div className="text-xs font-bold truncate text-rose-800 dark:text-rose-200 mt-0.5">{eventInfo.event.title}</div>
+      </div>
+    );
+  }
   return (
     <div className={`flex flex-col p-1.5 rounded-lg overflow-hidden border-l-4 ${
       type === 'Tim WFO' ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-brand-500 bg-brand-50 dark:bg-brand-500/10'

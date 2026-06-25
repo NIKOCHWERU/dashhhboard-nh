@@ -3,6 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import * as XLSX from 'xlsx';
+import { animateStagger } from '@/hooks/useAnime';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -286,7 +287,7 @@ function StatCard({
 
 function TableWrapper({ children }: { children: React.ReactNode }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-white/[0.06]">
+    <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-white/[0.06] print:overflow-visible print:border-none">
       <table className="min-w-full text-sm border-collapse">
         {children}
       </table>
@@ -295,7 +296,7 @@ function TableWrapper({ children }: { children: React.ReactNode }) {
 }
 
 const thClass =
-  'px-3 py-3 text-left text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-white/[0.03] cursor-pointer select-none whitespace-nowrap border-b border-gray-100 dark:border-white/[0.05]';
+  'px-3 py-3 text-left text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-white/[0.03] cursor-pointer select-none whitespace-nowrap border-b border-gray-100 dark:border-white/[0.05] print:static print:bg-white print:text-black print:whitespace-normal';
 
 function Th({
   col, sort, onSort, children, className = '',
@@ -307,7 +308,7 @@ function Th({
   className?: string;
 }) {
   return (
-    <th className={`${thClass} ${className}`} onClick={() => onSort(col)}>
+    <th className={`${thClass} ${className} print:static print:bg-white print:text-black`} onClick={() => onSort(col)}>
       <span className="inline-flex items-center">
         {children}
         <SortIcon col={col} sort={sort} />
@@ -316,11 +317,11 @@ function Th({
   );
 }
 
-const tdClass = 'px-3 py-2.5 text-gray-700 dark:text-gray-300 whitespace-nowrap max-w-[180px] truncate align-top';
+const tdClass = 'px-3 py-2.5 text-gray-700 dark:text-gray-300 whitespace-nowrap max-w-[180px] truncate align-top print:whitespace-normal print:max-w-none print:text-black print:text-xs';
 
 function TdSticky({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <td className={`sticky left-0 z-10 px-3 py-2.5 text-gray-700 dark:text-gray-300 font-medium bg-inherit ${className}`}>
+    <td className={`sticky left-0 z-10 px-3 py-2.5 text-gray-700 dark:text-gray-300 font-medium bg-inherit print:static print:bg-transparent print:text-black ${className}`}>
       {children}
     </td>
   );
@@ -382,10 +383,10 @@ function Modal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50 backdrop-blur-[12px]"
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-3xl bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-white/[0.08] rounded-2xl shadow-2xl flex flex-col max-h-[90vh] animate-[fadeInUp_0.2s_ease]">
+      <div className="relative z-10 w-full max-w-3xl bg-white dark:bg-[#0f1117] border border-gray-250 dark:border-white/[0.08] rounded-2xl shadow-2xl flex flex-col max-h-[90vh] animate-[fadeInUp_0.2s_ease]">
         {/* Body */}
         <div className="overflow-y-auto flex-1 px-6 py-6">{children}</div>
         {/* Footer */}
@@ -551,6 +552,12 @@ export default function DaftarCalonKlienPage() {
     fetchKonten();
     fetchSI();
   }, [fetchCalon, fetchKlien, fetchKonten, fetchSI]);
+
+  useEffect(() => {
+    if (!loadingCalon && !loadingKlien && !loadingKonten && !loadingSI) {
+      animateStagger(".animate-fade-in-up", 35, 750);
+    }
+  }, [loadingCalon, loadingKlien, loadingKonten, loadingSI, activeTab, interaksiSubTab]);
 
   const handleExportExcel = (type: string) => {
     let dataToExport: any[] = [];
@@ -1344,6 +1351,9 @@ export default function DaftarCalonKlienPage() {
               <button onClick={() => handleExportExcel('calon')} className="px-3 py-2.5 text-sm font-semibold text-brand-700 bg-brand-50 border border-brand-200 dark:border-white/[0.1] rounded-xl hover:bg-brand-100 transition-colors flex items-center gap-1 shadow-sm">
                 Export CSV/Excel
               </button>
+              <button onClick={() => window.print()} className="px-3 py-2.5 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 dark:border-white/[0.1] rounded-xl hover:bg-red-100 transition-colors flex items-center gap-1 shadow-sm">
+                Cetak PDF
+              </button>
             </>
           )}
           {activeTab === 'klien' && (
@@ -1355,7 +1365,15 @@ export default function DaftarCalonKlienPage() {
               <button onClick={() => handleExportExcel('klien')} className="px-3 py-2.5 text-sm font-semibold text-brand-700 bg-brand-50 border border-brand-200 dark:border-white/[0.1] rounded-xl hover:bg-brand-100 transition-colors flex items-center gap-1 shadow-sm">
                 Export CSV/Excel
               </button>
+              <button onClick={() => window.print()} className="px-3 py-2.5 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 dark:border-white/[0.1] rounded-xl hover:bg-red-100 transition-colors flex items-center gap-1 shadow-sm">
+                Cetak PDF
+              </button>
             </>
+          )}
+          {activeTab === 'interaksi' && (
+            <button onClick={() => window.print()} className="px-3 py-2.5 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 dark:border-white/[0.1] rounded-xl hover:bg-red-100 transition-colors flex items-center gap-1 shadow-sm">
+              Cetak PDF
+            </button>
           )}
           <AddButton onClick={handleAdd} label={addLabels[activeTab]} />
         </div>

@@ -3,7 +3,7 @@ import Calendar from "@/components/calendar/Calendar";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Kalender | DASHBOARD NH",
+  title: "Kalender",
   description: "Atur dan lihat kegiatan atau agenda kerja anda",
 };
 

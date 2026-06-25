@@ -35,9 +35,9 @@ export const FeatureModal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/45 backdrop-blur-[12px] animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-[12px] animate-in fade-in duration-300">
       <div 
-        className={`bg-white dark:bg-boxdark w-full ${width} rounded-2xl shadow-2xl border border-stroke dark:border-strokedark overflow-hidden animate-in zoom-in duration-300`}
+        className={`bg-white dark:bg-boxdark w-full ${width} rounded-2xl shadow-2xl border border-gray-250 dark:border-white/[0.08] overflow-hidden animate-in zoom-in duration-300`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Modern style from Jadwal */}
