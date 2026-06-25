@@ -204,7 +204,7 @@ const AppSidebar: React.FC = () => {
   }, [session]);
 
   const renderMenuItems = (items: NavItem[]) => {
-    const showLabels = isExpanded || isHovered || isMobileOpen;
+    const showLabels = isExpanded || isMobileOpen;
     return (
       <ul className="flex flex-col gap-2 w-full">
         {items.map((nav) => {
@@ -285,15 +285,13 @@ const AppSidebar: React.FC = () => {
   return (
     <aside
       className={`fixed mt-16 flex flex-col lg:mt-0 top-0 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 print:hidden 
-        ${isExpanded || isMobileOpen ? "w-[290px] px-5" : isHovered ? "w-[290px] px-5" : "w-[90px] px-2"}
+        ${isExpanded || isMobileOpen ? "w-[290px] px-5" : "w-[90px] px-2"}
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0`}
-      onMouseEnter={() => !isExpanded && setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <div className="py-8 flex justify-center w-full">
         <Link href="/" className="flex items-center justify-center">
-          {isExpanded || isHovered || isMobileOpen ? (
+          {isExpanded || isMobileOpen ? (
             <Image src="/images/logo/logo-law.png" alt="Logo" width={64} height={64} className="transition-all duration-300" />
           ) : (
             <Image src="/images/logo/logo-law.png" alt="Logo" width={40} height={40} className="transition-all duration-300" />
@@ -304,7 +302,7 @@ const AppSidebar: React.FC = () => {
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar pb-10 w-full">
         <nav className="space-y-8 w-full">
           {menuGroups.map((group) => {
-            const showLabels = isExpanded || isHovered || isMobileOpen;
+            const showLabels = isExpanded || isMobileOpen;
             return (
               <div key={group.title} className="w-full">
                 <h2 className={`mb-4 text-[10px] font-black uppercase tracking-[2px] text-gray-400/80 flex items-center ${

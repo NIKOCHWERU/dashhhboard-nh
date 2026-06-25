@@ -82,3 +82,25 @@ Filter pemilihan PT (Perusahaan) pada **Summary Dashboard HRM** (`/hrm`) sekaran
 82: - **Perubahan Parameter**: Memperbaiki pemanggilan fungsi agar sesuai dengan signatur v4 `animate(targets, parameters)`.
 83: - **TypeScript & Build Clean**: Kode Next.js berhasil dikompilasi (build) dan di-lint dengan sukses 100% tanpa kendala tipe atau modul missing.
 84: 
+85: ---
+86: 
+87: ## 5. Modifikasi Sidebar (Tanpa Hover Expand) & Kaskade Animasi Dinamis
+88: 
+89: Saya telah memperbarui perilaku sidebar saat mengecil agar tidak mengembang secara otomatis ketika di-hover, serta mendesain ulang sistem animasi agar komponen muncul secara bertahap (kaskade) dengan durasi dan jeda yang lebih terstruktur.
+90: 
+91: ### 📴 Sidebar Kolaps Stabil:
+92: - **Tanpa Ekspansi Hover**: Ketika sidebar dikecilkan (`collapsed` ke `90px`), melayangkan kursor (hover) di atas sidebar tidak akan memicu ekspansi lebar atau memunculkan label teks menu. Sidebar tetap diam pada lebar `90px` agar navigasi terasa konsisten dan tidak mengganggu konten utama.
+93: - **Layout Utama Stabil**: Margin kiri dari area konten utama halaman dikunci agar tidak bergeser atau berkedip ketika kursor melintasi area sidebar.
+94: 
+95: ### 🎭 Kaskade Animasi Bertahap (Multi-Stage Stagger):
+96: Alih-alih menganimasikan seluruh halaman dengan kecepatan seragam, komponen-komponen visual utama kini dibagi menjadi tiga kelompok target dengan parameter stagger yang berbeda untuk efek masuk air terjun (*waterfall effect*):
+97: 1. **Metric Cards (`.animate-metric-card`)**: Kartu statistik, counter, dan status prioritas. Muncul pertama dengan stagger yang cepat dan mantap (`delay: 70-75ms`, `duration: 850-900ms`).
+98: 2. **Main Panels (`.animate-main-panel`)**: Widget utama seperti jam digital, mini calendar, agenda terdekat, dan tugas aktif. Menyusul dengan durasi transisi lebih lambat (`delay: 110ms`, `duration: 1100ms`).
+99: 3. **Bottom Tables / Lists (`.animate-bottom-widget`)**: Tabel data utama (calon klien, klien, bahan konten, progress pekerjaan, dll.) serta baris-baris tabel (`tr`). Masuk paling akhir dengan efek bergulir yang anggun (`delay: 30-35ms`, `duration: 750-800ms`).
+100: 
+101: Halaman yang terpengaruh oleh sistem kaskade baru ini meliputi:
+102: - **Dashboard Utama (`/`)**
+103: - **Daftar Pekerjaan (`/progress-pekerjaan`)**
+104: - **Daftar Potensi Klien (`/daftar-potensi-klien`)**
+105: 
+84: 

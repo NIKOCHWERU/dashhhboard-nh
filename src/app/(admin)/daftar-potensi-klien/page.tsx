@@ -271,7 +271,7 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="bg-white dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06] rounded-xl p-5 flex items-center gap-4 shadow-sm">
+    <div className="animate-metric-card opacity-0 bg-white dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06] rounded-xl p-5 flex items-center gap-4 shadow-sm">
       <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
         {icon}
       </div>
@@ -555,7 +555,10 @@ export default function DaftarCalonKlienPage() {
 
   useEffect(() => {
     if (!loadingCalon && !loadingKlien && !loadingKonten && !loadingSI) {
-      animateStagger(".animate-fade-in-up", 35, 750);
+      // 1. Stat cards entrance (snappy stagger)
+      animateStagger(".animate-metric-card", 75, 850);
+      // 2. Table rows & main panel entrance (slower flowing stagger)
+      animateStagger(".animate-bottom-widget", 30, 800);
     }
   }, [loadingCalon, loadingKlien, loadingKonten, loadingSI, activeTab, interaksiSubTab]);
 
@@ -1425,7 +1428,7 @@ export default function DaftarCalonKlienPage() {
             </tr>
           ) : (
             searchedCalon.map((row, i) => (
-            <tr key={row.id} className={`${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
+            <tr key={row.id} className={`animate-bottom-widget opacity-0 ${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
               <TdSticky className={rowBg(i)}>{i + 1}</TdSticky>
               <td className={tdClass}>{formatDateIndo(row.tanggal)}</td>
               <td className={`${tdClass} font-semibold text-gray-800 dark:text-white`}>{row.namaProspek || '—'}</td>
@@ -1531,7 +1534,7 @@ export default function DaftarCalonKlienPage() {
             </tr>
           ) : (
             searchedKlien.map((row, i) => (
-            <tr key={row.id} className={`${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
+            <tr key={row.id} className={`animate-bottom-widget opacity-0 ${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
               <TdSticky className={rowBg(i)}>{i + 1}</TdSticky>
               <td className={`${tdClass} font-semibold text-gray-800 dark:text-white`}>{row.namaKlien || '—'}</td>
               <td className={tdClass}>{row.sumber || '—'}</td>
@@ -1615,7 +1618,7 @@ export default function DaftarCalonKlienPage() {
             </tr>
           ) : (
             searchedKonten.map((row, i) => (
-            <tr key={row.id} className={`${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
+            <tr key={row.id} className={`animate-bottom-widget opacity-0 ${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
               <TdSticky className={rowBg(i)}>{i + 1}</TdSticky>
               <td className={tdClass}>{formatDateIndo(row.tanggal)}</td>
               <td className={`${tdClass} font-semibold text-gray-800 dark:text-white`}>{row.topik || '—'}</td>
@@ -1672,7 +1675,7 @@ export default function DaftarCalonKlienPage() {
             searchedSI.map((row, i) => {
             const kl = klienData.find(k => k.id === row.klienId);
             return (
-              <tr key={row.id} className={`${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
+              <tr key={row.id} className={`animate-bottom-widget opacity-0 ${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
                 <TdSticky className={rowBg(i)}>{i + 1}</TdSticky>
                 <td className={`${tdClass} font-semibold text-gray-800 dark:text-white`}>
                   {row.namaKlien ?? kl?.namaKlien ?? '—'}
@@ -1806,7 +1809,7 @@ export default function DaftarCalonKlienPage() {
         </div>
 
         {/* ── Main Panel */}
-        <div className="bg-white dark:bg-white/[0.02] border border-gray-100 dark:border-white/[0.06] rounded-2xl p-5 shadow-sm">
+        <div className="animate-bottom-widget opacity-0 bg-white dark:bg-white/[0.02] border border-gray-100 dark:border-white/[0.06] rounded-2xl p-5 shadow-sm">
           {renderPanelHeader()}
 
           {/* ── Table Content */}

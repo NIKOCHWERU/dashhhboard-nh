@@ -108,7 +108,10 @@ export default function ProgressPekerjaanPage() {
 
   useEffect(() => {
     if (!loading) {
-      animateStagger(".animate-fade-in-up", 35, 750);
+      // 1. Metric cards entrance (snappy stagger)
+      animateStagger(".animate-metric-card", 70, 850);
+      // 2. Table rows cascade entrance (flowing stagger)
+      animateStagger(".animate-bottom-widget", 35, 750);
     }
   }, [loading, activeTab]);
 
@@ -732,7 +735,7 @@ export default function ProgressPekerjaanPage() {
             <div
               key={meta.key}
               onClick={() => setSelectedStatusFilter(isActiveFilter ? null : meta.key)}
-              className={`animate-fade-in-up opacity-0 p-4 border rounded-2xl shadow-sm transition-all duration-200 cursor-pointer flex flex-col justify-between ${
+              className={`animate-metric-card opacity-0 p-4 border rounded-2xl shadow-sm transition-all duration-200 cursor-pointer flex flex-col justify-between ${
                 isActiveFilter
                   ? "bg-brand-500 text-white border-brand-500 shadow-md ring-2 ring-brand-500/20 scale-102"
                   : "bg-white dark:bg-white/[0.03] border-gray-200 dark:border-gray-800 hover:border-brand-500/50"
@@ -1050,7 +1053,7 @@ export default function ProgressPekerjaanPage() {
                   return (
                     <tr
                       key={item.id}
-                      className={`animate-fade-in-up opacity-0 group ${rowBgClass} hover:bg-brand-500/[0.02] transition-colors`}
+                      className={`animate-bottom-widget opacity-0 group ${rowBgClass} hover:bg-brand-500/[0.02] transition-colors`}
                     >
                       {/* Dynamic Columns cells */}
                       {columns.map((col) => {
