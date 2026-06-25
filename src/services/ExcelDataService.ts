@@ -27,7 +27,6 @@ interface CacheEntry {
 
 export class ExcelDataService {
   private static cache: CacheEntry | null = null;
-  private static readonly TTL_MS = 60 * 1000; // 60 seconds cache TTL
   private static readonly EXCEL_PATH = path.join(
     process.cwd(),
     "DASHBOARD NARASUMBER HUKUM.xlsx"
@@ -67,12 +66,8 @@ export class ExcelDataService {
       const mtimeMs = stats.mtimeMs;
       const now = Date.now();
 
-      // Return cached data if valid
-      if (
-        this.cache &&
-        now - this.cache.timestamp < this.TTL_MS &&
-        this.cache.mtimeMs === mtimeMs
-      ) {
+      // Return cached data if file hasn't changed
+      if (this.cache && this.cache.mtimeMs === mtimeMs) {
         return this.cache.data;
       }
 
