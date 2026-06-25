@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { FeatureModal } from "@/components/common/FeatureModal";
 import { APP_LABELS } from "@/config/app-labels";
+import PicSelect from "@/components/common/PicSelect";
 
 interface GDriveItem {
   id: string;
@@ -91,6 +92,19 @@ export default function NarasumberHukumPage() {
   const [picDropdownOpen, setPicDropdownOpen] = useState(false);
   const picDropdownRef = useRef<HTMLDivElement>(null);
 
+  const [users, setUsers] = useState<any[]>([]);
+
+  const usersForPicSelect = employees.map(emp => {
+    const userMatch = users.find(u => u.email === emp.email);
+    return {
+      id: emp.id,
+      name: emp.name,
+      email: emp.email,
+      image: userMatch?.image || null,
+      position: emp.position
+    };
+  });
+
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<GDriveItem | null>(null);
   const [previewItem, setPreviewItem] = useState<GDriveItem | null>(null);
@@ -109,6 +123,7 @@ export default function NarasumberHukumPage() {
   useEffect(() => {
     fetchPTs();
     fetchEmployees();
+    fetchUsers();
     browseFolder(null, "Arsip", true);
     fetchStorageInfo();
     fetchRecentDrafts();
@@ -167,6 +182,18 @@ export default function NarasumberHukumPage() {
         if (Array.isArray(data)) {
           setEmployees(data);
         }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch("/api/users");
+      if (res.ok) {
+        const data = await res.json();
+        setUsers(data);
       }
     } catch (e) {
       console.error(e);
@@ -1720,80 +1747,18 @@ export default function NarasumberHukumPage() {
             </select>
           </div>
 
-          <div className="relative" ref={picDropdownRef}>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Pilih PIC Keamanan Akses (Opsional)</label>
-            
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {selectedPICs.length === 0 ? (
-                <span className="text-[11px] text-gray-400 italic">Bersifat publik (dapat dilihat oleh Staf Legal dan Admin)</span>
-              ) : (
-                selectedPICs.map((picEmail) => {
-                  const empObj = employees.find((e) => e.email === picEmail || e.name === picEmail);
-                  return (
-                    <span key={picEmail} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-500/10 text-red-600 dark:text-red-400 font-bold text-[10px] rounded-lg border border-red-500/20">
-                      {empObj ? `${empObj.name}` : picEmail}
-                      <button
-                        type="button"
-                        onClick={() => togglePICSelection(picEmail)}
-                        className="text-red-500 hover:text-red-700 font-black cursor-pointer text-xs"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  );
-                })
-              )}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setPicDropdownOpen(!picDropdownOpen)}
-              className="w-full px-4 py-2.5 text-left border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-white hover:border-brand-500 outline-none transition-colors text-xs font-black uppercase tracking-wider flex justify-between items-center cursor-pointer rounded-xl"
-            >
-              <span>{picDropdownOpen ? "Tutup Menu PIC" : "Pilih Karyawan PIC..."}</span>
-              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {picDropdownOpen && (
-              <div className="absolute z-[999] left-0 right-0 mt-1 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 shadow-2xl max-h-56 overflow-y-auto p-3 space-y-2 rounded-xl">
-                <input
-                  type="text"
-                  placeholder="Cari karyawan..."
-                  className="w-full px-3 py-1.5 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-white outline-none focus:border-brand-500 text-xs font-semibold rounded-lg"
-                  value={picSearch}
-                  onChange={(e) => setPicSearch(e.target.value)}
-                />
-                <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-40 overflow-y-auto">
-                  {filteredEmployees.length === 0 ? (
-                    <div className="text-center py-4 text-[11px] text-gray-400 italic">Tidak ada karyawan ditemukan</div>
-                  ) : (
-                    filteredEmployees.map((emp) => {
-                      const identifier = emp.email || emp.name;
-                      const isSelected = selectedPICs.includes(identifier);
-                      return (
-                        <div
-                          key={emp.id}
-                          onClick={() => togglePICSelection(identifier)}
-                          className="flex items-center justify-between p-2.5 hover:bg-gray-50 dark:hover:bg-gray-900/50 cursor-pointer transition-colors rounded-lg"
-                        >
-                          <div className="flex flex-col">
-                            <span className="text-[11px] font-black text-black dark:text-white uppercase">{emp.name}</span>
-                            <span className="text-[9px] text-gray-400 font-semibold">{emp.position} | {emp.email || "-"}</span>
-                          </div>
-                          {isSelected && (
-                            <svg className="w-4 h-4 text-brand-500 fill-brand-500" viewBox="0 0 24 24">
-                              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                            </svg>
-                          )}
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            )}
+          <div className="relative">
+            <PicSelect
+              label="Pilih PIC Keamanan Akses (Opsional)"
+              users={usersForPicSelect}
+              selectedValues={selectedPICs}
+              onChange={setSelectedPICs}
+              placeholder="Pilih Karyawan PIC..."
+              valueKey="email"
+            />
+            <p className="text-[9px] text-gray-405 mt-1.5 font-bold uppercase tracking-wider leading-relaxed">
+              {APP_LABELS.documentation.picAccessNote}
+            </p>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
@@ -1858,80 +1823,18 @@ export default function NarasumberHukumPage() {
             </select>
           </div>
 
-          <div className="relative" ref={picDropdownRef}>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Pilih PIC Keamanan Akses (Opsional)</label>
-            
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {selectedPICs.length === 0 ? (
-                <span className="text-[11px] text-gray-400 italic">Bersifat publik (dapat dilihat oleh Staf Legal dan Admin)</span>
-              ) : (
-                selectedPICs.map((picEmail) => {
-                  const empObj = employees.find((e) => e.email === picEmail || e.name === picEmail);
-                  return (
-                    <span key={picEmail} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-500/10 text-red-600 dark:text-red-400 font-bold text-[10px] rounded-lg border border-red-500/20">
-                      {empObj ? `${empObj.name}` : picEmail}
-                      <button
-                        type="button"
-                        onClick={() => togglePICSelection(picEmail)}
-                        className="text-red-500 hover:text-red-700 font-black cursor-pointer text-xs"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  );
-                })
-              )}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setPicDropdownOpen(!picDropdownOpen)}
-              className="w-full px-4 py-2.5 text-left border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-white hover:border-brand-500 outline-none transition-colors text-xs font-black uppercase tracking-wider flex justify-between items-center cursor-pointer rounded-xl"
-            >
-              <span>{picDropdownOpen ? "Tutup Menu PIC" : "Pilih Karyawan PIC..."}</span>
-              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {picDropdownOpen && (
-              <div className="absolute z-[999] left-0 right-0 mt-1 bg-white dark:bg-gray-955 border border-gray-200 dark:border-gray-800 shadow-2xl max-h-56 overflow-y-auto p-3 space-y-2 rounded-xl">
-                <input
-                  type="text"
-                  placeholder="Cari karyawan..."
-                  className="w-full px-3 py-1.5 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-white outline-none focus:border-brand-500 text-xs font-semibold rounded-lg"
-                  value={picSearch}
-                  onChange={(e) => setPicSearch(e.target.value)}
-                />
-                <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-40 overflow-y-auto">
-                  {filteredEmployees.length === 0 ? (
-                    <div className="text-center py-4 text-[11px] text-gray-400 italic">Tidak ada karyawan ditemukan</div>
-                  ) : (
-                    filteredEmployees.map((emp) => {
-                      const identifier = emp.email || emp.name;
-                      const isSelected = selectedPICs.includes(identifier);
-                      return (
-                        <div
-                          key={emp.id}
-                          onClick={() => togglePICSelection(identifier)}
-                          className="flex items-center justify-between p-2.5 hover:bg-gray-50 dark:hover:bg-gray-900/50 cursor-pointer transition-colors rounded-lg"
-                        >
-                          <div className="flex flex-col">
-                            <span className="text-[11px] font-black text-black dark:text-white uppercase">{emp.name}</span>
-                            <span className="text-[9px] text-gray-450 font-medium">{emp.position} | {emp.email || "-"}</span>
-                          </div>
-                          {isSelected && (
-                            <svg className="w-4 h-4 text-brand-500 fill-brand-500" viewBox="0 0 24 24">
-                              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                            </svg>
-                          )}
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            )}
+          <div className="relative">
+            <PicSelect
+              label="Pilih PIC Keamanan Akses (Opsional)"
+              users={usersForPicSelect}
+              selectedValues={selectedPICs}
+              onChange={setSelectedPICs}
+              placeholder="Pilih Karyawan PIC..."
+              valueKey="email"
+            />
+            <p className="text-[9px] text-gray-405 mt-1.5 font-bold uppercase tracking-wider leading-relaxed">
+              {APP_LABELS.documentation.picAccessNoteEdit}
+            </p>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">

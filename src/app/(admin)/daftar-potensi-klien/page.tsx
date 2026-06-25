@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import * as XLSX from 'xlsx';
-import { animateStagger } from '@/hooks/useAnime';
+import { useAnimeSlideInLeft, useAnimeSlideInRight } from '@/hooks/useAnime';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -271,7 +271,7 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="animate-metric-card opacity-0 bg-white dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06] rounded-xl p-5 flex items-center gap-4 shadow-sm">
+    <div className="bg-white dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06] rounded-xl p-5 flex items-center gap-4 shadow-sm">
       <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
         {icon}
       </div>
@@ -480,6 +480,10 @@ export default function DaftarCalonKlienPage() {
   const [loadingSI, setLoadingSI] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const animTrigger = !loadingCalon && !loadingKlien && !loadingKonten && !loadingSI;
+  const statsRef = useAnimeSlideInLeft(1000, 1000, animTrigger);
+  const contentRef = useAnimeSlideInRight(1500, 1000, animTrigger);
+
   // ── Sort
   const [sortCalon, setSortCalon] = useState<SortState>({ key: '', dir: 'asc' });
   const [sortKlien, setSortKlien] = useState<SortState>({ key: '', dir: 'asc' });
@@ -553,14 +557,6 @@ export default function DaftarCalonKlienPage() {
     fetchSI();
   }, [fetchCalon, fetchKlien, fetchKonten, fetchSI]);
 
-  useEffect(() => {
-    if (!loadingCalon && !loadingKlien && !loadingKonten && !loadingSI) {
-      // 1. Stat cards entrance (snappy stagger)
-      animateStagger(".animate-metric-card", 75, 850);
-      // 2. Table rows & main panel entrance (slower flowing stagger)
-      animateStagger(".animate-bottom-widget", 30, 800);
-    }
-  }, [loadingCalon, loadingKlien, loadingKonten, loadingSI, activeTab, interaksiSubTab]);
 
   const handleExportExcel = (type: string) => {
     let dataToExport: any[] = [];
@@ -1772,7 +1768,7 @@ export default function DaftarCalonKlienPage() {
         </div>
 
         {/* ── Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div ref={statsRef} className="grid grid-cols-1 sm:grid-cols-3 gap-4" style={{ opacity: 0 }}>
           <StatCard
             label="Total Potensi Klien"
             value={calonData.length}
@@ -1809,7 +1805,7 @@ export default function DaftarCalonKlienPage() {
         </div>
 
         {/* ── Main Panel */}
-        <div className="animate-bottom-widget opacity-0 bg-white dark:bg-white/[0.02] border border-gray-100 dark:border-white/[0.06] rounded-2xl p-5 shadow-sm">
+        <div ref={contentRef} className="bg-white dark:bg-white/[0.02] border border-gray-100 dark:border-white/[0.06] rounded-2xl p-5 shadow-sm" style={{ opacity: 0 }}>
           {renderPanelHeader()}
 
           {/* ── Table Content */}

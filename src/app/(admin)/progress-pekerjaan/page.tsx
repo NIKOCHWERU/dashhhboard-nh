@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import * as xlsx from "xlsx";
-import { animateStagger } from "@/hooks/useAnime";
+import { useAnimeSlideInLeft, useAnimeSlideInRight } from "@/hooks/useAnime";
+import PicSelect from "@/components/common/PicSelect";
 
 type ActiveTab = "RETAINER" | "NON_RETAINER" | "INTERNAL" | "LAPORAN_BERKALA";
 
@@ -57,6 +58,10 @@ export default function ProgressPekerjaanPage() {
   
   // Selections for form updates
   const [users, setUsers] = useState<User[]>([]);
+
+  const animTrigger = !loading;
+  const statsRef = useAnimeSlideInLeft(1000, 1000, animTrigger);
+  const contentRef = useAnimeSlideInRight(1500, 1000, animTrigger);
   
   // Status summary counts
   const [summary, setSummary] = useState<any>(null);
@@ -106,14 +111,6 @@ export default function ProgressPekerjaanPage() {
     fetchData();
   }, [activeTab]);
 
-  useEffect(() => {
-    if (!loading) {
-      // 1. Metric cards entrance (snappy stagger)
-      animateStagger(".animate-metric-card", 70, 850);
-      // 2. Table rows cascade entrance (flowing stagger)
-      animateStagger(".animate-bottom-widget", 35, 750);
-    }
-  }, [loading, activeTab]);
 
   // Handle clicking outside column filter popover to close it
   useEffect(() => {
@@ -717,7 +714,7 @@ export default function ProgressPekerjaanPage() {
       </div>
 
       {/* ─── STATS SUMMARY PANELS ────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 print:hidden">
+      <div ref={statsRef} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 print:hidden" style={{ opacity: 0 }}>
         {STATUS_METADATA.map((meta) => {
           let count = 0;
           if (activeStats) {
@@ -735,7 +732,7 @@ export default function ProgressPekerjaanPage() {
             <div
               key={meta.key}
               onClick={() => setSelectedStatusFilter(isActiveFilter ? null : meta.key)}
-              className={`animate-metric-card opacity-0 p-4 border rounded-2xl shadow-sm transition-all duration-200 cursor-pointer flex flex-col justify-between ${
+              className={`p-4 border rounded-2xl shadow-sm transition-all duration-200 cursor-pointer flex flex-col justify-between ${
                 isActiveFilter
                   ? "bg-brand-500 text-white border-brand-500 shadow-md ring-2 ring-brand-500/20 scale-102"
                   : "bg-white dark:bg-white/[0.03] border-gray-200 dark:border-gray-800 hover:border-brand-500/50"
@@ -759,6 +756,7 @@ export default function ProgressPekerjaanPage() {
       </div>
 
       {/* ─── TAB NAVIGATION ─────────────────────────────────────────────────── */}
+      <div ref={contentRef} style={{ opacity: 0 }}>
       <div className="flex border-b border-gray-200 dark:border-gray-800 gap-1 overflow-x-auto pb-px print:hidden mt-2">
         {(["RETAINER", "NON_RETAINER", "INTERNAL", "LAPORAN_BERKALA"] as ActiveTab[]).map((tab) => {
           const isActive = activeTab === tab;
@@ -1053,7 +1051,7 @@ export default function ProgressPekerjaanPage() {
                   return (
                     <tr
                       key={item.id}
-                      className={`animate-bottom-widget opacity-0 group ${rowBgClass} hover:bg-brand-500/[0.02] transition-colors`}
+                      className={`group ${rowBgClass} hover:bg-brand-500/[0.02] transition-colors`}
                     >
                       {/* Dynamic Columns cells */}
                       {columns.map((col) => {
@@ -1167,6 +1165,7 @@ export default function ProgressPekerjaanPage() {
             </table>
           </div>
         )}
+      </div>
       </div>
 
       {/* ─── MODAL: DETIL PEKERJAAN & LAMPIRAN ────────────────────────────────── */}
@@ -1370,44 +1369,16 @@ export default function ProgressPekerjaanPage() {
                   );
                 })}
 
-                {/* Penanggung Jawab Checkbox Selection */}
+                {/* Penanggung Jawab selection using unified PicSelect */}
                 <div className="sm:col-span-2 border-t border-gray-100 dark:border-white/[0.05] pt-4">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2.5">
-                    Penanggung Jawab (Pilih Karyawan)
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-36 overflow-y-auto no-scrollbar">
-                    {users.map((u) => {
-                      const currentSelected = (formRow.penanggungJawab || "")
-                        .split(",")
-                        .map(s => s.trim())
-                        .filter(Boolean);
-                      
-                      const isChecked = currentSelected.includes(u.name);
-
-                      return (
-                        <label
-                          key={u.id}
-                          className="flex items-center gap-2 p-2 border border-gray-150 dark:border-white/[0.05] rounded-xl cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/[0.02]"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => {
-                              let updated = [...currentSelected];
-                              if (isChecked) {
-                                updated = updated.filter(name => name !== u.name);
-                              } else {
-                                updated.push(u.name);
-                              }
-                              setFormRow(p => ({ ...p, penanggungJawab: updated.join(", ") }));
-                            }}
-                            className="rounded text-brand-500 focus:ring-brand-500/20 w-4 h-4 cursor-pointer"
-                          />
-                          <span className="truncate font-semibold text-gray-700 dark:text-gray-300 text-[11px]">{u.name}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
+                  <PicSelect
+                    label="Penanggung Jawab (Pilih Karyawan)"
+                    users={users.map(u => ({ id: u.id, name: u.name, email: u.email, image: u.image }))}
+                    selectedValues={(formRow.penanggungJawab || "").split(",").map(s => s.trim()).filter(Boolean)}
+                    onChange={(selected) => setFormRow(p => ({ ...p, penanggungJawab: selected.join(", ") }))}
+                    placeholder="Pilih Karyawan PIC..."
+                    valueKey="name"
+                  />
                 </div>
               </div>
             </div>

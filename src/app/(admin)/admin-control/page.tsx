@@ -25,12 +25,14 @@ interface UserPermissions {
 }
 
 export default function AdminControlPage() {
-  const [activeTab, setActiveTab] = useState<"logs" | "permissions">("logs");
+  const [activeTab, setActiveTab] = useState<"logs" | "permissions" | "backup">("logs");
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [users, setUsers] = useState<UserPermissions[]>([]);
+  const [backups, setBackups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingUser, setSavingUser] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [backupSubmitting, setBackupSubmitting] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -44,14 +46,54 @@ export default function AdminControlPage() {
         if (!res.ok) throw new Error("Failed to fetch logs");
         const data = await res.json();
         setLogs(Array.isArray(data) ? data : []);
-      } else {
+      } else if (activeTab === "permissions") {
         const res = await fetch("/api/users");
         if (!res.ok) throw new Error("Failed to fetch users");
         const data = await res.json();
         setUsers(Array.isArray(data) ? data : []);
+      } else if (activeTab === "backup") {
+        const res = await fetch("/api/admin/backup");
+        if (!res.ok) throw new Error("Failed to fetch backups");
+        const data = await res.json();
+        setBackups(Array.isArray(data) ? data : []);
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTriggerBackup = async () => {
+    try {
+      setBackupSubmitting(true);
+      const res = await fetch("/api/admin/backup", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to trigger backup");
+      alert("Backup database berhasil dibuat!");
+      // Reload backups list
+      const reloadRes = await fetch("/api/admin/backup");
+      if (reloadRes.ok) {
+        setBackups(await reloadRes.json());
+      }
+    } catch (err: any) {
+      alert("Gagal membuat backup: " + err.message);
+    } finally {
+      setBackupSubmitting(false);
+    }
+  };
+
+  const handleDeleteBackup = async (filename: string) => {
+    if (!confirm(`Apakah Anda yakin ingin menghapus backup "${filename}"?`)) return;
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/admin/backup?filename=${encodeURIComponent(filename)}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete backup");
+      alert("Backup database berhasil dihapus!");
+      setBackups(prev => prev.filter(b => b.filename !== filename));
+    } catch (err: any) {
+      alert("Gagal menghapus backup: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -192,6 +234,20 @@ export default function AdminControlPage() {
           <ShieldAlert className="w-3.5 h-3.5" />
           Kontrol Akses
         </button>
+        <button
+          onClick={() => {
+            setActiveTab("backup");
+            setSearchQuery("");
+          }}
+          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-black uppercase tracking-wider rounded-lg transition-all duration-200 ${
+            activeTab === "backup"
+              ? "bg-white dark:bg-gray-900 text-brand-500 shadow-sm"
+              : "text-gray-550 dark:text-gray-450 hover:text-gray-900 dark:hover:text-white"
+          }`}
+        >
+          <RotateCw className="w-3.5 h-3.5" />
+          Backup Database
+        </button>
       </div>
 
       {activeTab === "logs" ? (
@@ -280,7 +336,7 @@ export default function AdminControlPage() {
             )}
           </div>
         </div>
-      ) : (
+      ) : activeTab === "permissions" ? (
         // ACCESS PERMISSIONS VIEW
         <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm">
           {loading ? (
@@ -401,6 +457,120 @@ export default function AdminControlPage() {
               </table>
             </div>
           )}
+        </div>
+      ) : (
+        // DATABASE BACKUP VIEW
+        <div className="space-y-6">
+          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm p-6 space-y-6">
+            <div>
+              <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">
+                Pengaturan Backup Database Otomatis
+              </h3>
+              <p className="text-xs text-gray-400 mt-1">
+                Sistem secara otomatis dikonfigurasi untuk melakukan pencadangan database secara berkala. Semua berkas backup disimpan dalam format MySQL Dump terkompresi (.sql.gz).
+              </p>
+            </div>
+
+            <div className="p-4 bg-gray-50 dark:bg-gray-850/50 rounded-xl border border-gray-200 dark:border-gray-800 space-y-3">
+              <div className="flex items-center gap-2 text-xs font-bold text-gray-700 dark:text-gray-200">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                <span>Backup Otomatis Terjadwal: AKTIF (Harian, Jam 00:00)</span>
+              </div>
+              <p className="text-[10px] text-gray-500 leading-relaxed font-semibold">
+                Untuk mendaftarkan scheduler otomatis di server Linux (cron), jalankan perintah berikut pada terminal server menggunakan user yang bersangkutan:
+              </p>
+              <div className="p-3 bg-gray-900 text-gray-200 font-mono text-[9px] rounded-lg overflow-x-auto select-all leading-normal border border-gray-950">
+                crontab -e
+                <br />
+                0 0 * * * /usr/bin/node /home/niko/Desktop/Kantor/Aplikasi/NH/Dashboard/scripts/backup.js &gt;&gt; /home/niko/Desktop/Kantor/Aplikasi/NH/Dashboard/backups/backup.log 2&gt;&amp;1
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-4">
+              <div>
+                <h4 className="text-xs font-bold text-gray-955 dark:text-white uppercase tracking-wider">Pencadangan Manual</h4>
+                <p className="text-[10px] text-gray-400 font-semibold">Buat backup database terbaru secara instan.</p>
+              </div>
+              <button
+                onClick={handleTriggerBackup}
+                disabled={backupSubmitting}
+                className="px-4 py-2 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-[10px] font-black uppercase rounded-xl tracking-wider transition-all flex items-center gap-2"
+              >
+                <RotateCw className={`w-3.5 h-3.5 ${backupSubmitting ? "animate-spin" : ""}`} />
+                {backupSubmitting ? "Memproses Backup..." : "Backup Sekarang"}
+              </button>
+            </div>
+          </div>
+
+          {/* BACKUP HISTORY LIST */}
+          <div className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm">
+            <div className="p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-850/20">
+              <h3 className="text-xs font-black text-gray-955 dark:text-white uppercase tracking-wider">
+                Daftar Riwayat Cadangan (Backup History)
+              </h3>
+            </div>
+
+            {loading ? (
+              <div className="flex flex-col justify-center items-center py-16 gap-3">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Memuat Berkas Backup...</span>
+              </div>
+            ) : backups.length === 0 ? (
+              <div className="text-center py-16 text-xs text-gray-400 font-bold uppercase tracking-wider italic">
+                Belum ada berkas backup database yang tersimpan.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-855/10 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                      <th className="p-4 pl-6">Waktu Pembuatan</th>
+                      <th className="p-4">Nama Berkas (Filename)</th>
+                      <th className="p-4">Ukuran File</th>
+                      <th className="p-4 pr-6 text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-xs text-gray-700 dark:text-gray-300">
+                    {backups.map((b) => (
+                      <tr key={b.filename} className="hover:bg-gray-50/30 dark:hover:bg-white/[0.003] transition-colors">
+                        <td className="p-4 pl-6 font-semibold text-gray-450 dark:text-gray-550">
+                          {new Date(b.createdAt).toLocaleString("id-ID", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit",
+                          })}
+                        </td>
+                        <td className="p-4 font-bold text-gray-900 dark:text-white font-mono text-[11px]">
+                          {b.filename}
+                        </td>
+                        <td className="p-4 font-semibold text-brand-500">
+                          {b.sizeMB} MB
+                        </td>
+                        <td className="p-4 pr-6 text-right whitespace-nowrap space-x-2">
+                          <a
+                            href={`/api/admin/backup?filename=${encodeURIComponent(b.filename)}`}
+                            download
+                            className="inline-flex items-center px-3 py-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase rounded-lg border border-emerald-500/20 hover:bg-emerald-500/20 transition-all"
+                          >
+                            Unduh
+                          </a>
+                          <button
+                            onClick={() => handleDeleteBackup(b.filename)}
+                            className="inline-flex items-center px-3 py-1.5 bg-rose-500/10 text-rose-600 dark:text-rose-455 text-[10px] font-black uppercase rounded-lg border border-rose-500/20 hover:bg-rose-500/20 transition-all cursor-pointer"
+                          >
+                            Hapus
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
