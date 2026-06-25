@@ -1757,7 +1757,7 @@ export default function NarasumberHukumPage() {
               valueKey="email"
             />
             <p className="text-[9px] text-gray-405 mt-1.5 font-bold uppercase tracking-wider leading-relaxed">
-              {APP_LABELS.narasumberHukum.picAccessNote}
+              {APP_LABELS.narasumberHukum.modals.picAccessNote}
             </p>
           </div>
 
@@ -1833,7 +1833,7 @@ export default function NarasumberHukumPage() {
               valueKey="email"
             />
             <p className="text-[9px] text-gray-405 mt-1.5 font-bold uppercase tracking-wider leading-relaxed">
-              {APP_LABELS.narasumberHukum.picAccessNoteEdit}
+              {APP_LABELS.narasumberHukum.modals.picAccessNoteEdit}
             </p>
           </div>
 
