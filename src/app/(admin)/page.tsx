@@ -228,7 +228,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" suppressHydrationWarning>
-        <Link ref={metric1Ref} href="/daftar-potensi-klien" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-855 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer" style={{ opacity: 0 }}>
+        <Link ref={metric1Ref} href="/daftar-potensi-klien" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-855 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer">
           <div className="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 transition-colors group-hover:bg-brand-500 group-hover:text-white">
             <GroupIcon />
           </div>
@@ -238,7 +238,7 @@ export default function Dashboard() {
           </div>
         </Link>
 
-        <Link ref={metric2Ref} href="/progress-pekerjaan" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-855 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer" style={{ opacity: 0 }}>
+        <Link ref={metric2Ref} href="/progress-pekerjaan" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-855 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer">
           <div className="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-amber-500/10 text-amber-500 transition-colors group-hover:bg-amber-500 group-hover:text-white">
             <RetainerIcon />
           </div>
@@ -248,7 +248,7 @@ export default function Dashboard() {
           </div>
         </Link>
 
-        <Link ref={metric3Ref} href="/progress-pekerjaan" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-855 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer" style={{ opacity: 0 }}>
+        <Link ref={metric3Ref} href="/progress-pekerjaan" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-855 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer">
           <div className="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 transition-colors group-hover:bg-emerald-500 group-hover:text-white">
             <PageIcon />
           </div>
@@ -258,7 +258,7 @@ export default function Dashboard() {
           </div>
         </Link>
 
-        <Link ref={metric4Ref} href="/narasumber-hukum" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-855 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer" style={{ opacity: 0 }}>
+        <Link ref={metric4Ref} href="/narasumber-hukum" className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm dark:border-gray-855 dark:bg-gray-900 flex items-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-brand-500 hover:shadow-md group cursor-pointer">
           <div className="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-blue-500/10 text-blue-500 transition-colors group-hover:bg-blue-500 group-hover:text-white">
             <PageIcon />
           </div>
@@ -271,7 +271,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5" suppressHydrationWarning>
         
-        <div ref={middleLeftRef} className="lg:col-span-7 flex flex-col" style={{ opacity: 0 }}>
+        <div ref={middleLeftRef} className="lg:col-span-7 flex flex-col">
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-850 dark:bg-gray-900 flex-1 flex flex-col justify-between max-h-[350px] min-h-[350px]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full overflow-hidden">
               
@@ -365,7 +365,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div ref={middleRightRef} className="lg:col-span-5 flex flex-col justify-between max-h-[350px] min-h-[350px] space-y-4" style={{ opacity: 0 }}>
+        <div ref={middleRightRef} className="lg:col-span-5 flex flex-col justify-between max-h-[350px] min-h-[350px] space-y-4">
           <div className="flex-1 flex flex-col justify-center min-h-[90px] max-h-[90px]">
             <DigitalClock />
           </div>
@@ -381,7 +381,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5" suppressHydrationWarning>
         
-        <div ref={bottomLeftRef} className="lg:col-span-5" style={{ opacity: 0 }}>
+        <div ref={bottomLeftRef} className="lg:col-span-5">
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[210px] max-h-[210px] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2 border-b border-gray-100 pb-2 dark:border-gray-800">
               <div className="flex items-center gap-2">
@@ -514,7 +514,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div ref={bottomRightRef} className="lg:col-span-7" style={{ opacity: 0 }}>
+        <div ref={bottomRightRef} className="lg:col-span-7">
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[210px] max-h-[210px] flex flex-col justify-between">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full overflow-hidden">
               
@@ -588,7 +588,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5" suppressHydrationWarning>
-        <div ref={recentKlienRef} className="lg:col-span-1" style={{ opacity: 0 }}>
+        <div ref={recentKlienRef} className="lg:col-span-1">
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[300px] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-2 dark:border-gray-800">
               <div className="flex items-center gap-2">
@@ -628,7 +628,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div ref={recentArsipRef} className="lg:col-span-1" style={{ opacity: 0 }}>
+        <div ref={recentArsipRef} className="lg:col-span-1">
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[300px] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-2 dark:border-gray-800">
               <div className="flex items-center gap-2">

@@ -1768,7 +1768,7 @@ export default function DaftarCalonKlienPage() {
         </div>
 
         {/* ── Stat Cards */}
-        <div ref={statsRef} className="grid grid-cols-1 sm:grid-cols-3 gap-4" style={{ opacity: 0 }}>
+        <div ref={statsRef} className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-stagger">
           <StatCard
             label="Total Potensi Klien"
             value={calonData.length}
@@ -1805,7 +1805,7 @@ export default function DaftarCalonKlienPage() {
         </div>
 
         {/* ── Main Panel */}
-        <div ref={contentRef} className="bg-white dark:bg-white/[0.02] border border-gray-100 dark:border-white/[0.06] rounded-2xl p-5 shadow-sm" style={{ opacity: 0 }}>
+        <div ref={contentRef} className="bg-white dark:bg-white/[0.02] border border-gray-100 dark:border-white/[0.06] rounded-2xl p-5 shadow-sm animate-stagger">
           {renderPanelHeader()}
 
           {/* ── Table Content */}
