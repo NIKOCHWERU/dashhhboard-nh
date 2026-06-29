@@ -181,13 +181,7 @@ export default function PeroranganPage() {
 
   // Password Lock Enforcement Helper
   const executeWithAuth = (action: () => void) => {
-    if (activeTab === "LAPORAN_BERKALA" && !isPeriodicUnlocked) {
-      setPasswordInput("");
-      setPendingAction(() => action);
-      setShowPasswordModal(true);
-    } else {
-      action();
-    }
+    action();
   };
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
