@@ -354,8 +354,8 @@ const Calendar: React.FC = () => {
   const renderAgendaItem = (ev: AgendaEvent) => {
     const isGoogle = ev.extendedProps?.type === "Tim WFO";
     const isHoliday = ev.extendedProps?.type === "holiday";
-    const startStr = ev.start ? new Date(ev.start as any).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "";
-    const endStr = ev.end ? new Date(ev.end as any).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "";
+    const startStr = ev.start ? new Date(ev.start as any).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", hour12: false }).replace(".", ":") : "";
+    const endStr = ev.end ? new Date(ev.end as any).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", hour12: false }).replace(".", ":") : "";
     const timeRange = endStr ? `${startStr} - ${endStr}` : startStr;
     
     const scale = ev.extendedProps?.scale || "Q2";
@@ -1142,8 +1142,8 @@ const Calendar: React.FC = () => {
     const start = event.start;
     const end = event.end;
     if (!start) return "All Day";
-    const startStr = new Date(start).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
-    const endStr = end ? new Date(end).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "";
+    const startStr = new Date(start).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", hour12: false }).replace(".", ":");
+    const endStr = end ? new Date(end).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", hour12: false }).replace(".", ":") : "";
     return endStr ? `${startStr} - ${endStr}` : startStr;
   };
 
@@ -1513,6 +1513,17 @@ const Calendar: React.FC = () => {
                 datesSet={handleDatesSet}
                 height="auto"
                 aspectRatio={1.8}
+                eventTimeFormat={{
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  meridiem: false,
+                  hour12: false
+                }}
+                slotLabelFormat={{
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false
+                }}
               />
             </div>
           )}
@@ -1969,14 +1980,31 @@ const Calendar: React.FC = () => {
                 {/* Peserta (Multi-select using PicSelect) */}
                 <div className="md:col-span-2 relative z-50">
                   {canManage ? (
-                    <PicSelect
-                      label="Peserta"
-                      users={karyawanList.map(k => ({ id: k.id, name: k.name, email: k.email, image: (k as any).image, position: k.position }))}
-                      selectedValues={selectedPeserta}
-                      onChange={(selected) => setSelectedPeserta(selected)}
-                      placeholder="Pilih Peserta..."
-                      valueKey="name"
-                    />
+                    <div className="relative">
+                      <div className="absolute top-0.5 right-0 z-10">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (selectedPeserta.length === karyawanList.length) {
+                              setSelectedPeserta([]);
+                            } else {
+                              setSelectedPeserta(karyawanList.map(k => k.name));
+                            }
+                          }}
+                          className="text-[9px] font-black text-brand-500 hover:underline transition-all uppercase tracking-wider cursor-pointer"
+                        >
+                          {selectedPeserta.length === karyawanList.length ? "Hapus Semua" : "Pilih Semua PIC"}
+                        </button>
+                      </div>
+                      <PicSelect
+                        label="Peserta"
+                        users={karyawanList.map(k => ({ id: k.id, name: k.name, email: k.email, image: (k as any).image, position: k.position }))}
+                        selectedValues={selectedPeserta}
+                        onChange={(selected) => setSelectedPeserta(selected)}
+                        placeholder="Pilih Peserta..."
+                        valueKey="name"
+                      />
+                    </div>
                   ) : (
                     <div>
                       <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Peserta</label>

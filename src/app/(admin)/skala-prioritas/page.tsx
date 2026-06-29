@@ -165,7 +165,7 @@ export default function SkalaPrioritasPage() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[10px] text-gray-400 font-semibold italic pl-3">Nihil</p>
+                      <p className="text-[10px] text-gray-400 font-semibold italic pl-3">-</p>
                     )}
                   </div>
 
@@ -187,7 +187,7 @@ export default function SkalaPrioritasPage() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[10px] text-gray-400 font-semibold italic pl-3">Nihil</p>
+                      <p className="text-[10px] text-gray-400 font-semibold italic pl-3">-</p>
                     )}
                   </div>
 
@@ -209,7 +209,7 @@ export default function SkalaPrioritasPage() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[10px] text-gray-400 font-semibold italic pl-3">Nihil</p>
+                      <p className="text-[10px] text-gray-400 font-semibold italic pl-3">-</p>
                     )}
                   </div>
 

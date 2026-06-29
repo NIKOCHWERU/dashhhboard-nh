@@ -134,14 +134,14 @@ export default function LaporanHarianPage() {
     }
   };
 
-  // Helper: Format Date Indon Lowercase
+  // Helper: Format Date Indon Capitalized
   const formatDateIndo = (dateStr: string) => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
-    const daysIndo = ["minggu", "senin", "selasa", "rabu", "kamis", "jumat", "sabtu"];
+    const daysIndo = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
     const months = [
-      "januari", "februari", "maret", "april", "mei", "juni",
-      "juli", "agustus", "september", "oktober", "november", "desember"
+      "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+      "Juli", "Agustus", "September", "Oktober", "November", "Desember"
     ];
     return `${daysIndo[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
   };
@@ -259,19 +259,19 @@ export default function LaporanHarianPage() {
 
     text += `I. *Skala Prioritas (_On Duty_)*\n\n`;
     text += `*Q1:*\n`;
-    if (q1T.length === 0) text += `- Nihil\n`;
+    if (q1T.length === 0) text += `- -\n`;
     else q1T.forEach((t, i) => { text += `${i + 1}. ${t.task} (${t.duration} menit, ${t.desc || "-"})${t.attachment ? ` [Lampiran: ${t.attachment.url}]` : ""}\n`; });
 
     text += `\n*Q2:*\n`;
-    if (q2T.length === 0) text += `- Nihil\n`;
+    if (q2T.length === 0) text += `- -\n`;
     else q2T.forEach((t, i) => { text += `${i + 1}. ${t.task} (${t.duration} menit, ${t.desc || "-"})${t.attachment ? ` [Lampiran: ${t.attachment.url}]` : ""}\n`; });
 
     text += `\n*Q3:*\n`;
-    if (q3T.length === 0) text += `- Nihil\n`;
+    if (q3T.length === 0) text += `- -\n`;
     else q3T.forEach((t, i) => { text += `${i + 1}. ${t.task} (${t.duration} menit, ${t.desc || "-"})${t.attachment ? ` [Lampiran: ${t.attachment.url}]` : ""}\n`; });
 
     text += `\nII. *Rincian Kegiatan (Log Waktu)*\n\n`;
-    if (logs.length === 0) text += `- Nihil\n`;
+    if (logs.length === 0) text += `- -\n`;
     else {
       logs.forEach((log, i) => {
         text += `${i + 1}. ${log.start} WIB - ${log.end} WIB _${getDurationStr(log.start, log.end)}_ = ${log.activity}\n`;
@@ -279,20 +279,20 @@ export default function LaporanHarianPage() {
     }
 
     text += `\nIII. *Hasil Kerja (Output hari ini)*\n\n`;
-    if (outs.length === 0) text += `- Nihil\n`;
+    if (outs.length === 0) text += `- -\n`;
     else outs.forEach((out, i) => { text += `${i + 1}. ${out}\n`; });
 
     text += `\nIV. *Tugas Esok Hari (_Planning_)*\n\n`;
     text += `*Q1:*\n`;
-    if (q1Tom.length === 0) text += `- Nihil\n`;
+    if (q1Tom.length === 0) text += `- -\n`;
     else q1Tom.forEach((t, i) => { text += `${i + 1}. ${t.task} (${t.duration} menit, ${t.desc || "-"})${t.attachment ? ` [Lampiran: ${t.attachment.url}]` : ""}\n`; });
 
     text += `\n*Q2:*\n`;
-    if (q2Tom.length === 0) text += `- Nihil\n`;
+    if (q2Tom.length === 0) text += `- -\n`;
     else q2Tom.forEach((t, i) => { text += `${i + 1}. ${t.task} (${t.duration} menit, ${t.desc || "-"})${t.attachment ? ` [Lampiran: ${t.attachment.url}]` : ""}\n`; });
 
     text += `\n*Q3:*\n`;
-    if (q3Tom.length === 0) text += `- Nihil\n`;
+    if (q3Tom.length === 0) text += `- -\n`;
     else q3Tom.forEach((t, i) => { text += `${i + 1}. ${t.task} (${t.duration} menit, ${t.desc || "-"})${t.attachment ? ` [Lampiran: ${t.attachment.url}]` : ""}\n`; });
 
     text += `\nV. *Refleksi & Evaluasi Hari ini*\n\n`;
@@ -499,7 +499,7 @@ export default function LaporanHarianPage() {
                       {list.map((item, idx) => (
                         <div key={idx} className="flex justify-between items-start gap-4 text-xs">
                           <span className="font-semibold text-gray-750 dark:text-gray-300">
-                            {idx + 1}. {item.task} ({item.duration}m) - <span className="italic text-gray-400">{item.desc || "Nihil"}</span>
+                            {idx + 1}. {item.task} ({item.duration}m) - <span className="italic text-gray-400">{item.desc || "-"}</span>
                             {item.attachment && (
                               <a
                                 href={item.attachment.url}
@@ -709,7 +709,7 @@ export default function LaporanHarianPage() {
                       {list.map((item, idx) => (
                         <div key={idx} className="flex justify-between items-start gap-4 text-xs">
                           <span className="font-semibold text-gray-750 dark:text-gray-300">
-                            {idx + 1}. {item.task} ({item.duration}m) - <span className="italic text-gray-400">{item.desc || "Nihil"}</span>
+                            {idx + 1}. {item.task} ({item.duration}m) - <span className="italic text-gray-400">{item.desc || "-"}</span>
                             {item.attachment && (
                               <a
                                 href={item.attachment.url}
@@ -998,7 +998,7 @@ export default function LaporanHarianPage() {
                                   ))}
                                 </div>
                               ) : (
-                                <span className="text-[10px] italic text-gray-400 pl-3">Nihil</span>
+                                <span className="text-[10px] italic text-gray-400 pl-3">-</span>
                               )}
                             </div>
                           );
@@ -1020,9 +1020,9 @@ export default function LaporanHarianPage() {
                                 </div>
                               ))}
                             </div>
-                          ) : <span className="italic text-gray-400 pl-3">Nihil</span>;
+                          ) : <span className="italic text-gray-400 pl-3">-</span>;
                         } catch (e) {
-                          return <span className="italic text-gray-400 pl-3">Nihil</span>;
+                          return <span className="italic text-gray-400 pl-3">-</span>;
                         }
                       })()}
                     </div>
@@ -1041,9 +1041,9 @@ export default function LaporanHarianPage() {
                                 </div>
                               ))}
                             </div>
-                          ) : <span className="italic text-gray-400 pl-3">Nihil</span>;
+                          ) : <span className="italic text-gray-400 pl-3">-</span>;
                         } catch (e) {
-                          return <span className="italic text-gray-400 pl-3">Nihil</span>;
+                          return <span className="italic text-gray-400 pl-3">-</span>;
                         }
                       })()}
                     </div>
@@ -1076,7 +1076,7 @@ export default function LaporanHarianPage() {
                                   ))}
                                 </div>
                               ) : (
-                                <span className="text-[10px] italic text-gray-400 pl-3">Nihil</span>
+                                <span className="text-[10px] italic text-gray-400 pl-3">-</span>
                               )}
                             </div>
                           );
@@ -1098,7 +1098,7 @@ export default function LaporanHarianPage() {
                             </div>
                           );
                         } catch (e) {
-                          return <span className="italic text-gray-400 pl-3">Nihil</span>;
+                          return <span className="italic text-gray-400 pl-3">-</span>;
                         }
                       })()}
                     </div>

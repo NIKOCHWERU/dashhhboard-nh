@@ -18,37 +18,66 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // 1. Get the task details
-    const task = await prisma.progressPekerjaan.findUnique({
+    // 1. Get the task details (check ProgressPekerjaan first, then PersonalTask)
+    let taskName = "";
+    let taskPriority = "";
+    let taskLabel = "";
+    let isPersonalTask = false;
+
+    let progressTask = await prisma.progressPekerjaan.findUnique({
       where: { id: taskId },
     });
 
-    if (!task) {
-      return NextResponse.json({ error: "Task not found" }, { status: 404 });
-    }
+    if (progressTask) {
+      taskName = progressTask.deskripsi || progressTask.tugas || "";
+      taskPriority = progressTask.quadran || "Q3";
+      taskLabel = progressTask.namaKlien || (progressTask.type === "RETAINER" ? "RETAINER" : progressTask.type === "NON_RETAINER" ? "NON RETAINER" : "INTERNAL");
 
-    // Prepare attachments update
-    let updatedAttachments = [];
-    try {
-      if (task.attachments) {
-        updatedAttachments = JSON.parse(task.attachments);
+      // Prepare attachments update
+      let updatedAttachments = [];
+      try {
+        if (progressTask.attachments) {
+          updatedAttachments = JSON.parse(progressTask.attachments);
+        }
+      } catch (e) {}
+
+      if (uploadedFile) {
+        updatedAttachments.push(uploadedFile);
       }
-    } catch (e) {}
 
-    if (uploadedFile) {
-      updatedAttachments.push(uploadedFile);
+      // Update ProgressPekerjaan status to SELESAI
+      await prisma.progressPekerjaan.update({
+        where: { id: taskId },
+        data: {
+          status: "SELESAI",
+          keterangan: keterangan || progressTask.keterangan,
+          catatan: catatan || progressTask.catatan,
+          attachments: JSON.stringify(updatedAttachments),
+        },
+      });
+    } else {
+      let personalTask = await prisma.personalTask.findUnique({
+        where: { id: taskId },
+      });
+
+      if (!personalTask) {
+        return NextResponse.json({ error: "Task not found" }, { status: 404 });
+      }
+
+      taskName = personalTask.title;
+      taskPriority = personalTask.priority || "Q3";
+      taskLabel = "PERSONAL TASK";
+      isPersonalTask = true;
+
+      // Update PersonalTask status to COMPLETED
+      await prisma.personalTask.update({
+        where: { id: taskId },
+        data: {
+          status: "COMPLETED",
+          notes: catatan || personalTask.notes,
+        },
+      });
     }
-
-    // Update ProgressPekerjaan status to SELESAI
-    await prisma.progressPekerjaan.update({
-      where: { id: taskId },
-      data: {
-        status: "SELESAI",
-        keterangan: keterangan || task.keterangan,
-        catatan: catatan || task.catatan,
-        attachments: JSON.stringify(updatedAttachments),
-      },
-    });
 
     // 2. Fetch or create today's LaporanHarian for this user
     const targetDate = new Date();
@@ -75,8 +104,8 @@ export async function POST(req: Request) {
     const durationStr = `durasi ${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:00`;
 
     // Construct the log description
-    const label = task.namaKlien || (task.type === "RETAINER" ? "Retainer" : task.type === "NON_RETAINER" ? "Non Retainer" : "Internal");
-    const activityDesc = `[${label}] ${task.deskripsi || task.tugas || ""} - Keterangan: ${keterangan || "-"}${catatan ? `. Catatan: ${catatan}` : ""}`;
+    const label = taskLabel;
+    const activityDesc = `[${label}] ${taskName} - Keterangan: ${keterangan || "-"}${catatan ? `. Catatan: ${catatan}` : ""}`;
 
     const newTimeLog = {
       start: startTime,
@@ -85,7 +114,7 @@ export async function POST(req: Request) {
       activity: activityDesc,
     };
 
-    const outputDesc = `[${label}] Selesai: ${task.deskripsi || task.tugas || ""}`;
+    const outputDesc = `[${label}] Selesai: ${taskName}`;
 
     if (existingReport) {
       // Append to existing report

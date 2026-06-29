@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ExcelDataService, ExcelDataRow } from "@/services/ExcelDataService";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   try {
@@ -15,16 +16,17 @@ export async function GET(req: NextRequest) {
     // Check if agenda list is requested
     const getAgenda = searchParams.get("agenda");
     if (getAgenda === "true") {
-      const limit = parseInt(searchParams.get("limit") || "10");
-      const excelAgendas = await ExcelDataService.getAgendas(limit);
-      const mapped = excelAgendas.map((row) => ({
-        id: `excel-${row.no}`,
-        title: row.deskripsi || row.tugas || "Pekerjaan",
-        startDate: row.tanggal,
-        pic: row.penanggungJawab,
-        scale: row.quadran || "Q3",
-        description: row.tugas,
-        notes: row.keterangan || row.catatan,
+      const agendas = await prisma.agenda.findMany({
+        orderBy: { startDate: "asc" },
+      });
+      const mapped = agendas.map((row) => ({
+        id: row.id,
+        title: row.title,
+        startDate: row.startDate,
+        pic: row.pic,
+        scale: row.scale,
+        description: row.description,
+        notes: row.notes,
       }));
       return NextResponse.json(mapped);
     }

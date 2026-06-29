@@ -116,7 +116,8 @@ export async function getOrCreateFolder(
   name: string,
   parentId?: string
 ): Promise<string> {
-  let query = `mimeType='application/vnd.google-apps.folder' and name='${name}' and trashed=false`;
+  const upperName = name.toUpperCase();
+  let query = `mimeType='application/vnd.google-apps.folder' and name='${upperName}' and trashed=false`;
   if (parentId) {
     query += ` and '${parentId}' in parents`;
   } else {
@@ -137,7 +138,7 @@ export async function getOrCreateFolder(
 
     if (!res.ok) {
       const errText = await res.text();
-      throw new Error(`Failed to search folder '${name}': ${errText}`);
+      throw new Error(`Failed to search folder '${upperName}': ${errText}`);
     }
 
     const data = await res.json();
@@ -148,7 +149,7 @@ export async function getOrCreateFolder(
     // Create the folder
     const createUrl = "https://www.googleapis.com/drive/v3/files";
     const body: any = {
-      name: name,
+      name: upperName,
       mimeType: "application/vnd.google-apps.folder",
     };
     if (parentId) {
@@ -265,7 +266,7 @@ export async function renameFolder(folderId: string, newFolderName: string): Pro
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        name: newFolderName,
+        name: newFolderName.toUpperCase(),
       }),
     });
 
@@ -344,8 +345,9 @@ export async function uploadFile(
   try {
     const accessToken = await getAccessToken();
     const boundary = "foo_bar_boundary";
+    const upperFileName = fileName.toUpperCase();
     const metadata = JSON.stringify({
-      name: fileName,
+      name: upperFileName,
       parents: [parentId],
       description: description || "",
     });

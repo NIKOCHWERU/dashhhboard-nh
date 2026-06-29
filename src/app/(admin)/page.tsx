@@ -28,6 +28,7 @@ interface PersonalTask {
   title: string;
   status: string;
   priority: string;
+  endDate?: string | Date;
 }
 
 interface ActivityLog {
@@ -52,9 +53,19 @@ export default function Dashboard() {
   const [allAgendas, setAllAgendas] = useState<Agenda[]>([]);
   const [displayAgendas, setDisplayAgendas] = useState<Agenda[]>([]);
   const [personalTasks, setPersonalTasks] = useState<PersonalTask[]>([]);
+  const [todayQ1Tasks, setTodayQ1Tasks] = useState<string[]>([]);
   const [karyawanList, setKaryawanList] = useState<Member[]>([]);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [announcements, setAnnouncements] = useState<Pengumuman[]>([]);
+
+  const formatDateIndoCapitalized = (dVal: any) => {
+    if (!dVal) return "-";
+    const d = new Date(dVal);
+    if (isNaN(d.getTime())) return "-";
+    const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  };
   
   const [dbSummary, setDbSummary] = useState({
     totalCalonKlien: 0,
@@ -118,7 +129,8 @@ export default function Dashboard() {
         resRecentArsip,
         resDilo,
         resWilo,
-        resMilo
+        resMilo,
+        resLaporan
       ] = await Promise.all([
         fetch("/api/karyawan"),
         fetch("/api/personal-tasks"),
@@ -129,13 +141,26 @@ export default function Dashboard() {
         fetch("/api/narasumber-hukum?recent=true"),
         fetch("/api/progress-pekerjaan?type=RETAINER&limit=3"),
         fetch("/api/progress-pekerjaan?type=NON_RETAINER&limit=3"),
-        fetch("/api/progress-pekerjaan?type=INTERNAL&limit=3")
+        fetch("/api/progress-pekerjaan?type=INTERNAL&limit=3"),
+        fetch("/api/laporan-harian?date=" + new Date().toISOString().slice(0, 10))
       ]);
 
       const team = resKaryawan.ok ? await resKaryawan.json() : [];
       const tasks = resPersonalTasks.ok ? await resPersonalTasks.json() : [];
       const ann = resPengumuman.ok ? await resPengumuman.json() : [];
       const calonKlienData = resCalonKlien.ok ? await resCalonKlien.json() : [];
+      const reports = resLaporan.ok ? await resLaporan.json() : [];
+      
+      const sessionUser = session?.user as any;
+      const myReport = reports.find((r: any) => r.userId === sessionUser?.id) || reports[0];
+      let q1Tasks: string[] = [];
+      if (myReport && myReport.prioritas) {
+        try {
+          const parsed = JSON.parse(myReport.prioritas);
+          q1Tasks = parsed.q1 || [];
+        } catch (e) {}
+      }
+      setTodayQ1Tasks(q1Tasks);
       const recentArsip = resRecentArsip.ok ? await resRecentArsip.json() : [];
       const arsipSummaryObj = resArsipSummary.ok ? await resArsipSummary.json() : { total: 0 };
       const progressSummaryObj = resProgressSummary.ok ? await resProgressSummary.json() : {};
@@ -168,7 +193,6 @@ export default function Dashboard() {
         totalArsipDokumen: arsipSummaryObj.total || 0
       });
 
-      const sessionUser = session?.user as any;
       if (sessionUser?.role === "admin") {
         const resLogs = await fetch("/api/admin/activities");
         const logs = resLogs.ok ? await resLogs.json() : [];
@@ -402,23 +426,19 @@ export default function Dashboard() {
                 <div className="space-y-2 overflow-y-auto pr-1 flex-1 no-scrollbar">
                   {loading ? (
                     [1, 2, 3].map(i => <div key={i} className="h-12 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
-                  ) : personalTasks.filter(t => t.status !== "COMPLETED").length > 0 ? (
-                    personalTasks.filter(t => t.status !== "COMPLETED").slice(0, 4).map(task => (
-                      <div key={task.id} className="flex items-center justify-between p-2.5 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-white/[0.005] hover:border-brand-500/30 transition-all group">
+                  ) : todayQ1Tasks.length > 0 ? (
+                    todayQ1Tasks.map((task, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-white/[0.005] hover:border-brand-500/30 transition-all group">
                         <div className="flex items-center gap-3 overflow-hidden">
-                          <div className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg font-black text-[9px] ${
-                            task.priority === 'Q1' ? 'bg-red-50 text-red-500 dark:bg-red-950/20' : 
-                            task.priority === 'Q2' ? 'bg-amber-50 text-amber-500 dark:bg-amber-950/20' : 
-                            'bg-gray-50 text-gray-500 dark:bg-gray-800'
-                          }`}>
-                            {task.priority || 'Q2'}
+                          <div className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg font-black text-[9px] bg-red-50 text-red-500 dark:bg-red-950/20">
+                            Q1
                           </div>
                           <div className="overflow-hidden">
-                            <h4 className="text-[11px] font-bold text-gray-900 dark:text-white group-hover:text-brand-500 transition-colors leading-snug truncate">
-                              {task.title}
+                            <h4 className="text-[11px] font-bold text-gray-905 dark:text-white leading-snug truncate">
+                              {task}
                             </h4>
                             <div className="text-[9px] text-gray-400 mt-0.5 flex items-center gap-2 font-semibold uppercase tracking-wider">
-                              <span className="text-red-555 font-black uppercase tracking-widest text-[8px]">{task.status}</span>
+                              <span className="text-red-555 font-black uppercase tracking-widest text-[8px]">On Duty</span>
                             </div>
                           </div>
                         </div>
@@ -426,7 +446,7 @@ export default function Dashboard() {
                     ))
                   ) : (
                     <div className="text-center py-10 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/20">
-                      <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Tidak ada tugas aktif.</p>
+                      <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Tidak ada tugas aktif Q1 hari ini.</p>
                     </div>
                   )}
                 </div>
@@ -458,76 +478,39 @@ export default function Dashboard() {
                 <span className="w-1.5 h-3.5 bg-brand-500 rounded-full"></span>
                 <h2 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider font-bold">Laporan Kerja</h2>
               </div>
-              <div className="flex gap-1 bg-gray-100 dark:bg-gray-855 p-0.5 rounded-lg select-none">
-                {(["dilo", "wilo", "milo"] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setLaporanTab(tab)}
-                    className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider transition-all ${
-                      laporanTab === tab
-                        ? "bg-brand-500 text-white shadow-sm"
-                        : "text-gray-500 dark:text-gray-400 hover:text-brand-500"
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
             </div>
             
             <div className="flex-1 min-w-[500px]">
               <table className="w-full text-left border-collapse text-[10px]">
                 <thead>
                   <tr className="border-b border-gray-150 dark:border-gray-800 text-gray-400 uppercase tracking-wider font-bold">
-                    {laporanTab === "dilo" && (
-                      <>
-                        <th className="pb-1.5 w-8">No</th>
-                        <th className="pb-1.5 w-32">Klien/Pekerjaan</th>
-                        <th className="pb-1.5 w-16">Prioritas</th>
-                        <th className="pb-1.5 w-24">Batas</th>
-                        <th className="pb-1.5 w-24 text-right">Aksi</th>
-                      </>
-                    )}
-                    {laporanTab === "wilo" && (
-                      <>
-                        <th className="pb-1.5 w-8">No</th>
-                        <th className="pb-1.5 w-32">Pekerjaan</th>
-                        <th className="pb-1.5 w-20">Area</th>
-                        <th className="pb-1.5 w-16">Status</th>
-                        <th className="pb-1.5 w-24 text-right">Aksi</th>
-                      </>
-                    )}
-                    {laporanTab === "milo" && (
-                      <>
-                        <th className="pb-1.5 w-8">No</th>
-                        <th className="pb-1.5 w-32">Pekerjaan</th>
-                        <th className="pb-1.5 w-24">PIC</th>
-                        <th className="pb-1.5 w-16">Status</th>
-                        <th className="pb-1.5 w-24 text-right">Aksi</th>
-                      </>
-                    )}
+                    <th className="pb-1.5 w-8">No</th>
+                    <th className="pb-1.5 w-48">Klien/Pekerjaan</th>
+                    <th className="pb-1.5 w-16">Prioritas</th>
+                    <th className="pb-1.5 w-32">Batas</th>
+                    <th className="pb-1.5 w-24 text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
-                  {laporanTab === "dilo" && diloRows.length > 0 ? (
-                    diloRows.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.002]">
-                        <td className="py-2.5 font-bold text-gray-450">{item.no || idx + 1}</td>
-                        <td className="py-2.5 font-bold text-gray-905 dark:text-white truncate max-w-[140px]" title={item.deskripsi || item.tugas}>
-                          {item.namaKlien || item.deskripsi || item.tugas}
+                  {personalTasks.length > 0 ? (
+                    personalTasks.map((item, idx) => (
+                      <tr key={item.id || idx} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.002]">
+                        <td className="py-2.5 font-bold text-gray-450">{idx + 1}</td>
+                        <td className="py-2.5 font-bold text-gray-905 dark:text-white truncate max-w-[180px]" title={item.title}>
+                          {item.title || "-"}
                         </td>
                         <td className="py-2.5">
                           <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
-                            item.quadran === "Q1" ? "text-red-650 bg-red-50 dark:bg-red-950/20" :
-                            item.quadran === "Q2" ? "text-blue-650 bg-blue-50 dark:bg-blue-950/20" :
+                            item.priority === "Q1" ? "text-red-650 bg-red-50 dark:bg-red-950/20" :
+                            item.priority === "Q2" ? "text-blue-650 bg-blue-50 dark:bg-blue-950/20" :
                             "text-gray-650 bg-gray-55 dark:bg-white/[0.03]"
-                          }`}>{item.quadran || "Q3"}</span>
+                          }`}>{item.priority || "Q3"}</span>
                         </td>
                         <td className="py-2.5 font-bold text-brand-500">
-                          {item.tanggal ? new Date(item.tanggal).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : "-"}
+                          {item.endDate ? formatDateIndoCapitalized(item.endDate) : "-"}
                         </td>
                         <td className="py-2.5 text-right">
-                          {item.status === "SELESAI" ? (
+                          {item.status === "COMPLETED" ? (
                             <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-[5px] text-[8px] font-black uppercase tracking-widest border border-emerald-500/10">Selesai</span>
                           ) : (
                             <button
@@ -548,101 +531,11 @@ export default function Dashboard() {
                         </td>
                       </tr>
                     ))
-                  ) : laporanTab === "dilo" ? (
+                  ) : (
                     <tr>
-                      <td colSpan={5} className="py-6 text-center text-gray-400 italic">Tidak ada data Dilo.</td>
+                      <td colSpan={5} className="py-6 text-center text-gray-400 italic">Tidak ada skala prioritas pribadi.</td>
                     </tr>
-                  ) : null}
-
-                  {laporanTab === "wilo" && wiloRows.length > 0 ? (
-                    wiloRows.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.002]">
-                        <td className="py-2.5 font-bold text-gray-455">{item.no || idx + 1}</td>
-                        <td className="py-2.5 font-bold text-gray-905 dark:text-white truncate max-w-[140px]" title={item.deskripsi || item.tugas}>
-                          {item.deskripsi || item.tugas}
-                        </td>
-                        <td className="py-2.5 text-gray-550 truncate max-w-[80px]" title={item.area}>
-                          {item.area || "-"}
-                        </td>
-                        <td className="py-2.5">
-                          <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
-                            item.status === "SELESAI" ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20" :
-                            item.status === "ON PROGRESS" ? "text-blue-600 bg-blue-50 dark:bg-blue-950/20" :
-                            "text-amber-600 bg-amber-50 dark:bg-amber-950/20"
-                          }`}>{item.status || "-"}</span>
-                        </td>
-                        <td className="py-2.5 text-right">
-                          {item.status === "SELESAI" ? (
-                            <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-[5px] text-[8px] font-black uppercase tracking-widest border border-emerald-500/10">Selesai</span>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                setSelectedTask(item);
-                                setCompleteStartTime("09:00");
-                                setCompleteEndTime("10:00");
-                                setCompleteKeterangan("");
-                                setCompleteCatatan("");
-                                setCompleteFile(null);
-                                setCompleteModalOpen(true);
-                              }}
-                              className="px-2 py-1 bg-brand-500 hover:bg-brand-600 text-white rounded-[6px] text-[8px] font-black uppercase tracking-wider transition-all shadow active:scale-95 cursor-pointer"
-                            >
-                              Selesaikan
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  ) : laporanTab === "wilo" ? (
-                    <tr>
-                      <td colSpan={5} className="py-6 text-center text-gray-400 italic">Tidak ada data Wilo.</td>
-                    </tr>
-                  ) : null}
-
-                  {laporanTab === "milo" && miloRows.length > 0 ? (
-                    miloRows.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.002]">
-                        <td className="py-2.5 font-bold text-gray-455">{item.no || idx + 1}</td>
-                        <td className="py-2.5 font-bold text-gray-905 dark:text-white truncate max-w-[140px]" title={item.deskripsi || item.tugas}>
-                          {item.deskripsi || item.tugas}
-                        </td>
-                        <td className="py-2.5 text-gray-550 truncate max-w-[80px]" title={item.penanggungJawab}>
-                          {item.penanggungJawab || "-"}
-                        </td>
-                        <td className="py-2.5">
-                          <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
-                            item.status === "SELESAI" ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20" :
-                            item.status === "ON PROGRESS" ? "text-blue-600 bg-blue-50 dark:bg-blue-950/20" :
-                            "text-amber-600 bg-amber-50 dark:bg-amber-950/20"
-                          }`}>{item.status || "-"}</span>
-                        </td>
-                        <td className="py-2.5 text-right">
-                          {item.status === "SELESAI" ? (
-                            <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-[5px] text-[8px] font-black uppercase tracking-widest border border-emerald-500/10">Selesai</span>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                setSelectedTask(item);
-                                setCompleteStartTime("09:00");
-                                setCompleteEndTime("10:00");
-                                setCompleteKeterangan("");
-                                setCompleteCatatan("");
-                                setCompleteFile(null);
-                                setCompleteModalOpen(true);
-                              }}
-                              className="px-2 py-1 bg-brand-500 hover:bg-brand-600 text-white rounded-[6px] text-[8px] font-black uppercase tracking-wider transition-all shadow active:scale-95 cursor-pointer"
-                            >
-                              Selesaikan
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  ) : laporanTab === "milo" ? (
-                    <tr>
-                      <td colSpan={5} className="py-6 text-center text-gray-400 italic">Tidak ada data Milo.</td>
-                    </tr>
-                  ) : null}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -822,7 +715,7 @@ export default function Dashboard() {
           <div>
             <label className="block text-xs font-black uppercase text-gray-400 mb-1.5">Nama Pekerjaan</label>
             <div className="w-full bg-gray-100 dark:bg-gray-800/80 px-4 py-3 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300">
-              {selectedTask ? (selectedTask.namaKlien || selectedTask.deskripsi || selectedTask.tugas) : ""}
+              {selectedTask ? (selectedTask.namaKlien || selectedTask.deskripsi || selectedTask.tugas || selectedTask.title) : ""}
             </div>
           </div>
 
@@ -883,11 +776,16 @@ export default function Dashboard() {
               />
               <label
                 htmlFor="complete-file-upload"
-                className={`w-full text-center border border-dashed border-gray-300 dark:border-gray-700 py-3 rounded-xl text-xs font-bold text-gray-500 hover:border-brand-500 cursor-pointer flex items-center justify-center gap-2 ${
+                className={`w-full text-center border border-dashed border-gray-300 dark:border-gray-700 py-3 rounded-xl text-xs font-bold text-gray-500 hover:border-brand-500 cursor-pointer flex flex-col items-center justify-center gap-2 ${
                   completeUploading ? "pointer-events-none opacity-50" : ""
                 }`}
               >
-                {completeUploading ? "Mengunggah..." : completeFile ? `✓ ${completeFile.name}` : "Upload Berkas Ke Google Drive"}
+                <span>{completeUploading ? "Mengunggah..." : completeFile ? `✓ ${completeFile.name}` : "Upload Berkas Ke Google Drive"}</span>
+                {completeUploading && (
+                  <div className="w-11/12 bg-gray-250 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden mt-1 relative">
+                    <div className="bg-brand-500 h-full w-[70%] animate-pulse transition-all duration-1000"></div>
+                  </div>
+                )}
               </label>
             </div>
           </div>

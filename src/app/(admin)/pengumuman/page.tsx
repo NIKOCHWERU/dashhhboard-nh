@@ -18,6 +18,7 @@ export default function PengumumanPage() {
   const { data: session } = useSession();
   const [data, setData] = useState<Pengumuman[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [detailItem, setDetailItem] = useState<Pengumuman | null>(null);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({ 
     title: "", 
@@ -33,6 +34,15 @@ export default function PengumumanPage() {
     const res = await fetch("/api/pengumuman");
     if (res.ok) setData(await res.json());
     setLoading(false);
+  };
+
+  const formatDateCapitalized = (dVal: any) => {
+    if (!dVal) return "-";
+    const d = new Date(dVal);
+    if (isNaN(d.getTime())) return "-";
+    const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
   useEffect(() => { fetchData(); }, []);
@@ -84,35 +94,72 @@ export default function PengumumanPage() {
           <div className="h-40 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-none"></div>
         ) : data.length > 0 ? (
           data.map((item) => (
-            <div key={item.id} className="bg-white dark:bg-gray-900 border border-stroke dark:border-strokedark rounded-none shadow-sm hover:border-brand-500 transition-all overflow-hidden flex flex-col md:flex-row h-full">
+            <div 
+              key={item.id} 
+              onClick={() => setDetailItem(item)}
+              className="cursor-pointer bg-white dark:bg-gray-900 border border-stroke dark:border-strokedark rounded-none shadow-sm hover:border-brand-500 hover:scale-[1.01] transition-all overflow-hidden flex flex-col md:flex-row h-full relative"
+            >
               {item.image && (
                 <div className="w-full md:w-48 h-48 md:h-auto flex-shrink-0 relative">
-                  <img 
-                    src={item.image} 
-                    alt={item.title} 
-                    className="w-full h-full object-cover"
-                  />
+                  {item.image.toLowerCase().endsWith(".pdf") ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 text-brand-500">
+                      <span className="text-2xl font-black">PDF</span>
+                      <span className="text-[9px] uppercase tracking-wider font-bold">Dokumen Lampiran</span>
+                    </div>
+                  ) : (
+                    <img 
+                      src={item.image} 
+                      alt={item.title} 
+                      className="w-full h-full object-cover"
+                    />
+                  )}
                 </div>
               )}
               <div className="p-6 flex flex-col justify-between flex-grow">
                 <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-none uppercase ${
-                      item.priority === 'High' ? 'bg-red-500 text-white' : 'bg-brand-500 text-white'
-                    }`}>
-                      {item.priority}
-                    </span>
-                    {item.expiresAt && (
-                       <span className="text-[10px] font-bold text-gray-400 uppercase">
-                         Aktif Hingga: {new Date(item.expiresAt).toLocaleDateString('id-ID')}
-                       </span>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-none uppercase ${
+                        item.priority === 'High' ? 'bg-red-500 text-white' : 'bg-brand-500 text-white'
+                      }`}>
+                        {item.priority}
+                      </span>
+                      {item.expiresAt && (
+                         <span className="text-[10px] font-bold text-gray-450 uppercase">
+                           Aktif Hingga: {formatDateCapitalized(item.expiresAt)}
+                         </span>
+                      )}
+                    </div>
+                    {isAdmin && (
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (confirm("Hapus pengumuman ini?")) {
+                            try {
+                              const res = await fetch(`/api/pengumuman?id=${item.id}`, { method: "DELETE" });
+                              if (res.ok) {
+                                fetchData();
+                              } else {
+                                alert("Gagal menghapus pengumuman");
+                              }
+                            } catch (err) {
+                              console.error(err);
+                              alert("Terjadi kesalahan.");
+                            }
+                          }
+                        }}
+                        className="text-red-500 hover:text-red-700 transition-colors p-1"
+                        title="Hapus Pengumuman"
+                      >
+                        <TrashBinIcon className="w-3.5 h-3.5" />
+                      </button>
                     )}
                   </div>
                   <h3 className="text-lg font-bold text-black dark:text-white mb-2">{item.title}</h3>
                   <p className="text-sm text-gray-500 line-clamp-3">{item.content}</p>
                 </div>
                 <div className="mt-4 pt-4 border-t border-stroke dark:border-strokedark text-[10px] text-gray-400 font-bold uppercase">
-                  Diposting pada {new Date(item.createdAt).toLocaleDateString('id-ID')}
+                  Diposting pada {formatDateCapitalized(item.createdAt)}
                 </div>
               </div>
             </div>
@@ -121,6 +168,38 @@ export default function PengumumanPage() {
           <div className="text-center py-20 text-gray-400 italic lg:col-span-2 bg-white dark:bg-gray-900 border border-stroke dark:border-strokedark rounded-none">Belum ada pengumuman.</div>
         )}
       </div>
+
+      {/* Details Modal */}
+      <FeatureModal
+        isOpen={!!detailItem}
+        onClose={() => setDetailItem(null)}
+        title={detailItem?.title || "Detail Pengumuman"}
+        subtitle={`Diposting pada ${detailItem ? formatDateCapitalized(detailItem.createdAt) : ""}`}
+        icon={<BellIcon />}
+      >
+        <div className="space-y-4">
+          {detailItem?.image && (
+            <div className="w-full max-h-96 overflow-hidden rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-950 border border-stroke dark:border-strokedark">
+              {detailItem.image.toLowerCase().endsWith(".pdf") ? (
+                <iframe 
+                  src={detailItem.image} 
+                  className="w-full h-96 border-none"
+                  title={detailItem.title}
+                />
+              ) : (
+                <img 
+                  src={detailItem.image} 
+                  alt={detailItem.title} 
+                  className="max-w-full max-h-96 object-contain"
+                />
+              )}
+            </div>
+          )}
+          <div className="text-sm text-gray-750 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+            {detailItem?.content}
+          </div>
+        </div>
+      </FeatureModal>
 
       <FeatureModal 
         isOpen={isModalOpen} 
@@ -171,7 +250,7 @@ export default function PengumumanPage() {
             <div className="relative group">
                <input 
                  type="file"
-                 accept="image/*"
+                 accept="image/*,application/pdf"
                  onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
                  className="hidden"
                  id="image-upload"

@@ -1061,9 +1061,26 @@ html.dark:not(.gold) tbody tr:hover {
   background-color: rgba(255, 255, 255, 0.06) !important;
 }
 
-/* Dark mode specific card shadows */
 html.dark:not(.gold) .bg-white:hover {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Force Table Text Uppercase (except buttons/menus/headers/etc.) */
+table {
+  text-transform: uppercase;
+}
+table button,
+table a,
+table select,
+table input,
+.btn,
+button,
+a,
+h1, h2, h3, h4, h5, h6,
+.fc-event,
+.fc-toolbar-title,
+.fc-col-header-cell-cushion {
+  text-transform: none !important;
 }
 
 

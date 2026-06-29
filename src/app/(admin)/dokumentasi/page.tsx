@@ -149,7 +149,7 @@ export default function DokumentasiPage() {
             const resCreate = await fetch("/api/gdrive", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ folderName: "Internal_NH_Dokumentasi" })
+              body: JSON.stringify({ folderId: "root", folderName: "Internal_NH_Dokumentasi" })
             });
             const newFolder = await resCreate.json();
             intFolder = { id: newFolder.id, name: "Internal_NH_Dokumentasi", mimeType: "application/vnd.google-apps.folder" };
