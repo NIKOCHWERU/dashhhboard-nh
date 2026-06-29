@@ -2305,17 +2305,20 @@ const Calendar: React.FC = () => {
         }
 
         /* 🛑 PREVENT ROW HOVER HIGHLIGHT FROM GLOBALS.CSS */
-        .fc tbody tr:hover {
+        html:not(.dark):not(.gold) .fc tbody tr:hover,
+        html.dark:not(.gold) .fc tbody tr:hover {
           background-color: transparent !important;
         }
         
         /* 🌟 ONLY HIGHLIGHT INDIVIDUAL DAY CELLS ON HOVER */
-        html:not(.dark):not(.gold) .fc .fc-daygrid-day:hover {
+        html:not(.dark):not(.gold) .fc .fc-daygrid-day:hover .fc-scrollgrid-sync-inner {
           background-color: #FCFAF5 !important;
+          border: 1px solid #A67C00 !important;
           cursor: pointer !important;
         }
-        html.dark:not(.gold) .fc .fc-daygrid-day:hover {
+        html.dark:not(.gold) .fc .fc-daygrid-day:hover .fc-scrollgrid-sync-inner {
           background-color: rgba(255, 255, 255, 0.06) !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
           cursor: pointer !important;
         }
 
