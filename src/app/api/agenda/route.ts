@@ -539,12 +539,27 @@ export async function GET() {
         orderBy: { startDate: "asc" },
       });
     } else {
-      // Read-only: only return schedules created by admins
-      agendas = await prisma.agenda.findMany({
-        where: {
+      // Regular user: can see agendas created by admins, agendas they created themselves, or where they are PIC
+      const orClauses: any[] = [
+        {
           user: {
             role: "admin",
           },
+        },
+        {
+          userId: user.id,
+        },
+      ];
+      if (user.name) {
+        orClauses.push({
+          pic: {
+            contains: user.name,
+          },
+        });
+      }
+      agendas = await prisma.agenda.findMany({
+        where: {
+          OR: orClauses,
         },
         orderBy: { startDate: "asc" },
       });

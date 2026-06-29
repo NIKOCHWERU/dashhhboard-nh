@@ -15,6 +15,7 @@ import { Modal } from "@/components/ui/modal";
 import { useSession } from "next-auth/react";
 import { CalenderIcon } from "@/icons";
 import { HOLIDAYS_2026 } from "@/components/dashboard/DashboardWidgets";
+import PicSelect from "@/components/common/PicSelect";
 
 
 interface AgendaEvent extends EventInput {
@@ -1961,95 +1962,35 @@ const Calendar: React.FC = () => {
                   {reminderEnabled && (
                     <p className="text-[10px] text-gray-400 font-medium italic mt-2">
                       *Nada dering notifikasi mengikuti pengaturan default aplikasi Google Calendar di HP Anda. Silakan ubah nada dering langsung dari menu Pengaturan (Settings) aplikasi Google Calendar di HP.
-                    </p>
+</p>
                   )}
                 </div>
 
-                {/* Peserta (Multi-select) */}
-                <div ref={pesertaDropdownRef} className="md:col-span-2 relative z-50">
-                  <label className="block text-sm font-bold text-black dark:text-white mb-2">Peserta</label>
-                  <button
-                    type="button"
-                    disabled={!canManage}
-                    onClick={() => setIsPesertaDropdownOpen(!isPesertaDropdownOpen)}
-                    className="w-full text-left flex justify-between items-center rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white"
-                  >
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                      {selectedPeserta.length > 0
-                        ? `${selectedPeserta.length} Peserta Terpilih`
-                        : "Pilih Peserta..."}
-                    </span>
-                    <span className="text-gray-400">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                      </svg>
-                    </span>
-                  </button>
-                  
-                  {isPesertaDropdownOpen && (
-                    <div className="absolute left-0 mt-1 w-full bg-white dark:bg-gray-800 border border-stroke dark:border-strokedark shadow-2xl z-999 p-3 max-h-[250px] overflow-y-auto rounded-none animate-in fade-in zoom-in-95 duration-200">
-                      <input
-                        type="text"
-                        placeholder="Cari karyawan..."
-                        value={pesertaSearchQuery}
-                        onChange={(e) => setPesertaSearchQuery(e.target.value)}
-                        className="w-full mb-3 px-3 py-1.5 text-xs rounded border border-stroke dark:border-form-strokedark bg-transparent text-black dark:text-white outline-none focus:border-brand-500"
-                      />
-                      <div className="space-y-1">
-                        {karyawanList
-                          .filter((k) =>
-                            k.name.toLowerCase().includes(pesertaSearchQuery.toLowerCase()) ||
-                            (k.position && k.position.toLowerCase().includes(pesertaSearchQuery.toLowerCase()))
-                          )
-                          .map((k) => {
-                            const isChecked = selectedPeserta.includes(k.name);
-                            return (
-                              <label
-                                key={k.id}
-                                className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer rounded transition-colors text-xs font-semibold"
-                              >
-                                <input
-                                  type="checkbox"
-                                  disabled={!canManage}
-                                  checked={isChecked}
-                                  onChange={() => {
-                                    if (isChecked) {
-                                      setSelectedPeserta(selectedPeserta.filter((name) => name !== k.name));
-                                    } else {
-                                      setSelectedPeserta([...selectedPeserta, k.name]);
-                                    }
-                                  }}
-                                  className="w-3.5 h-3.5 text-brand-500 rounded border-gray-300 focus:ring-brand-500"
-                                />
-                                <div className="flex flex-col">
-                                  <span className="text-black dark:text-white">{k.name}</span>
-                                  <span className="text-[9px] text-gray-400 font-medium uppercase">{k.position}</span>
-                                </div>
-                              </label>
-                            );
-                          })}
+                {/* Peserta (Multi-select using PicSelect) */}
+                <div className="md:col-span-2 relative z-50">
+                  {canManage ? (
+                    <PicSelect
+                      label="Peserta"
+                      users={karyawanList.map(k => ({ id: k.id, name: k.name, email: k.email, image: (k as any).image, position: k.position }))}
+                      selectedValues={selectedPeserta}
+                      onChange={(selected) => setSelectedPeserta(selected)}
+                      placeholder="Pilih Peserta..."
+                      valueKey="name"
+                    />
+                  ) : (
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Peserta</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedPeserta.length > 0 ? (
+                          selectedPeserta.map((name, i) => (
+                            <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400 border border-brand-100 dark:border-brand-500/20 text-[10px] font-bold uppercase tracking-wide">
+                              {name}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-500 font-medium italic">Tidak ada peserta tercantum</span>
+                        )}
                       </div>
-                    </div>
-                  )}
-                  {selectedPeserta.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {selectedPeserta.map((name) => (
-                        <span
-                          key={name}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[10px] font-black uppercase tracking-wide rounded border border-brand-500/20"
-                        >
-                          {name}
-                          {canManage && (
-                            <button
-                              type="button"
-                              onClick={() => setSelectedPeserta(selectedPeserta.filter((n) => n !== name))}
-                              className="text-gray-400 hover:text-brand-500 ml-1 font-bold text-xs"
-                            >
-                              &times;
-                            </button>
-                          )}
-                        </span>
-                      ))}
                     </div>
                   )}
                 </div>

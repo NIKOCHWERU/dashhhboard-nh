@@ -1065,15 +1065,15 @@ export default function ProgressPekerjaanPage() {
                           content = getStatusBadge(item.status);
                         } else if (col.key === "penanggungJawab") {
                           content = (
-                            <span className="font-bold uppercase text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                            <div className="font-bold uppercase text-[10px] text-gray-500 dark:text-gray-400 break-words leading-tight" style={{ whiteSpace: "normal" }}>
                               {item.penanggungJawab || "—"}
-                            </span>
+                            </div>
                           );
                         } else if (col.key === "namaKlien") {
                           content = (
-                            <span className="font-black uppercase text-[10px] text-brand-600 dark:text-brand-400 whitespace-nowrap">
+                            <div className="font-black uppercase text-[10px] text-brand-600 dark:text-brand-400 break-words leading-tight" style={{ whiteSpace: "normal" }}>
                               {item.namaKlien || "—"}
-                            </span>
+                            </div>
                           );
                         } else if (col.key === "quadran") {
                           content = item.quadran ? (

@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { FeatureModal } from "@/components/common/FeatureModal";
 import { PlusIcon, TrashBinIcon, FileIcon, BellIcon } from "@/icons";
 import { useSession } from "next-auth/react";
-import Image from "next/image";
 
 interface Pengumuman {
   id: string;
@@ -87,12 +86,11 @@ export default function PengumumanPage() {
           data.map((item) => (
             <div key={item.id} className="bg-white dark:bg-gray-900 border border-stroke dark:border-strokedark rounded-none shadow-sm hover:border-brand-500 transition-all overflow-hidden flex flex-col md:flex-row h-full">
               {item.image && (
-                <div className="relative w-full md:w-48 h-48 md:h-full flex-shrink-0">
-                  <Image 
+                <div className="w-full md:w-48 h-48 md:h-auto flex-shrink-0 relative">
+                  <img 
                     src={item.image} 
                     alt={item.title} 
-                    fill 
-                    className="object-cover"
+                    className="w-full h-full object-cover"
                   />
                 </div>
               )}
