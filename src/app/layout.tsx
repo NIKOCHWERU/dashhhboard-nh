@@ -9,11 +9,6 @@ export const metadata: Metadata = {
     default: "Dashboard | Narasumber Hukum",
   },
   description: "Kantor Hukum Narasumber Hukum",
-  icons: {
-    icon: "/images/logo/logo-icon.svg",
-    shortcut: "/images/logo/logo-icon.svg",
-    apple: "/images/logo/logo-icon.svg",
-  },
 };
 
 export default function RootLayout({
