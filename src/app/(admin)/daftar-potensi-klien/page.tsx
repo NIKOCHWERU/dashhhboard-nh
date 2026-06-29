@@ -1424,7 +1424,7 @@ export default function DaftarCalonKlienPage() {
             </tr>
           ) : (
             searchedCalon.map((row, i) => (
-            <tr key={row.id} className={`animate-bottom-widget opacity-0 ${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
+            <tr key={row.id} className={`animate-bottom-widget ${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
               <TdSticky className={rowBg(i)}>{i + 1}</TdSticky>
               <td className={tdClass}>{formatDateIndo(row.tanggal)}</td>
               <td className={`${tdClass} font-semibold text-gray-800 dark:text-white`}>{row.namaProspek || '—'}</td>
@@ -1530,7 +1530,7 @@ export default function DaftarCalonKlienPage() {
             </tr>
           ) : (
             searchedKlien.map((row, i) => (
-            <tr key={row.id} className={`animate-bottom-widget opacity-0 ${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
+            <tr key={row.id} className={`animate-bottom-widget ${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
               <TdSticky className={rowBg(i)}>{i + 1}</TdSticky>
               <td className={`${tdClass} font-semibold text-gray-800 dark:text-white`}>{row.namaKlien || '—'}</td>
               <td className={tdClass}>{row.sumber || '—'}</td>
@@ -1614,7 +1614,7 @@ export default function DaftarCalonKlienPage() {
             </tr>
           ) : (
             searchedKonten.map((row, i) => (
-            <tr key={row.id} className={`animate-bottom-widget opacity-0 ${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
+            <tr key={row.id} className={`animate-bottom-widget ${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
               <TdSticky className={rowBg(i)}>{i + 1}</TdSticky>
               <td className={tdClass}>{formatDateIndo(row.tanggal)}</td>
               <td className={`${tdClass} font-semibold text-gray-800 dark:text-white`}>{row.topik || '—'}</td>
@@ -1671,7 +1671,7 @@ export default function DaftarCalonKlienPage() {
             searchedSI.map((row, i) => {
             const kl = klienData.find(k => k.id === row.klienId);
             return (
-              <tr key={row.id} className={`animate-bottom-widget opacity-0 ${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
+              <tr key={row.id} className={`animate-bottom-widget ${rowBg(i)} hover:bg-brand-50/40 dark:hover:bg-brand-500/[0.04] transition-colors`}>
                 <TdSticky className={rowBg(i)}>{i + 1}</TdSticky>
                 <td className={`${tdClass} font-semibold text-gray-800 dark:text-white`}>
                   {row.namaKlien ?? kl?.namaKlien ?? '—'}
