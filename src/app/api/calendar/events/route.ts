@@ -80,3 +80,65 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function POST(req: Request) {
+  const session = await getServerSession(authOptions);
+
+  if (!session || !(session as any).accessToken) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const body = await req.json();
+    const { title, start, end, description, location, reminderMinutes } = body;
+
+    if (!title || !start || !end) {
+      return NextResponse.json({ error: "Title, start, and end are required" }, { status: 400 });
+    }
+
+    const eventData: any = {
+      summary: title,
+      description,
+      location,
+      start: {
+        dateTime: new Date(start).toISOString(),
+      },
+      end: {
+        dateTime: new Date(end).toISOString(),
+      },
+    };
+
+    // If a reminder is specified, override defaults
+    if (reminderMinutes !== undefined && reminderMinutes !== null) {
+      eventData.reminders = {
+        useDefault: false,
+        overrides: [
+          { method: "popup", minutes: parseInt(reminderMinutes) },
+        ],
+      };
+    }
+
+    const response = await fetch(
+      "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${(session as any).accessToken}`,
+        },
+        body: JSON.stringify(eventData),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error?.message || "Failed to create event");
+    }
+
+    return NextResponse.json(data);
+  } catch (error: any) {
+    console.error("Calendar create error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

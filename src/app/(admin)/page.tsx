@@ -234,7 +234,7 @@ export default function Dashboard() {
           </div>
           <div className="overflow-hidden">
             <h3 className="text-base font-black text-gray-900 dark:text-white leading-none mb-0.5">{dbSummary.totalCalonKlien}</h3>
-            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest truncate">Potensi Klien</p>
+            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest truncate">Kontak Klien</p>
           </div>
         </Link>
 
@@ -594,7 +594,7 @@ export default function Dashboard() {
               <div className="flex items-center gap-2">
                 <span className="w-1.5 h-3.5 bg-brand-500 rounded-full"></span>
                 <h2 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider font-bold">
-                  Potensi Klien Terbaru
+                  Kontak Klien Terbaru
                 </h2>
               </div>
               <Link href="/daftar-potensi-klien" className="text-brand-500 font-black hover:underline text-[9px] uppercase tracking-wider">Semua</Link>

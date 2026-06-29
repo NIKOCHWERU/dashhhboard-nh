@@ -1760,7 +1760,7 @@ export default function DaftarCalonKlienPage() {
             <span className="text-brand-600">Kontak klien</span>
           </div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
-            Daftar Potensi Klien
+            Kontak Klien
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Kelola potensi klien, klien aktif, dan bahan konten NH Law Firm
@@ -1770,7 +1770,7 @@ export default function DaftarCalonKlienPage() {
         {/* ── Stat Cards */}
         <div ref={statsRef} className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-stagger">
           <StatCard
-            label="Total Potensi Klien"
+            label="Total Kontak Klien"
             value={calonData.length}
             color="bg-brand-50 dark:bg-brand-500/10"
             icon={

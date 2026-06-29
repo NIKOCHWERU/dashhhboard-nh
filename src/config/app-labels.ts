@@ -173,7 +173,7 @@ export const APP_LABELS = {
       tugas: "Tugas / Rincian",
       area: "Area",
       status: "Status",
-      keterangan: "Keterangan",
+      perorangan: "Non Retainer",
       pic: "Penanggung Jawab",
     },
     alerts: {

@@ -158,7 +158,9 @@ export async function GET(req: NextRequest) {
         RETAINER: { total: 0, selesai: 0, internalConf: 0, companyConf: 0, progress: 0, pending: 0, cancel: 0 },
         NON_RETAINER: { total: 0, selesai: 0, internalConf: 0, companyConf: 0, progress: 0, pending: 0, cancel: 0 },
         INTERNAL: { total: 0, selesai: 0, internalConf: 0, companyConf: 0, progress: 0, pending: 0, cancel: 0 },
-        LAPORAN_BERKALA: { total: 0, selesai: 0, internalConf: 0, companyConf: 0, progress: 0, pending: 0, cancel: 0 }
+        LAPORAN_BERKALA: { total: 0, selesai: 0, internalConf: 0, companyConf: 0, progress: 0, pending: 0, cancel: 0 },
+        NON_RETAINER_PK: { total: 0, selesai: 0, internalConf: 0, companyConf: 0, progress: 0, pending: 0, cancel: 0 },
+        NON_RETAINER_PU: { total: 0, selesai: 0, internalConf: 0, companyConf: 0, progress: 0, pending: 0, cancel: 0 }
       };
 
       allRows.forEach((row) => {

@@ -858,6 +858,51 @@ const Calendar: React.FC = () => {
       });
 
       if (response.ok) {
+        // Sync to Google Calendar
+        try {
+          if (!selectedEventId || isGoogleEvent) {
+             let reminderMinutes = null;
+             if (reminderEnabled) {
+               if (pengingatHari === "0") {
+                 // Hari H - we can parse pengingatWaktu vs start time, but for simplicity let's use a fixed offset or calculate
+                 const eventStart = new Date(startDateTime);
+                 const [pHours, pMins] = pengingatWaktu.split(":").map(Number);
+                 const reminderTime = new Date(eventStart);
+                 reminderTime.setHours(pHours, pMins, 0, 0);
+                 const diff = eventStart.getTime() - reminderTime.getTime();
+                 reminderMinutes = Math.max(0, Math.floor(diff / 60000));
+               } else if (pengingatHari === "1jam") {
+                 reminderMinutes = 60;
+               } else if (pengingatHari === "2jam") {
+                 reminderMinutes = 120;
+               } else if (pengingatHari === "1") {
+                 reminderMinutes = 24 * 60;
+               } else if (pengingatHari === "2") {
+                 reminderMinutes = 48 * 60;
+               } else if (pengingatHari === "3") {
+                 reminderMinutes = 72 * 60;
+               } else if (pengingatHari === "7") {
+                 reminderMinutes = 7 * 24 * 60;
+               }
+             }
+
+             await fetch("/api/calendar/events", {
+               method: "POST",
+               headers: { "Content-Type": "application/json" },
+               body: JSON.stringify({
+                 title: `[NH] ${title}`,
+                 start: startDateTime,
+                 end: endDateTime,
+                 description: `${description || ''}\n\nPIC: ${picValue}\nLokasi: ${lokasi || 'Tidak ada'}`,
+                 location: lokasi,
+                 reminderMinutes
+               }),
+             });
+          }
+        } catch (syncErr) {
+          console.error("Google sync error:", syncErr);
+        }
+
         closeModal();
         fetchAllEvents();
         resetForm();
@@ -1887,6 +1932,8 @@ const Calendar: React.FC = () => {
                           className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-3 py-2.5 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white font-semibold text-sm"
                         >
                           <option value="0">Hari H</option>
+                          <option value="1jam">1 Jam Sebelumnya</option>
+                          <option value="2jam">2 Jam Sebelumnya</option>
                           <option value="1">1 Hari Sebelumnya</option>
                           <option value="2">2 Hari Sebelumnya</option>
                           <option value="3">3 Hari Sebelumnya</option>
@@ -1909,6 +1956,11 @@ const Calendar: React.FC = () => {
                         </select>
                       </div>
                     </div>
+                  )}
+                  {reminderEnabled && (
+                    <p className="text-[10px] text-gray-400 font-medium italic mt-2">
+                      *Nada dering notifikasi mengikuti pengaturan default aplikasi Google Calendar di HP Anda. Silakan ubah nada dering langsung dari menu Pengaturan (Settings) aplikasi Google Calendar di HP.
+                    </p>
                   )}
                 </div>
 
