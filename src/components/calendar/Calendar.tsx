@@ -2304,6 +2304,21 @@ const Calendar: React.FC = () => {
           color: #ffffff !important;
         }
 
+        /* 🛑 PREVENT ROW HOVER HIGHLIGHT FROM GLOBALS.CSS */
+        .fc tbody tr:hover {
+          background-color: transparent !important;
+        }
+        
+        /* 🌟 ONLY HIGHLIGHT INDIVIDUAL DAY CELLS ON HOVER */
+        html:not(.dark):not(.gold) .fc .fc-daygrid-day:hover {
+          background-color: #FCFAF5 !important;
+          cursor: pointer !important;
+        }
+        html.dark:not(.gold) .fc .fc-daygrid-day:hover {
+          background-color: rgba(255, 255, 255, 0.06) !important;
+          cursor: pointer !important;
+        }
+
         /* 🔴 RESPONSIVE MOBILE OVERRIDES FOR FULL CALENDAR */
         @media (max-width: 767px) {
           .fc {
