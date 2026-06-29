@@ -41,7 +41,11 @@ export async function POST(req: Request) {
     if (image && image.size > 0) {
       const buffer = Buffer.from(await image.arrayBuffer());
       const fileName = `${Date.now()}-${image.name}`;
-      const filePath = path.join(process.cwd(), "public/uploads/announcements", fileName);
+      const dirPath = path.join(process.cwd(), "public/uploads/announcements");
+      if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+      }
+      const filePath = path.join(dirPath, fileName);
       fs.writeFileSync(filePath, buffer);
       imagePath = `/uploads/announcements/${fileName}`;
     }
