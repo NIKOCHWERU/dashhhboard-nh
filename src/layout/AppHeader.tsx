@@ -13,7 +13,7 @@ import { APP_LABELS } from "../config/app-labels";
 const STATIC_MENUS = [
   { name: "Dashboard Utama", category: "Menu", path: "/", description: "Ringkasan kegiatan operasional kantor hari ini" },
   { name: "Kalender", category: "Menu", path: "/calendar", description: "Atur dan lihat kegiatan atau agenda kerja anda" },
-  { name: "Daftar Potensi Klien", category: "Menu", path: "/daftar-potensi-klien", description: "Daftar prospek, klien, dan interaksi klien" },
+  { name: "Kontak klien", category: "Menu", path: "/daftar-potensi-klien", description: "Daftar prospek, klien, dan interaksi klien" },
   { name: "Dokumentasi", category: "Menu", path: "/dokumentasi", description: "Panduan operasional dan dokumentasi sistem" },
   { name: "Pengumuman", category: "Menu", path: "/pengumuman", description: "Daftar pengumuman internal kantor hukum" },
   { name: "Arsip", category: "Manajemen Arsip", path: "/narasumber-hukum", description: "Manajemen folder dan arsip dokumen Google Drive" },

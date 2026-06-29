@@ -44,7 +44,7 @@ export const APP_LABELS = {
     items: {
       dashboard: "Dashboard Utama",
       calendar: "Kalender",
-      tasks: "Daftar Potensi Klien",
+      tasks: "Kontak klien",
       berkas: "Berkas",
       dokumentasi: "Dokumentasi",
       pengumuman: "Pengumuman",

@@ -1757,7 +1757,7 @@ export default function DaftarCalonKlienPage() {
           <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mb-3 font-medium uppercase tracking-wider">
             <span>CRM</span>
             <span>›</span>
-            <span className="text-brand-600">Daftar Potensi Klien</span>
+            <span className="text-brand-600">Kontak klien</span>
           </div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
             Daftar Potensi Klien
