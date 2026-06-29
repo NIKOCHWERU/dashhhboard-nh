@@ -53,6 +53,7 @@ model User {
   sessions        Session[]
   agendas         Agenda[]
   personalTasks   PersonalTask[]
+  laporanHarian   LaporanHarian[]
 
   @@map("user")
 }
@@ -463,5 +464,22 @@ model ProgressPekerjaan {
   updatedAt       DateTime  @updatedAt
 
   @@map("progress_pekerjaan")
+}
+
+model LaporanHarian {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tanggal         DateTime @default(now())
+  prioritas       String   @db.Text // JSON string: { q1: [], q2: [], q3: [] }
+  rincianKegiatan String   @db.Text // JSON string: [{ start, end, duration, activity }]
+  hasilKerja      String   @db.Text // JSON string: [string]
+  tugasEsok       String   @db.Text // JSON string: { q1: [], q2: [], q3: [] }
+  refleksi        String   @db.Text // JSON string: { halBaru, hambatan, catatan }
+  documents       String?  @db.Text // JSON string: [{ name, url }]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("laporan_harian")
 }
 

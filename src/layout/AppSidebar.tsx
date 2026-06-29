@@ -111,6 +111,7 @@ const AppSidebar: React.FC = () => {
       { name: APP_LABELS.sidebar.items.calendar, icon: <CalenderIcon />, path: "/calendar" },
       { name: APP_LABELS.sidebar.items.tasks, icon: <CatatanIcon />, path: "/daftar-potensi-klien" },
       { name: "Pekerjaan aktif", icon: <SkalaPrioritasIcon />, path: "/progress-pekerjaan" },
+      { name: "Laporan Harian", icon: <CatatanIcon />, path: "/laporan-harian" },
       { name: APP_LABELS.sidebar.items.dokumentasi, icon: <DokumentasiIcon />, path: "/dokumentasi" },
       { name: APP_LABELS.sidebar.items.pengumuman, icon: <PengumumanIcon />, path: "/pengumuman" }
     ];

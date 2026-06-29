@@ -181,28 +181,26 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { title, startDate, endDate, pic, scale, description, notes } = body;
 
+    // Resolve PICs to find attendee emails and userIds
+    const picsResolved = await resolvePICs(pic || "");
+
+    // 1. Sync to Google Calendar for all users (Creator and PICs)
+    let googleEventId = null;
+    const eventMap: Record<string, string> = {};
+
     // Parse reminder settings
     let reminderEnabled = false;
     let pengingatHari = "0";
     let pengingatWaktu = "09:00";
-    let pengingatPengulangan = "none";
     try {
       if (notes && notes.startsWith("{") && notes.endsWith("}")) {
         const parsed = JSON.parse(notes);
         reminderEnabled = !!parsed.reminderEnabled;
         pengingatHari = parsed.pengingatHari || "0";
         pengingatWaktu = parsed.pengingatWaktu || "09:00";
-        pengingatPengulangan = parsed.pengingatPengulangan || "none";
       }
     } catch (e) {}
 
-    // Resolve PICs to find attendee emails and userIds
-    const picsResolved = await resolvePICs(pic || "");
-    const attendees = picsResolved
-      .map((p) => (p.email ? { email: p.email } : null))
-      .filter(Boolean) as { email: string }[];
-
-    // Calculate alarm overrides
     const reminderMinutes = calculateReminderMinutes(startDate, pengingatHari, pengingatWaktu);
     let googleReminders = { useDefault: true } as any;
     if (reminderEnabled && reminderMinutes > 0) {
@@ -215,12 +213,7 @@ export async function POST(req: Request) {
       };
     }
 
-    // Map recurrence
-    const recurrence = mapRecurrence(pengingatPengulangan);
-
-    let googleEventId = null;
-
-    // 1. Sync to Google Calendar first to get ID
+    // Sync for Creator
     if (accessToken) {
       try {
         const googleRes = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events?sendUpdates=all", {
@@ -231,38 +224,52 @@ export async function POST(req: Request) {
             description: buildGoogleCalendarDescription(pic, description, notes),
             start: { dateTime: new Date(startDate).toISOString() },
             end: { dateTime: new Date(endDate).toISOString() },
-            attendees,
-            reminders: googleReminders,
-            recurrence
+            reminders: googleReminders
           }),
         });
         const resData = await googleRes.json();
         if (googleRes.ok) {
-          googleEventId = resData.id;
-
-          // 1b. Set notifications specifically on each attendee's copy of the event if they have connected Google Accounts
-          for (const attendee of picsResolved) {
-            if (attendee.userId && attendee.userId !== user.id) {
-              const attendeeAccessToken = await getUserAccessToken(attendee.userId);
-              if (attendeeAccessToken) {
-                try {
-                  await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`, {
-                    method: "PATCH",
-                    headers: { Authorization: `Bearer ${attendeeAccessToken}`, "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      reminders: googleReminders
-                    })
-                  });
-                } catch (patchErr) {
-                  console.error(`Failed to patch reminder for attendee ${attendee.name}:`, patchErr);
-                }
-              }
-            }
-          }
+          eventMap["creator"] = resData.id;
         } else {
-          console.error("Google Sync Failed. Response:", resData);
+          console.error("Creator sync failed:", resData);
         }
-      } catch (e) { console.error("Google Sync Error:", e); }
+      } catch (e) {
+        console.error("Creator sync error:", e);
+      }
+    }
+
+    // Sync for other PICs
+    for (const picUser of picsResolved) {
+      if (picUser.userId && picUser.userId !== user.id) {
+        const picAccessToken = await getUserAccessToken(picUser.userId);
+        if (picAccessToken) {
+          try {
+            const googleRes = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events?sendUpdates=all", {
+              method: "POST",
+              headers: { Authorization: `Bearer ${picAccessToken}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                summary: `[${scale}] ${title}`,
+                description: buildGoogleCalendarDescription(pic, description, notes),
+                start: { dateTime: new Date(startDate).toISOString() },
+                end: { dateTime: new Date(endDate).toISOString() },
+                reminders: googleReminders
+              }),
+            });
+            const resData = await googleRes.json();
+            if (googleRes.ok) {
+              eventMap[picUser.userId] = resData.id;
+            } else {
+              console.error(`PIC ${picUser.name} sync failed:`, resData);
+            }
+          } catch (e) {
+            console.error(`PIC ${picUser.name} sync error:`, e);
+          }
+        }
+      }
+    }
+
+    if (Object.keys(eventMap).length > 0) {
+      googleEventId = JSON.stringify(eventMap);
     }
 
     // 2. Save to Local DB
@@ -276,7 +283,7 @@ export async function POST(req: Request) {
         description,
         notes,
         googleEventId,
-        userId: (session.user as any).id,
+        userId: user.id,
       },
     });
 
@@ -305,7 +312,7 @@ export async function PUT(req: Request) {
     const body = await req.json();
     const { title, startDate, endDate, pic, scale, description, notes } = body;
 
-    // 1. Get existing agenda to find googleEventId
+    // 1. Get existing agenda
     const existing = await prisma.agenda.findUnique({ where: { id } });
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -313,24 +320,15 @@ export async function PUT(req: Request) {
     let reminderEnabled = false;
     let pengingatHari = "0";
     let pengingatWaktu = "09:00";
-    let pengingatPengulangan = "none";
     try {
       if (notes && notes.startsWith("{") && notes.endsWith("}")) {
         const parsed = JSON.parse(notes);
         reminderEnabled = !!parsed.reminderEnabled;
         pengingatHari = parsed.pengingatHari || "0";
         pengingatWaktu = parsed.pengingatWaktu || "09:00";
-        pengingatPengulangan = parsed.pengingatPengulangan || "none";
       }
     } catch (e) {}
 
-    // Resolve PICs to find attendee emails and userIds
-    const picsResolved = await resolvePICs(pic || "");
-    const attendees = picsResolved
-      .map((p) => (p.email ? { email: p.email } : null))
-      .filter(Boolean) as { email: string }[];
-
-    // Calculate alarm overrides
     const reminderMinutes = calculateReminderMinutes(startDate, pengingatHari, pengingatWaktu);
     let googleReminders = { useDefault: true } as any;
     if (reminderEnabled && reminderMinutes > 0) {
@@ -343,17 +341,29 @@ export async function PUT(req: Request) {
       };
     }
 
-    // Map recurrence
-    const recurrence = mapRecurrence(pengingatPengulangan);
+    const picsResolved = await resolvePICs(pic || "");
 
-    // 2. Update or Create Google Calendar event
-    let newGoogleEventId = existing.googleEventId;
+    // Parse existing Google event IDs map
+    let eventMap: Record<string, string> = {};
+    if (existing.googleEventId) {
+      if (existing.googleEventId.startsWith("{") && existing.googleEventId.endsWith("}")) {
+        try {
+          eventMap = JSON.parse(existing.googleEventId);
+        } catch (e) {}
+      } else {
+        eventMap["creator"] = existing.googleEventId;
+      }
+    }
 
+    const newEventMap: Record<string, string> = {};
+
+    // 2. Update/Create Google event for Creator
     if (accessToken) {
       try {
-        const method = existing.googleEventId ? "PUT" : "POST";
-        const url = existing.googleEventId 
-          ? `https://www.googleapis.com/calendar/v3/calendars/primary/events/${existing.googleEventId}?sendUpdates=all`
+        const existingCreatorEventId = eventMap["creator"];
+        const method = existingCreatorEventId ? "PUT" : "POST";
+        const url = existingCreatorEventId 
+          ? `https://www.googleapis.com/calendar/v3/calendars/primary/events/${existingCreatorEventId}?sendUpdates=all`
           : "https://www.googleapis.com/calendar/v3/calendars/primary/events?sendUpdates=all";
 
         const googleRes = await fetch(url, {
@@ -364,48 +374,76 @@ export async function PUT(req: Request) {
             description: buildGoogleCalendarDescription(pic, description, notes),
             start: { dateTime: new Date(startDate).toISOString() },
             end: { dateTime: new Date(endDate).toISOString() },
-            attendees,
-            reminders: googleReminders,
-            recurrence
+            reminders: googleReminders
           }),
         });
 
         if (googleRes.ok) {
-          if (!existing.googleEventId) {
-            const resData = await googleRes.json();
-            newGoogleEventId = resData.id;
-          }
-
-          // 2b. Set notifications specifically on each attendee's copy of the event if they have connected Google Accounts
-          const activeEventId = newGoogleEventId;
-          if (activeEventId) {
-            for (const attendee of picsResolved) {
-              if (attendee.userId && attendee.userId !== user.id) {
-                const attendeeAccessToken = await getUserAccessToken(attendee.userId);
-                if (attendeeAccessToken) {
-                  try {
-                    await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${activeEventId}`, {
-                      method: "PATCH",
-                      headers: { Authorization: `Bearer ${attendeeAccessToken}`, "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        reminders: googleReminders
-                      })
-                    });
-                  } catch (patchErr) {
-                    console.error(`Failed to patch reminder for attendee ${attendee.name}:`, patchErr);
-                  }
-                }
-              }
-            }
-          }
-        } else {
           const resData = await googleRes.json();
-          console.error("Google Sync PUT/POST Failed. Response:", resData);
+          newEventMap["creator"] = resData.id;
+        } else {
+          console.error("Creator PUT/POST failed:", await googleRes.text());
         }
       } catch (e) { console.error("Google Update Error:", e); }
     }
 
-    // 3. Update Local DB
+    // 3. Update/Create Google event for PICs
+    for (const picUser of picsResolved) {
+      if (picUser.userId && picUser.userId !== user.id) {
+        const picAccessToken = await getUserAccessToken(picUser.userId);
+        if (picAccessToken) {
+          try {
+            const existingPicEventId = eventMap[picUser.userId];
+            const method = existingPicEventId ? "PUT" : "POST";
+            const url = existingPicEventId 
+              ? `https://www.googleapis.com/calendar/v3/calendars/primary/events/${existingPicEventId}?sendUpdates=all`
+              : "https://www.googleapis.com/calendar/v3/calendars/primary/events?sendUpdates=all";
+
+            const googleRes = await fetch(url, {
+              method: method,
+              headers: { Authorization: `Bearer ${picAccessToken}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                summary: `[${scale}] ${title}`,
+                description: buildGoogleCalendarDescription(pic, description, notes),
+                start: { dateTime: new Date(startDate).toISOString() },
+                end: { dateTime: new Date(endDate).toISOString() },
+                reminders: googleReminders
+              }),
+            });
+
+            if (googleRes.ok) {
+              const resData = await googleRes.json();
+              newEventMap[picUser.userId] = resData.id;
+            } else {
+              console.error(`PIC ${picUser.name} PUT/POST failed:`, await googleRes.text());
+            }
+          } catch (e) {
+            console.error(`PIC ${picUser.name} Update Error:`, e);
+          }
+        }
+      }
+    }
+
+    // Clean up old events for users who are no longer PICs
+    for (const [userId, eventId] of Object.entries(eventMap)) {
+      if (userId !== "creator" && !picsResolved.some(p => p.userId === userId)) {
+        const picAccessToken = await getUserAccessToken(userId);
+        if (picAccessToken) {
+          try {
+            await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}?sendUpdates=all`, {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${picAccessToken}` }
+            });
+          } catch (e) {
+            console.error(`PIC delete cleanup error:`, e);
+          }
+        }
+      }
+    }
+
+    const newGoogleEventId = Object.keys(newEventMap).length > 0 ? JSON.stringify(newEventMap) : null;
+
+    // 4. Update Local DB
     const updated = await prisma.agenda.update({
       where: { id },
       data: {
@@ -419,7 +457,6 @@ export async function PUT(req: Request) {
         googleEventId: newGoogleEventId,
       },
     });
-
 
     return NextResponse.json(updated);
   } catch (error: any) {
@@ -444,13 +481,42 @@ export async function DELETE(req: Request) {
 
   try {
     const existing = await prisma.agenda.findUnique({ where: { id } });
-    if (existing && accessToken && existing.googleEventId) {
-      try {
-        await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${existing.googleEventId}?sendUpdates=all`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-      } catch (e) { console.error("Google Delete Error:", e); }
+    if (existing && existing.googleEventId) {
+      let eventMap: Record<string, string> = {};
+      if (existing.googleEventId.startsWith("{") && existing.googleEventId.endsWith("}")) {
+        try {
+          eventMap = JSON.parse(existing.googleEventId);
+        } catch (e) {}
+      } else {
+        eventMap["creator"] = existing.googleEventId;
+      }
+
+      // Delete from Creator
+      if (eventMap["creator"] && accessToken) {
+        try {
+          await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventMap["creator"]}?sendUpdates=all`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+        } catch (e) { console.error("Google Creator Delete Error:", e); }
+      }
+
+      // Delete from PICs
+      for (const [userId, eventId] of Object.entries(eventMap)) {
+        if (userId !== "creator") {
+          const picAccessToken = await getUserAccessToken(userId);
+          if (picAccessToken) {
+            try {
+              await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}?sendUpdates=all`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${picAccessToken}` }
+              });
+            } catch (e) {
+              console.error(`Google PIC ${userId} Delete Error:`, e);
+            }
+          }
+        }
+      }
     }
 
     await prisma.agenda.delete({ where: { id } });

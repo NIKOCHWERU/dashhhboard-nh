@@ -200,6 +200,11 @@ const Calendar: React.FC = () => {
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
 
+  // Calendar Filter Checkboxes
+  const [showLocalAgendas, setShowLocalAgendas] = useState(true);
+  const [showGoogleEvents, setShowGoogleEvents] = useState(true);
+  const [showHolidays, setShowHolidays] = useState(true);
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (pesertaDropdownRef.current && !pesertaDropdownRef.current.contains(event.target as Node)) {
@@ -260,6 +265,14 @@ const Calendar: React.FC = () => {
     const isAdminUser = userObj?.role === "admin";
     
     const isHoliday = ev.extendedProps?.type === "holiday";
+    const isGoogle = ev.extendedProps?.type === "Tim WFO";
+    const isLocal = ev.extendedProps?.type === "local";
+
+    // Toggle Filters
+    if (isHoliday && !showHolidays) return false;
+    if (isGoogle && !showGoogleEvents) return false;
+    if (isLocal && !showLocalAgendas) return false;
+
     if (isHoliday) return true;
 
     if (isAdminUser && showAllAgenda) {
@@ -858,51 +871,6 @@ const Calendar: React.FC = () => {
       });
 
       if (response.ok) {
-        // Sync to Google Calendar
-        try {
-          if (!selectedEventId || isGoogleEvent) {
-             let reminderMinutes = null;
-             if (reminderEnabled) {
-               if (pengingatHari === "0") {
-                 // Hari H - we can parse pengingatWaktu vs start time, but for simplicity let's use a fixed offset or calculate
-                 const eventStart = new Date(startDateTime);
-                 const [pHours, pMins] = pengingatWaktu.split(":").map(Number);
-                 const reminderTime = new Date(eventStart);
-                 reminderTime.setHours(pHours, pMins, 0, 0);
-                 const diff = eventStart.getTime() - reminderTime.getTime();
-                 reminderMinutes = Math.max(0, Math.floor(diff / 60000));
-               } else if (pengingatHari === "1jam") {
-                 reminderMinutes = 60;
-               } else if (pengingatHari === "2jam") {
-                 reminderMinutes = 120;
-               } else if (pengingatHari === "1") {
-                 reminderMinutes = 24 * 60;
-               } else if (pengingatHari === "2") {
-                 reminderMinutes = 48 * 60;
-               } else if (pengingatHari === "3") {
-                 reminderMinutes = 72 * 60;
-               } else if (pengingatHari === "7") {
-                 reminderMinutes = 7 * 24 * 60;
-               }
-             }
-
-             await fetch("/api/calendar/events", {
-               method: "POST",
-               headers: { "Content-Type": "application/json" },
-               body: JSON.stringify({
-                 title: `[NH] ${title}`,
-                 start: startDateTime,
-                 end: endDateTime,
-                 description: `${description || ''}\n\nPIC: ${picValue}\nLokasi: ${lokasi || 'Tidak ada'}`,
-                 location: lokasi,
-                 reminderMinutes
-               }),
-             });
-          }
-        } catch (syncErr) {
-          console.error("Google sync error:", syncErr);
-        }
-
         closeModal();
         fetchAllEvents();
         resetForm();
@@ -1184,11 +1152,7 @@ const Calendar: React.FC = () => {
         {/* Header Panel */}
         <div className="border-b border-gray-100 dark:border-gray-800 pb-3">
           <div className="flex flex-col space-y-2">
-            <div className="flex justify-between items-center">
-              <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
-                {selectedDate ? "Agenda Terpilih" : "Agenda"}
-              </h3>
+            <div className="flex flex-col gap-3">
               {canManage && (
                 <button
                   onClick={() => {
@@ -1199,17 +1163,17 @@ const Calendar: React.FC = () => {
                     setViewMode("edit");
                     openModal();
                   }}
-                  className="px-2.5 py-1.5 bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 font-bold text-[9px] uppercase tracking-widest cursor-pointer shadow active:scale-95 transition-transform rounded-lg flex items-center gap-1"
+                  className="w-full px-5 py-3.5 bg-brand-500 hover:bg-brand-600 dark:bg-white dark:text-black dark:hover:bg-gray-100 text-white font-black text-xs uppercase tracking-widest cursor-pointer shadow-lg hover:shadow-xl hover:scale-101 active:scale-98 transition-all rounded-full flex items-center justify-center gap-2 border border-brand-200/20 dark:border-none"
                 >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                   </svg>
-                  Agenda
+                  Buat Agenda
                 </button>
               )}
             </div>
             {selectedDate ? (
-              <div className="flex justify-between items-center bg-brand-500/5 dark:bg-brand-500/10 border border-brand-500/20 px-2.5 py-1.5 rounded-lg">
+              <div className="flex justify-between items-center bg-brand-500/5 dark:bg-brand-500/10 border border-brand-500/20 px-2.5 py-1.5 rounded-lg mt-3">
                 <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wide truncate">
                   Tanggal: {formatDateIndo(selectedDate)}
                 </span>
@@ -1222,6 +1186,43 @@ const Calendar: React.FC = () => {
                 </button>
               </div>
             ) : null}
+          </div>
+        </div>
+
+        {/* Checkbox legend filters (Google Calendar Style) */}
+        <div className="bg-white dark:bg-white/[0.03] border border-gray-150 dark:border-gray-800 p-4 rounded-2xl shadow-sm space-y-3 mt-3">
+          <h4 className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Kalender Saya</h4>
+          <div className="space-y-2">
+            <label className="flex items-center gap-2.5 text-xs font-bold text-gray-600 dark:text-gray-300 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showLocalAgendas}
+                onChange={(e) => setShowLocalAgendas(e.target.checked)}
+                className="w-4 h-4 text-brand-500 rounded border-gray-300 dark:border-gray-700 focus:ring-brand-500 cursor-pointer"
+              />
+              <span className="w-2.5 h-2.5 rounded-full bg-brand-500 flex-shrink-0"></span>
+              Agenda NH
+            </label>
+            <label className="flex items-center gap-2.5 text-xs font-bold text-gray-600 dark:text-gray-300 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showGoogleEvents}
+                onChange={(e) => setShowGoogleEvents(e.target.checked)}
+                className="w-4 h-4 text-brand-500 rounded border-gray-300 dark:border-gray-700 focus:ring-brand-500 cursor-pointer"
+              />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#4285F4] flex-shrink-0"></span>
+              Google Calendar
+            </label>
+            <label className="flex items-center gap-2.5 text-xs font-bold text-gray-600 dark:text-gray-300 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showHolidays}
+                onChange={(e) => setShowHolidays(e.target.checked)}
+                className="w-4 h-4 text-brand-500 rounded border-gray-300 dark:border-gray-700 focus:ring-brand-500 cursor-pointer"
+              />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444] flex-shrink-0"></span>
+              Hari Libur Nasional
+            </label>
           </div>
         </div>
 
@@ -1342,7 +1343,64 @@ const Calendar: React.FC = () => {
         }
       `}} />
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4" style={{ height: 'calc(100vh - 130px)', minHeight: '500px' }}>
-        {/* Left Side: Calendar Area */}
+        {/* Left Side: Agenda Panel + Stats (Sidebar) */}
+        <div className="xl:col-span-3 flex flex-col h-full gap-3">
+
+          {/* Stat Mini Cards - 2x2 grid */}
+          <div className="grid grid-cols-2 gap-2 flex-shrink-0">
+            <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 px-3 py-2.5 rounded-xl flex items-center gap-2.5 shadow-sm">
+              <div className="w-7 h-7 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-500 flex-shrink-0">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider block">Hari Ini</span>
+                <span className="text-base font-black text-black dark:text-white leading-none">{todayCount}</span>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 px-3 py-2.5 rounded-xl flex items-center gap-2.5 shadow-sm">
+              <div className="w-7 h-7 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-500 flex-shrink-0">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                </svg>
+              </div>
+              <div>
+                <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider block">Minggu Ini</span>
+                <span className="text-base font-black text-black dark:text-white leading-none">{weekCount}</span>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 px-3 py-2.5 rounded-xl flex items-center gap-2.5 shadow-sm">
+              <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500 flex-shrink-0">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                </svg>
+              </div>
+              <div>
+                <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider block">Bulan Ini</span>
+                <span className="text-base font-black text-black dark:text-white leading-none">{monthCount}</span>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 px-3 py-2.5 rounded-xl flex items-center gap-2.5 shadow-sm">
+              <div className="w-7 h-7 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-500 flex-shrink-0">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z" />
+                </svg>
+              </div>
+              <div>
+                <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider block">Mendesak</span>
+                <span className="text-base font-black text-black dark:text-white leading-none">{deadlineCount}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Agenda Panel - fills remaining height */}
+          <div className="flex-1 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-2xl p-4 flex flex-col overflow-hidden min-h-0">
+            {renderAgendaPanelContent()}
+          </div>
+        </div>
+
+        {/* Right Side: Calendar Area */}
         <div className="xl:col-span-9 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-2xl p-4 md:p-5 flex flex-col overflow-hidden">
           
           {/* Custom Header Toolbar */}
@@ -1473,63 +1531,6 @@ const Calendar: React.FC = () => {
               </label>
             </div>
           )}
-        </div>
-
-        {/* Right Side: Agenda Panel + Stats */}
-        <div className="xl:col-span-3 flex flex-col h-full gap-3">
-
-          {/* Stat Mini Cards - 2x2 grid */}
-          <div className="grid grid-cols-2 gap-2 flex-shrink-0">
-            <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 px-3 py-2.5 rounded-xl flex items-center gap-2.5 shadow-sm">
-              <div className="w-7 h-7 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-500 flex-shrink-0">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider block">Hari Ini</span>
-                <span className="text-base font-black text-black dark:text-white leading-none">{todayCount}</span>
-              </div>
-            </div>
-            <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 px-3 py-2.5 rounded-xl flex items-center gap-2.5 shadow-sm">
-              <div className="w-7 h-7 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-500 flex-shrink-0">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                </svg>
-              </div>
-              <div>
-                <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider block">Minggu Ini</span>
-                <span className="text-base font-black text-black dark:text-white leading-none">{weekCount}</span>
-              </div>
-            </div>
-            <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 px-3 py-2.5 rounded-xl flex items-center gap-2.5 shadow-sm">
-              <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500 flex-shrink-0">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                </svg>
-              </div>
-              <div>
-                <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider block">Bulan Ini</span>
-                <span className="text-base font-black text-black dark:text-white leading-none">{monthCount}</span>
-              </div>
-            </div>
-            <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 px-3 py-2.5 rounded-xl flex items-center gap-2.5 shadow-sm">
-              <div className="w-7 h-7 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-500 flex-shrink-0">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z" />
-                </svg>
-              </div>
-              <div>
-                <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider block">Mendesak</span>
-                <span className="text-base font-black text-black dark:text-white leading-none">{deadlineCount}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Agenda Panel - fills remaining height */}
-          <div className="flex-1 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-2xl p-4 flex flex-col overflow-hidden min-h-0">
-            {renderAgendaPanelContent()}
-          </div>
         </div>
       </div>
       <Modal isOpen={isOpen} onClose={closeModal}>
