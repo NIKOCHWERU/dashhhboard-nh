@@ -714,7 +714,7 @@ export default function ProgressPekerjaanPage() {
       </div>
 
       {/* ─── STATS SUMMARY PANELS ────────────────────────────────────────────── */}
-      <div ref={statsRef} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 print:hidden" style={{ opacity: 0 }}>
+      <div ref={statsRef} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 print:hidden animate-stagger">
         {STATUS_METADATA.map((meta) => {
           let count = 0;
           if (activeStats) {
@@ -756,7 +756,7 @@ export default function ProgressPekerjaanPage() {
       </div>
 
       {/* ─── TAB NAVIGATION ─────────────────────────────────────────────────── */}
-      <div ref={contentRef} style={{ opacity: 0 }}>
+      <div ref={contentRef} className="animate-stagger">
       <div className="flex border-b border-gray-200 dark:border-gray-800 gap-1 overflow-x-auto pb-px print:hidden mt-2">
         {(["RETAINER", "NON_RETAINER", "INTERNAL", "LAPORAN_BERKALA"] as ActiveTab[]).map((tab) => {
           const isActive = activeTab === tab;
