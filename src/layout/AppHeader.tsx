@@ -126,7 +126,7 @@ const AppHeader: React.FC = () => {
       case "/skala-prioritas": return APP_LABELS.header.titles.skalaPrioritas;
       case "/internal": return APP_LABELS.header.titles.suratInternal;
       case "/narasumber-hukum": return "Arsip";
-      case "/progress-pekerjaan": return "Progress Pekerjaan";
+      case "/progress-pekerjaan": return "Pekerjaan aktif";
       default: return APP_LABELS.header.titles.default;
     }
   };

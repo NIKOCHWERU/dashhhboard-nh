@@ -706,7 +706,7 @@ export default function ProgressPekerjaanPage() {
       </div>
       <div className="hidden print:block text-center mb-6 text-black">
         <h2 className="text-sm font-black uppercase tracking-wider">
-          Laporan Progress Pekerjaan ({activeTab.replace("_", " ")})
+          Laporan Pekerjaan Aktif ({activeTab.replace("_", " ")})
         </h2>
         <p className="text-[9px] text-gray-555 uppercase font-bold tracking-widest mt-1">
           Tanggal Rekap: {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
@@ -774,12 +774,8 @@ export default function ProgressPekerjaanPage() {
               label = "Internal";
               break;
             case "LAPORAN_BERKALA":
-              label = "Laporan Berkala Retainer";
-              icon = (
-                <svg className="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                </svg>
-              );
+              label = "Lainnya";
+              icon = null;
               break;
           }
 
@@ -915,7 +911,7 @@ export default function ProgressPekerjaanPage() {
           </div>
         ) : filteredData.length === 0 ? (
           <div className="text-center py-24 text-xs text-gray-400 italic">
-            Belum ada data progress pekerjaan yang sesuai filter.
+            Belum ada data pekerjaan aktif yang sesuai filter.
           </div>
         ) : (
           <div className="overflow-x-auto text-[13px] relative max-h-[70vh] no-scrollbar rounded-2xl border border-gray-250 dark:border-gray-800 print:max-h-none print:overflow-visible print:border-none">
