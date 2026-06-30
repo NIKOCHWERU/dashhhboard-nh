@@ -1546,11 +1546,11 @@ const Calendar: React.FC = () => {
         </div>
       </div>
       <Modal isOpen={isOpen} onClose={closeModal}>
-        <div className="bg-white dark:bg-boxdark rounded-none overflow-hidden shadow-2xl border border-stroke dark:border-strokedark max-w-3xl w-full mx-auto animate-in zoom-in duration-300">
+        <div className="bg-white dark:bg-boxdark rounded-2xl overflow-hidden shadow-2xl border border-stroke dark:border-strokedark max-w-3xl w-full mx-auto animate-in zoom-in duration-300">
           {/* Header Modern */}
           <div className="px-8 py-6 bg-white dark:bg-boxdark border-b border-stroke dark:border-strokedark flex justify-between items-center">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-none bg-brand-500/10 flex items-center justify-center text-brand-500">
+              <div className="w-12 h-12 rounded-xl bg-brand-500/10 flex items-center justify-center text-brand-500">
                 <CalenderIcon />
               </div>
               <div>
@@ -1819,7 +1819,7 @@ const Calendar: React.FC = () => {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Meeting PT. A"
-                    className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
+                    className="w-full rounded-xl border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
                   />
                 </div>
 
@@ -1830,7 +1830,7 @@ const Calendar: React.FC = () => {
                     disabled={!canManage}
                     value={kategori}
                     onChange={(e) => setKategori(e.target.value)}
-                    className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3.5 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-semibold text-sm"
+                    className="w-full rounded-xl border-[1.5px] border-stroke bg-transparent px-5 py-3.5 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-semibold text-sm"
                   >
                     <option value="Retainer">Retainer</option>
                     <option value="Non Retainer">Non Retainer</option>
@@ -1844,7 +1844,7 @@ const Calendar: React.FC = () => {
                       value={kategoriLainnya}
                       onChange={(e) => setKategoriLainnya(e.target.value)}
                       placeholder="Masukkan Kategori Lainnya..."
-                      className="w-full mt-3 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
+                      className="w-full mt-3 rounded-xl border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
                     />
                   )}
                 </div>
@@ -1859,7 +1859,7 @@ const Calendar: React.FC = () => {
                     value={lokasi}
                     onChange={(e) => setLokasi(e.target.value)}
                     placeholder="Pilih atau ketik lokasi..."
-                    className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
+                    className="w-full rounded-xl border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
                   />
                   <datalist id="locations">
                     <option value="Kantor Pusat Narasumber Hukum" />
@@ -2213,7 +2213,7 @@ const Calendar: React.FC = () => {
               {selectedEventId && isCreatorOrAdminForSelected && !isHolidayEvent && (
                 <button
                   onClick={handleDelete}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-none text-sm font-bold text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all cursor-pointer"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                   Hapus Agenda
@@ -2223,7 +2223,7 @@ const Calendar: React.FC = () => {
             <div className="flex gap-4">
               <button
                 onClick={closeModal}
-                className="px-6 py-2.5 rounded-none text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
+                className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all cursor-pointer"
               >
                 {viewMode === "view" ? "Tutup" : "Batal"}
               </button>
@@ -2231,7 +2231,7 @@ const Calendar: React.FC = () => {
                 isCreatorOrAdminForSelected && !isGoogleEvent && !isHolidayEvent && (
                   <button
                     onClick={() => setViewMode("edit")}
-                    className="px-8 py-2.5 rounded-none text-sm font-black bg-brand-500 text-white shadow-lg shadow-brand-500/25 hover:bg-brand-600 hover:shadow-brand-500/40 transition-all active:scale-95"
+                    className="px-8 py-2.5 rounded-xl text-sm font-black bg-brand-500 text-white shadow-lg shadow-brand-500/25 hover:bg-brand-600 hover:shadow-brand-500/40 transition-all active:scale-95 cursor-pointer"
                   >
                     Edit Agenda
                   </button>
@@ -2240,7 +2240,7 @@ const Calendar: React.FC = () => {
                 !isGoogleEvent && canManage && (
                   <button
                     onClick={validateAndSubmit}
-                    className="px-8 py-2.5 rounded-none text-sm font-black bg-brand-500 text-white shadow-lg shadow-brand-500/25 hover:bg-brand-600 hover:shadow-brand-500/40 transition-all active:scale-95"
+                    className="px-8 py-2.5 rounded-xl text-sm font-black bg-brand-500 text-white shadow-lg shadow-brand-500/25 hover:bg-brand-600 hover:shadow-brand-500/40 transition-all active:scale-95 cursor-pointer"
                   >
                     {selectedEventId ? "Simpan Perubahan" : "Konfirmasi Agenda"}
                   </button>

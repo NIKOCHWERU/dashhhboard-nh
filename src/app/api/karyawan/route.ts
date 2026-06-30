@@ -19,10 +19,25 @@ export async function GET(req: Request) {
       filter.pt = pt;
     }
 
-    const data = await prisma.karyawan.findMany({
+    const karyawanList = await prisma.karyawan.findMany({
       where: filter,
       orderBy: { name: "asc" },
     });
+
+    // Map profile photos from corresponding users by email match
+    const emails = karyawanList.map((k) => k.email).filter(Boolean) as string[];
+    const users = await prisma.user.findMany({
+      where: { email: { in: emails } },
+      select: { email: true, image: true },
+    });
+
+    const userImageMap = new Map(users.map((u) => [u.email, u.image]));
+
+    const data = karyawanList.map((k) => ({
+      ...k,
+      image: k.email ? userImageMap.get(k.email) || null : null,
+    }));
+
     return NextResponse.json(data);
   } catch (error) {
     console.error("GET karyawan error:", error);

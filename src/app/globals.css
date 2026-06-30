@@ -1083,4 +1083,63 @@ h1, h2, h3, h4, h5, h6,
   text-transform: none !important;
 }
 
+/* FORCE BACKDROP BLUR SYSTEM-WIDE FOR ALL MODALS */
+.fixed.inset-0.bg-black\/50,
+.fixed.inset-0.h-full.w-full.bg-black\/50,
+.fixed.inset-0.bg-black\/30,
+.fixed.inset-0.bg-black\/40,
+[class*="backdrop-blur"],
+.backdrop-blur-\[12px\],
+.backdrop-blur-sm,
+.modal-backdrop,
+.modal-overlay {
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  background-color: rgba(0, 0, 0, 0.45) !important;
+  transition: all 0.3s ease-in-out;
+}
+
+/* FORCE PREMIUM ROUNDED CORNERS ON ALL MODAL DIALOGS/CARDS */
+div[class*="rounded-none"].overflow-hidden.shadow-2xl.border.max-w-3xl,
+div[class*="rounded-none"].max-w-3xl.w-full,
+div[class*="rounded-none"].overflow-hidden.shadow-2xl.border {
+  border-radius: 1rem !important; /* Force rounded-2xl */
+}
+
+/* PERFORMANCE OPTIMIZATIONS (FIX LAG & IMPROVE SMOOTHNESS) */
+* {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Enable hardware acceleration for smooth rendering of modals and dynamic transitions */
+.fixed, .absolute, .modal, .animate-in, .transition-all {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Scroll smoothness */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Improve scrollbars to prevent layout shifting and layout lag */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.5);
+}
+
+
 
