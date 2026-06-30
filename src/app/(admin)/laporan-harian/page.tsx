@@ -1171,8 +1171,8 @@ export default function LaporanHarianPage() {
 
           {/* Bulk Add Modal with Dynamic Inputs */}
           {bulkAddList && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 overflow-y-auto">
-              <div className="bg-white dark:bg-boxdark rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 max-w-3xl w-full p-6 space-y-4 animate-in zoom-in-95 duration-250 my-auto">
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-boxdark rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 max-w-3xl w-full p-6 space-y-4 max-h-[90vh] flex flex-col">
                 <div>
                   <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-wider">
                     Tambah Beberapa Tugas ({bulkAddList.category.toUpperCase()} - {bulkAddList.type === "today" ? "Hari Ini" : "Esok Hari"})
@@ -1182,7 +1182,7 @@ export default function LaporanHarianPage() {
                   </p>
                 </div>
                 
-                <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2">
+                <div className="space-y-3 flex-1 overflow-y-auto pr-2 min-h-0">
                   {bulkAddList.items.map((item, idx) => (
                     <div key={idx} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
                       <input
