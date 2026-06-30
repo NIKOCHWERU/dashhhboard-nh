@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { PlusIcon, UserCircleIcon, TrashBinIcon } from "@/icons";
+import { FeatureModal } from "@/components/common/FeatureModal";
 
 interface TaskItem {
   task: string;
@@ -1170,19 +1171,16 @@ export default function LaporanHarianPage() {
           </div>
 
           {/* Bulk Add Modal with Dynamic Inputs */}
-          {bulkAddList && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-boxdark rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 max-w-3xl w-full p-6 space-y-4 max-h-[90vh] flex flex-col">
-                <div>
-                  <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-wider">
-                    Tambah Beberapa Tugas ({bulkAddList.category.toUpperCase()} - {bulkAddList.type === "today" ? "Hari Ini" : "Esok Hari"})
-                  </h3>
-                  <p className="text-[9px] text-gray-400 font-bold uppercase mt-1">
-                    Masukkan detail tugas untuk setiap baris
-                  </p>
-                </div>
-                
-                <div className="space-y-3 flex-1 overflow-y-auto pr-2 min-h-0">
+          <FeatureModal
+            isOpen={!!bulkAddList}
+            onClose={() => setBulkAddList(null)}
+            title={`Tambah Beberapa Tugas (${bulkAddList?.category.toUpperCase()} - ${bulkAddList?.type === "today" ? "Hari Ini" : "Esok Hari"})`}
+            subtitle="Masukkan detail tugas untuk setiap baris"
+            width="max-w-4xl"
+          >
+            {bulkAddList && (
+              <div className="space-y-4">
+                <div className="space-y-3">
                   {bulkAddList.items.map((item, idx) => (
                     <div key={idx} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
                       <input
@@ -1235,7 +1233,7 @@ export default function LaporanHarianPage() {
                   ))}
                 </div>
 
-                <div className="flex justify-between items-center pt-2">
+                <div className="flex justify-between items-center pt-6 mt-4 border-t border-gray-100 dark:border-gray-800">
                   <button
                     type="button"
                     onClick={() => {
@@ -1244,7 +1242,7 @@ export default function LaporanHarianPage() {
                         items: [...bulkAddList.items, { task: "", duration: bulkAddList.category === "q1" ? 120 : bulkAddList.category === "q2" ? 60 : 30, desc: "" }]
                       });
                     }}
-                    className="text-[10px] font-black text-brand-500 uppercase tracking-wider hover:text-brand-600 transition-colors cursor-pointer flex items-center gap-1"
+                    className="text-[10px] font-black text-brand-500 uppercase tracking-wider hover:text-brand-600 transition-colors cursor-pointer flex items-center gap-1 bg-brand-500/10 px-4 py-2 rounded-xl"
                   >
                     <PlusIcon /> Tambah Baris
                   </button>
@@ -1253,22 +1251,22 @@ export default function LaporanHarianPage() {
                     <button
                       type="button"
                       onClick={() => setBulkAddList(null)}
-                      className="bg-gray-150 dark:bg-white/10 text-black dark:text-white px-4 py-2 font-bold uppercase tracking-widest text-[9px] rounded-xl hover:bg-gray-250 cursor-pointer"
+                      className="bg-gray-150 dark:bg-white/10 text-black dark:text-white px-5 py-2.5 font-bold uppercase tracking-widest text-[10px] rounded-xl hover:bg-gray-250 cursor-pointer"
                     >
                       Batal
                     </button>
                     <button
                       type="button"
                       onClick={handleBulkAddSave}
-                      className="bg-brand-500 text-white px-4 py-2 font-bold uppercase tracking-widest text-[9px] rounded-xl hover:bg-brand-600 cursor-pointer"
+                      className="bg-brand-500 text-white px-6 py-2.5 font-bold uppercase tracking-widest text-[10px] rounded-xl hover:bg-brand-600 cursor-pointer shadow-md"
                     >
                       Simpan Tugas
                     </button>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </FeatureModal>
         </div>
       ) : (
         /* --- Riwayat Tab Panel (Admins Only) --- */
