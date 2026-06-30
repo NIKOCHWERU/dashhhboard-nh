@@ -80,6 +80,143 @@ export default function LaporanHarianPage() {
   // Upload States for items
   const [uploadingItem, setUploadingItem] = useState<{ [key: string]: boolean }>({});
 
+  // --- Drag & Drop, Editing, Bulk addition, and Dual actions States ---
+  const [draggedItem, setDraggedItem] = useState<{ index: number; sourceCategory: "q1" | "q2" | "q3"; type: "today" | "tomorrow" } | null>(null);
+  const [editingItem, setEditingItem] = useState<{ index: number; category: "q1" | "q2" | "q3"; type: "today" | "tomorrow"; task: string; duration: number; desc: string } | null>(null);
+  const [bulkAddArea, setBulkAddArea] = useState<{ category: "q1" | "q2" | "q3"; type: "today" | "tomorrow"; text: string } | null>(null);
+  const [historySubTab, setHistorySubTab] = useState<"skala" | "laporan">("skala");
+
+  // Drag handlers
+  const handleDragStart = (e: React.DragEvent, index: number, sourceCategory: "q1" | "q2" | "q3", type: "today" | "tomorrow") => {
+    setDraggedItem({ index, sourceCategory, type });
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDrop = (e: React.DragEvent, targetCategory: "q1" | "q2" | "q3", type: "today" | "tomorrow") => {
+    e.preventDefault();
+    if (!draggedItem || draggedItem.type !== type) return;
+
+    const { index, sourceCategory } = draggedItem;
+    if (sourceCategory === targetCategory) return;
+
+    let sourceList = sourceCategory === "q1" 
+      ? (type === "today" ? q1Today : q1Tomorrow) 
+      : sourceCategory === "q2" 
+        ? (type === "today" ? q2Today : q2Tomorrow) 
+        : (type === "today" ? q3Today : q3Tomorrow);
+
+    const itemToMove = sourceList[index];
+    const newSourceList = [...sourceList];
+    newSourceList.splice(index, 1);
+
+    let targetList = targetCategory === "q1" 
+      ? (type === "today" ? q1Today : q1Tomorrow) 
+      : targetCategory === "q2" 
+        ? (type === "today" ? q2Today : q2Tomorrow) 
+        : (type === "today" ? q3Today : q3Tomorrow);
+
+    const newTargetList = [...targetList, itemToMove];
+
+    if (type === "today") {
+      if (sourceCategory === "q1") setQ1Today(newSourceList);
+      else if (sourceCategory === "q2") setQ2Today(newSourceList);
+      else setQ3Today(newSourceList);
+
+      if (targetCategory === "q1") setQ1Today(newTargetList);
+      else if (targetCategory === "q2") setQ2Today(newTargetList);
+      else setQ3Today(newTargetList);
+    } else {
+      if (sourceCategory === "q1") setQ1Tomorrow(newSourceList);
+      else if (sourceCategory === "q2") setQ2Tomorrow(newSourceList);
+      else setQ3Tomorrow(newSourceList);
+
+      if (targetCategory === "q1") setQ1Tomorrow(newTargetList);
+      else if (targetCategory === "q2") setQ2Tomorrow(newTargetList);
+      else setQ3Tomorrow(newTargetList);
+    }
+
+    setDraggedItem(null);
+  };
+
+  // Edit handlers
+  const startEditTask = (index: number, category: "q1" | "q2" | "q3", type: "today" | "tomorrow", item: TaskItem) => {
+    setEditingItem({ index, category, type, task: item.task, duration: item.duration, desc: item.desc });
+  };
+
+  const saveEditTask = () => {
+    if (!editingItem) return;
+    const { index, category, type, task, duration, desc } = editingItem;
+
+    let list = category === "q1" 
+      ? (type === "today" ? q1Today : q1Tomorrow) 
+      : category === "q2" 
+        ? (type === "today" ? q2Today : q2Tomorrow) 
+        : (type === "today" ? q3Today : q3Tomorrow);
+
+    const updatedList = [...list];
+    updatedList[index] = { ...updatedList[index], task, duration, desc };
+
+    if (type === "today") {
+      if (category === "q1") setQ1Today(updatedList);
+      else if (category === "q2") setQ2Today(updatedList);
+      else setQ3Today(updatedList);
+    } else {
+      if (category === "q1") setQ1Tomorrow(updatedList);
+      else if (category === "q2") setQ2Tomorrow(updatedList);
+      else setQ3Tomorrow(updatedList);
+    }
+
+    setEditingItem(null);
+  };
+
+  // Bulk add handlers
+  const handleBulkAddSave = () => {
+    if (!bulkAddArea) return;
+    const { category, type, text } = bulkAddArea;
+    const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+
+    const newTasks: TaskItem[] = lines.map(line => {
+      let task = line;
+      let duration = category === "q1" ? 120 : category === "q2" ? 60 : 30;
+      let desc = "";
+
+      const match = line.match(/^(.*?)\((.*?)\)$/);
+      if (match) {
+        task = match[1].trim();
+        const details = match[2].split(",").map(s => s.trim());
+        if (details[0]) {
+          const durMatch = details[0].match(/\d+/);
+          if (durMatch) duration = parseInt(durMatch[0]);
+        }
+        if (details[1]) {
+          desc = details[1];
+        }
+      }
+
+      return { task, duration, desc, attachment: null };
+    });
+
+    let list = category === "q1" 
+      ? (type === "today" ? q1Today : q1Tomorrow) 
+      : category === "q2" 
+        ? (type === "today" ? q2Today : q2Tomorrow) 
+        : (type === "today" ? q3Today : q3Tomorrow);
+
+    const updatedList = [...list, ...newTasks];
+
+    if (type === "today") {
+      if (category === "q1") setQ1Today(updatedList);
+      else if (category === "q2") setQ2Today(updatedList);
+      else setQ3Today(updatedList);
+    } else {
+      if (category === "q1") setQ1Tomorrow(updatedList);
+      else if (category === "q2") setQ2Tomorrow(updatedList);
+      else setQ3Tomorrow(updatedList);
+    }
+
+    setBulkAddArea(null);
+  };
+
   // --- Riwayat States ---
   const [historyList, setHistoryList] = useState<SavedReport[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -251,7 +388,8 @@ export default function LaporanHarianPage() {
     q3Tom: TaskItem[],
     learn: string,
     ob: string,
-    msg: string
+    msg: string,
+    onlyScale = false
   ) => {
     let text = `*LAPORAN AKTIFITAS HARIAN*\n\n`;
     text += `Nama: ${name || "Staf"}\n`;
@@ -269,6 +407,10 @@ export default function LaporanHarianPage() {
     text += `\n*Q3:*\n`;
     if (q3T.length === 0) text += `- -\n`;
     else q3T.forEach((t, i) => { text += `${i + 1}. ${t.task} (${t.duration} menit, ${t.desc || "-"})${t.attachment ? ` [Lampiran: ${t.attachment.url}]` : ""}\n`; });
+
+    if (onlyScale) {
+      return text;
+    }
 
     text += `\nII. *Rincian Kegiatan (Log Waktu)*\n\n`;
     if (logs.length === 0) text += `- -\n`;
@@ -303,7 +445,7 @@ export default function LaporanHarianPage() {
     return text;
   };
 
-  const handleCopyText = () => {
+  const handleCopyText = (onlyScale = false) => {
     const rawText = generateFormattedText(
       user?.name || "Staf",
       reportDate,
@@ -317,15 +459,17 @@ export default function LaporanHarianPage() {
       q3Tomorrow,
       learning,
       obstacles,
-      notes
+      notes,
+      onlyScale
     );
     navigator.clipboard.writeText(rawText);
-    alert("Laporan berhasil disalin ke clipboard!");
+    alert(onlyScale ? "Teks Skala Prioritas berhasil disalin ke clipboard!" : "Teks Laporan Lengkap berhasil disalin ke clipboard!");
   };
 
   // Submit / Save Laporan
-  const handleSaveReport = async () => {
-    if (!confirm("Apakah Anda yakin ingin mengirim laporan harian ini ke database?")) return;
+  const handleSaveReport = async (onlyScale = false) => {
+    const reportType = onlyScale ? "Skala Prioritas" : "Laporan Lengkap";
+    if (!confirm(`Apakah Anda yakin ingin mengirim ${reportType} ini ke database?`)) return;
 
     // Collect all documents/attachments uploaded per priority task
     const allDocs: { name: string; url: string }[] = [];
@@ -361,7 +505,26 @@ export default function LaporanHarianPage() {
       });
 
       if (res.ok) {
-        alert("Laporan Aktivitas Harian berhasil disimpan ke database!");
+        // Copy the clipboard text in the selected format
+        const rawText = generateFormattedText(
+          user?.name || "Staf",
+          reportDate,
+          q1Today,
+          q2Today,
+          q3Today,
+          timeLogs,
+          outputs,
+          q1Tomorrow,
+          q2Tomorrow,
+          q3Tomorrow,
+          learning,
+          obstacles,
+          notes,
+          onlyScale
+        );
+        navigator.clipboard.writeText(rawText);
+
+        alert(`Laporan Aktivitas Harian berhasil disimpan ke database dan teks ${reportType} telah disalin ke clipboard!`);
         if (isAdmin) {
           setActiveTab("riwayat");
         } else {
@@ -492,53 +655,138 @@ export default function LaporanHarianPage() {
               const uploadKey = `today-${q}`;
 
               return (
-                <div key={q} className="space-y-3">
-                  <span className="text-xs font-black text-brand-500 uppercase tracking-wide block">{label}</span>
-                  {list.length > 0 && (
-                    <div className="space-y-2 bg-gray-50/50 dark:bg-white/[0.01] p-3 rounded-xl border border-gray-100 dark:border-gray-800">
-                      {list.map((item, idx) => (
-                        <div key={idx} className="flex justify-between items-start gap-4 text-xs">
-                          <span className="font-semibold text-gray-750 dark:text-gray-300">
-                            {idx + 1}. {item.task} ({item.duration}m) - <span className="italic text-gray-400">{item.desc || "-"}</span>
-                            {item.attachment && (
-                              <a
-                                href={item.attachment.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center px-1.5 py-0.5 bg-brand-500/10 text-brand-650 hover:underline border border-brand-500/20 text-[9px] font-bold rounded ml-2"
-                              >
-                                Berkas: {item.attachment.name}
-                              </a>
+                <div 
+                  key={q} 
+                  className="space-y-3"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => handleDrop(e, q, "today")}
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-black text-brand-500 uppercase tracking-wide block">{label}</span>
+                    <button
+                      type="button"
+                      onClick={() => setBulkAddArea({ category: q, type: "today", text: "" })}
+                      className="text-[10px] font-black text-brand-500 hover:underline uppercase cursor-pointer"
+                    >
+                      + Tambah Beberapa
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 bg-gray-50/50 dark:bg-white/[0.01] p-3 rounded-xl border border-dashed border-gray-250 dark:border-gray-800 min-h-[60px] transition-colors">
+                    {list.length > 0 ? (
+                      list.map((item, idx) => {
+                        const isEditing = editingItem?.index === idx && editingItem?.category === q && editingItem?.type === "today";
+                        return (
+                          <div 
+                            key={idx}
+                            draggable={!isEditing}
+                            onDragStart={(e) => handleDragStart(e, idx, q, "today")}
+                            className={`flex justify-between items-start gap-4 text-xs bg-white dark:bg-gray-900/60 p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm cursor-grab active:cursor-grabbing hover:border-brand-500 transition-all ${
+                              draggedItem?.index === idx && draggedItem?.sourceCategory === q && draggedItem?.type === "today" ? "opacity-40" : ""
+                            }`}
+                          >
+                            {isEditing ? (
+                              <div className="w-full space-y-3">
+                                <input
+                                  type="text"
+                                  value={editingItem.task}
+                                  onChange={(e) => setEditingItem({ ...editingItem, task: e.target.value })}
+                                  className="w-full bg-gray-55 dark:bg-gray-850 border border-gray-200 dark:border-gray-800 px-4 py-2 rounded-xl text-xs outline-none focus:border-brand-500 font-semibold text-black dark:text-white"
+                                  placeholder="Nama tugas..."
+                                />
+                                <div className="flex gap-2">
+                                  <input
+                                    type="number"
+                                    value={editingItem.duration || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, duration: parseInt(e.target.value) || 0 })}
+                                    className="w-24 bg-gray-55 dark:bg-gray-850 border border-gray-200 dark:border-gray-800 px-4 py-2 rounded-xl text-xs outline-none focus:border-brand-500 font-semibold text-black dark:text-white"
+                                    placeholder="Menit"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={editingItem.desc}
+                                    onChange={(e) => setEditingItem({ ...editingItem, desc: e.target.value })}
+                                    className="flex-1 bg-gray-55 dark:bg-gray-850 border border-gray-200 dark:border-gray-800 px-4 py-2 rounded-xl text-xs outline-none focus:border-brand-500 font-semibold text-black dark:text-white"
+                                    placeholder="Keterangan..."
+                                  />
+                                </div>
+                                <div className="flex justify-end gap-2 pt-1">
+                                  <button
+                                    onClick={() => setEditingItem(null)}
+                                    className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-black dark:text-white rounded-lg text-[10px] font-black uppercase cursor-pointer"
+                                  >
+                                    Batal
+                                  </button>
+                                  <button
+                                    onClick={saveEditTask}
+                                    className="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-[10px] font-black uppercase cursor-pointer"
+                                  >
+                                    Simpan
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <span className="font-semibold text-gray-750 dark:text-gray-300">
+                                  {idx + 1}. {item.task} ({item.duration}m) - <span className="italic text-gray-400">{item.desc || "-"}</span>
+                                  {item.attachment && (
+                                    <a
+                                      href={item.attachment.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center px-1.5 py-0.5 bg-brand-500/10 text-brand-650 hover:underline border border-brand-500/20 text-[9px] font-bold rounded ml-2"
+                                    >
+                                      Berkas: {item.attachment.name}
+                                    </a>
+                                  )}
+                                </span>
+                                <div className="flex items-center gap-2.5 flex-shrink-0">
+                                  <button
+                                    onClick={() => startEditTask(idx, q, "today", item)}
+                                    className="text-amber-500 hover:text-amber-600 cursor-pointer"
+                                    title="Ubah Tugas"
+                                  >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                    </svg>
+                                  </button>
+                                  <button onClick={() => removeTask(idx)} className="text-rose-500 hover:text-rose-600 flex-shrink-0 cursor-pointer">
+                                    <TrashBinIcon />
+                                  </button>
+                                </div>
+                              </>
                             )}
-                          </span>
-                          <button onClick={() => removeTask(idx)} className="text-rose-500 hover:text-rose-600 flex-shrink-0">
-                            <TrashBinIcon />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <span className="text-[10px] italic text-gray-400 block text-center py-4">
+                        Belum ada tugas. Geser tugas ke sini atau gunakan input di bawah.
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
                     <input
                       type="text"
                       placeholder="Nama Tugas..."
                       value={temp.task}
                       onChange={(e) => setTemp({ ...temp, task: e.target.value })}
-                      className="sm:col-span-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-3 py-1.5 rounded-xl text-xs outline-none focus:border-brand-500 font-semibold"
+                      className="sm:col-span-4 bg-white dark:bg-gray-900 border border-gray-250 dark:border-gray-800 px-4 py-3 rounded-xl text-sm outline-none focus:border-brand-500 font-semibold"
                     />
                     <input
                       type="number"
                       placeholder="Menit..."
                       value={temp.duration || ""}
                       onChange={(e) => setTemp({ ...temp, duration: parseInt(e.target.value) || 0 })}
-                      className="sm:col-span-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-3 py-1.5 rounded-xl text-xs outline-none focus:border-brand-500 font-semibold"
+                      className="sm:col-span-2 bg-white dark:bg-gray-900 border border-gray-250 dark:border-gray-800 px-4 py-3 rounded-xl text-sm outline-none focus:border-brand-500 font-semibold"
                     />
                     <input
                       type="text"
                       placeholder="Keterangan..."
                       value={temp.desc}
                       onChange={(e) => setTemp({ ...temp, desc: e.target.value })}
-                      className="sm:col-span-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-3 py-1.5 rounded-xl text-xs outline-none focus:border-brand-500 font-semibold"
+                      className="sm:col-span-3 bg-white dark:bg-gray-900 border border-gray-250 dark:border-gray-800 px-4 py-3 rounded-xl text-sm outline-none focus:border-brand-500 font-semibold"
                     />
                     
                     {/* Item Document Upload */}
@@ -551,7 +799,7 @@ export default function LaporanHarianPage() {
                       />
                       <label
                         htmlFor={`file-upload-${uploadKey}`}
-                        className={`w-full text-center border border-dashed border-gray-300 dark:border-gray-700 py-1.5 rounded-xl text-[10px] font-bold text-gray-500 hover:border-brand-500 cursor-pointer truncate ${
+                        className={`w-full text-center border border-dashed border-gray-300 dark:border-gray-700 py-3 rounded-xl text-xs font-bold text-gray-500 hover:border-brand-500 cursor-pointer truncate ${
                           uploadingItem[uploadKey] ? "pointer-events-none opacity-50" : ""
                         }`}
                       >
@@ -561,7 +809,7 @@ export default function LaporanHarianPage() {
 
                     <button
                       onClick={() => addTask(q, "today")}
-                      className="sm:col-span-1 bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 flex items-center justify-center rounded-xl p-1.5 cursor-pointer shadow-sm active:scale-95 transition-transform"
+                      className="sm:col-span-1 bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 flex items-center justify-center rounded-xl p-3 cursor-pointer shadow-sm active:scale-95 transition-transform"
                     >
                       <PlusIcon />
                     </button>
@@ -702,55 +950,140 @@ export default function LaporanHarianPage() {
               const uploadKey = `tomorrow-${q}`;
 
               return (
-                <div key={q} className="space-y-3">
-                  <span className="text-xs font-black text-brand-500 uppercase tracking-wide block">{label}</span>
-                  {list.length > 0 && (
-                    <div className="space-y-2 bg-gray-50/50 dark:bg-white/[0.01] p-3 rounded-xl border border-gray-100 dark:border-gray-800">
-                      {list.map((item, idx) => (
-                        <div key={idx} className="flex justify-between items-start gap-4 text-xs">
-                          <span className="font-semibold text-gray-750 dark:text-gray-300">
-                            {idx + 1}. {item.task} ({item.duration}m) - <span className="italic text-gray-400">{item.desc || "-"}</span>
-                            {item.attachment && (
-                              <a
-                                href={item.attachment.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center px-1.5 py-0.5 bg-brand-500/10 text-brand-650 hover:underline border border-brand-500/20 text-[9px] font-bold rounded ml-2"
-                              >
-                                Berkas: {item.attachment.name}
-                              </a>
+                <div 
+                  key={q} 
+                  className="space-y-3"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => handleDrop(e, q, "tomorrow")}
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-black text-brand-500 uppercase tracking-wide block">{label}</span>
+                    <button
+                      type="button"
+                      onClick={() => setBulkAddArea({ category: q, type: "tomorrow", text: "" })}
+                      className="text-[10px] font-black text-brand-500 hover:underline uppercase cursor-pointer"
+                    >
+                      + Tambah Beberapa
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 bg-gray-50/50 dark:bg-white/[0.01] p-3 rounded-xl border border-dashed border-gray-250 dark:border-gray-800 min-h-[60px] transition-colors">
+                    {list.length > 0 ? (
+                      list.map((item, idx) => {
+                        const isEditing = editingItem?.index === idx && editingItem?.category === q && editingItem?.type === "tomorrow";
+                        return (
+                          <div 
+                            key={idx}
+                            draggable={!isEditing}
+                            onDragStart={(e) => handleDragStart(e, idx, q, "tomorrow")}
+                            className={`flex justify-between items-start gap-4 text-xs bg-white dark:bg-gray-900/60 p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm cursor-grab active:cursor-grabbing hover:border-brand-500 transition-all ${
+                              draggedItem?.index === idx && draggedItem?.sourceCategory === q && draggedItem?.type === "tomorrow" ? "opacity-40" : ""
+                            }`}
+                          >
+                            {isEditing ? (
+                              <div className="w-full space-y-3">
+                                <input
+                                  type="text"
+                                  value={editingItem.task}
+                                  onChange={(e) => setEditingItem({ ...editingItem, task: e.target.value })}
+                                  className="w-full bg-gray-55 dark:bg-gray-850 border border-gray-200 dark:border-gray-800 px-4 py-2 rounded-xl text-xs outline-none focus:border-brand-500 font-semibold text-black dark:text-white"
+                                  placeholder="Nama tugas..."
+                                />
+                                <div className="flex gap-2">
+                                  <input
+                                    type="number"
+                                    value={editingItem.duration || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, duration: parseInt(e.target.value) || 0 })}
+                                    className="w-24 bg-gray-55 dark:bg-gray-850 border border-gray-200 dark:border-gray-800 px-4 py-2 rounded-xl text-xs outline-none focus:border-brand-500 font-semibold text-black dark:text-white"
+                                    placeholder="Menit"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={editingItem.desc}
+                                    onChange={(e) => setEditingItem({ ...editingItem, desc: e.target.value })}
+                                    className="flex-1 bg-gray-55 dark:bg-gray-850 border border-gray-200 dark:border-gray-800 px-4 py-2 rounded-xl text-xs outline-none focus:border-brand-500 font-semibold text-black dark:text-white"
+                                    placeholder="Keterangan..."
+                                  />
+                                </div>
+                                <div className="flex justify-end gap-2 pt-1">
+                                  <button
+                                    onClick={() => setEditingItem(null)}
+                                    className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-black dark:text-white rounded-lg text-[10px] font-black uppercase cursor-pointer"
+                                  >
+                                    Batal
+                                  </button>
+                                  <button
+                                    onClick={saveEditTask}
+                                    className="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-[10px] font-black uppercase cursor-pointer"
+                                  >
+                                    Simpan
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <span className="font-semibold text-gray-750 dark:text-gray-300">
+                                  {idx + 1}. {item.task} ({item.duration}m) - <span className="italic text-gray-400">{item.desc || "-"}</span>
+                                  {item.attachment && (
+                                    <a
+                                      href={item.attachment.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center px-1.5 py-0.5 bg-brand-500/10 text-brand-650 hover:underline border border-brand-500/20 text-[9px] font-bold rounded ml-2"
+                                    >
+                                      Berkas: {item.attachment.name}
+                                    </a>
+                                  )}
+                                </span>
+                                <div className="flex items-center gap-2.5 flex-shrink-0">
+                                  <button
+                                    onClick={() => startEditTask(idx, q, "tomorrow", item)}
+                                    className="text-amber-500 hover:text-amber-600 cursor-pointer"
+                                    title="Ubah Tugas"
+                                  >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                    </svg>
+                                  </button>
+                                  <button onClick={() => removeTask(idx)} className="text-rose-500 hover:text-rose-600 flex-shrink-0 cursor-pointer">
+                                    <TrashBinIcon />
+                                  </button>
+                                </div>
+                              </>
                             )}
-                          </span>
-                          <button onClick={() => removeTask(idx)} className="text-rose-500 hover:text-rose-600 flex-shrink-0">
-                            <TrashBinIcon />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <span className="text-[10px] italic text-gray-400 block text-center py-4">
+                        Belum ada tugas. Geser tugas ke sini atau gunakan input di bawah.
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
                     <input
                       type="text"
                       placeholder="Nama Tugas..."
                       value={temp.task}
                       onChange={(e) => setTemp({ ...temp, task: e.target.value })}
-                      className="sm:col-span-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-3 py-1.5 rounded-xl text-xs outline-none focus:border-brand-500 font-semibold"
+                      className="sm:col-span-4 bg-white dark:bg-gray-900 border border-gray-250 dark:border-gray-800 px-4 py-3 rounded-xl text-sm outline-none focus:border-brand-500 font-semibold"
                     />
                     <input
                       type="number"
                       placeholder="Menit..."
                       value={temp.duration || ""}
                       onChange={(e) => setTemp({ ...temp, duration: parseInt(e.target.value) || 0 })}
-                      className="sm:col-span-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-3 py-1.5 rounded-xl text-xs outline-none focus:border-brand-500 font-semibold"
+                      className="sm:col-span-2 bg-white dark:bg-gray-900 border border-gray-250 dark:border-gray-800 px-4 py-3 rounded-xl text-sm outline-none focus:border-brand-500 font-semibold"
                     />
                     <input
                       type="text"
                       placeholder="Keterangan..."
                       value={temp.desc}
                       onChange={(e) => setTemp({ ...temp, desc: e.target.value })}
-                      className="sm:col-span-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-3 py-1.5 rounded-xl text-xs outline-none focus:border-brand-500 font-semibold"
+                      className="sm:col-span-3 bg-white dark:bg-gray-900 border border-gray-250 dark:border-gray-800 px-4 py-3 rounded-xl text-sm outline-none focus:border-brand-500 font-semibold"
                     />
-
+                    
                     {/* Item Document Upload */}
                     <div className="sm:col-span-2 relative flex items-center justify-center">
                       <input
@@ -761,7 +1094,7 @@ export default function LaporanHarianPage() {
                       />
                       <label
                         htmlFor={`file-upload-${uploadKey}`}
-                        className={`w-full text-center border border-dashed border-gray-300 dark:border-gray-700 py-1.5 rounded-xl text-[10px] font-bold text-gray-500 hover:border-brand-500 cursor-pointer truncate ${
+                        className={`w-full text-center border border-dashed border-gray-300 dark:border-gray-700 py-3 rounded-xl text-xs font-bold text-gray-500 hover:border-brand-500 cursor-pointer truncate ${
                           uploadingItem[uploadKey] ? "pointer-events-none opacity-50" : ""
                         }`}
                       >
@@ -771,7 +1104,7 @@ export default function LaporanHarianPage() {
 
                     <button
                       onClick={() => addTask(q, "tomorrow")}
-                      className="sm:col-span-1 bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 flex items-center justify-center rounded-xl p-1.5 cursor-pointer shadow-sm active:scale-95 transition-transform"
+                      className="sm:col-span-1 bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 flex items-center justify-center rounded-xl p-3 cursor-pointer shadow-sm active:scale-95 transition-transform"
                     >
                       <PlusIcon />
                     </button>
@@ -819,57 +1152,137 @@ export default function LaporanHarianPage() {
           </div>
 
           {/* Form Actions */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
             <button
               type="button"
-              onClick={handleCopyText}
-              className="w-full bg-gray-100 dark:bg-white/10 text-black dark:text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-gray-200 dark:hover:bg-white/20 transition-all cursor-pointer shadow-sm active:scale-98"
+              onClick={() => handleCopyText(true)}
+              className="w-full bg-gray-100 dark:bg-white/10 text-black dark:text-white py-3.5 rounded-xl font-black uppercase tracking-wider text-[10px] hover:bg-gray-200 dark:hover:bg-white/20 transition-all cursor-pointer shadow-sm active:scale-98"
+            >
+              Salin Skala
+            </button>
+            <button
+              type="button"
+              onClick={() => handleCopyText(false)}
+              className="w-full bg-gray-100 dark:bg-white/10 text-black dark:text-white py-3.5 rounded-xl font-black uppercase tracking-wider text-[10px] hover:bg-gray-200 dark:hover:bg-white/20 transition-all cursor-pointer shadow-sm active:scale-98"
             >
               Salin Laporan
             </button>
             <button
               type="button"
-              onClick={handleSaveReport}
-              className="w-full bg-brand-500 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-brand-600 transition-all cursor-pointer shadow-sm active:scale-98"
+              onClick={() => handleSaveReport(true)}
+              className="w-full bg-amber-500 text-white py-3.5 rounded-xl font-black uppercase tracking-wider text-[10px] hover:bg-amber-600 transition-all cursor-pointer shadow-sm active:scale-98"
             >
-              Kirimkan
+              Kirim Skala
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSaveReport(false)}
+              className="w-full bg-brand-500 text-white py-3.5 rounded-xl font-black uppercase tracking-wider text-[10px] hover:bg-brand-650 transition-all cursor-pointer shadow-sm active:scale-98"
+            >
+              Kirim Laporan
             </button>
           </div>
+
+          {/* Bulk Add Textarea Modal */}
+          {bulkAddArea && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-boxdark rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 max-w-md w-full p-6 space-y-4 animate-in zoom-in-95 duration-250">
+                <div>
+                  <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-wider">
+                    Tambah Beberapa Tugas ({bulkAddArea.category.toUpperCase()} - {bulkAddArea.type === "today" ? "Hari Ini" : "Esok Hari"})
+                  </h3>
+                  <p className="text-[9px] text-gray-400 font-bold uppercase mt-1">
+                    Masukkan satu tugas per baris. Format opsional: Nama Tugas (Durasi Menit, Keterangan)
+                  </p>
+                </div>
+                <textarea
+                  rows={6}
+                  value={bulkAddArea.text}
+                  onChange={(e) => setBulkAddArea({ ...bulkAddArea, text: e.target.value })}
+                  placeholder="Contoh:&#10;Memperbaiki file-file PT OBG (120, perbaikan database)&#10;Update dashboard NH (60, modul baru)"
+                  className="w-full bg-gray-55 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-4 py-3 rounded-xl text-xs font-semibold text-black dark:text-white focus:border-brand-500 outline-none resize-none"
+                />
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setBulkAddArea(null)}
+                    className="bg-gray-150 dark:bg-white/10 text-black dark:text-white px-4 py-2 font-bold uppercase tracking-widest text-[9px] rounded-xl hover:bg-gray-250 cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleBulkAddSave}
+                    className="bg-brand-500 text-white px-4 py-2 font-bold uppercase tracking-widest text-[9px] rounded-xl hover:bg-brand-600 cursor-pointer"
+                  >
+                    Tambah
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         /* --- Riwayat Tab Panel (Admins Only) --- */
         isAdmin && (
           <div className="space-y-6">
-            {/* History Filters */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-white/[0.02] p-4 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
-                {/* User filter for Admins */}
-                <div className="flex items-center gap-2 border border-gray-250 dark:border-gray-800 px-3 py-2 rounded-xl bg-white dark:bg-transparent">
-                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Karyawan:</span>
-                  <select
-                    value={filterUser}
-                    onChange={(e) => setFilterUser(e.target.value)}
-                    className="bg-transparent text-xs font-bold text-black dark:text-white outline-none cursor-pointer"
-                  >
-                    <option value="">Semua</option>
-                    {usersList.map((u) => (
-                      <option key={u.id} value={u.id}>{u.name}</option>
-                    ))}
-                  </select>
-                </div>
+            {/* History Filters & Sub-Tabs */}
+            <div className="flex flex-col gap-4 bg-white dark:bg-white/[0.02] p-5 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm">
+              <div className="flex border-b border-gray-150 dark:border-gray-800 mb-2">
+                <button
+                  type="button"
+                  onClick={() => setHistorySubTab("skala")}
+                  className={`pb-2.5 px-4 text-xs font-black uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+                    historySubTab === "skala"
+                      ? "border-brand-500 text-brand-500 font-bold"
+                      : "border-transparent text-gray-500 hover:text-black dark:hover:text-white"
+                  }`}
+                >
+                  Skala Prioritas
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHistorySubTab("laporan")}
+                  className={`pb-2.5 px-4 text-xs font-black uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+                    historySubTab === "laporan"
+                      ? "border-brand-500 text-brand-500 font-bold"
+                      : "border-transparent text-gray-500 hover:text-black dark:hover:text-white"
+                  }`}
+                >
+                  Laporan Harian
+                </button>
+              </div>
 
-                {/* Date Filter */}
-                <div className="flex items-center gap-2 border border-gray-250 dark:border-gray-800 px-3 py-2 rounded-xl bg-white dark:bg-transparent">
-                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Tanggal:</span>
-                  <input
-                    type="date"
-                    value={filterDate}
-                    onChange={(e) => setFilterDate(e.target.value)}
-                    className="bg-transparent text-xs font-bold text-black dark:text-white outline-none cursor-pointer"
-                  />
-                  {filterDate && (
-                    <button onClick={() => setFilterDate("")} className="text-xs text-gray-400 font-bold hover:text-brand-500">×</button>
-                  )}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+                  {/* User filter for Admins */}
+                  <div className="flex items-center gap-2 border border-gray-250 dark:border-gray-800 px-3 py-2 rounded-xl bg-white dark:bg-transparent">
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Karyawan:</span>
+                    <select
+                      value={filterUser}
+                      onChange={(e) => setFilterUser(e.target.value)}
+                      className="bg-transparent text-xs font-bold text-black dark:text-white outline-none cursor-pointer"
+                    >
+                      <option value="">Semua</option>
+                      {usersList.map((u) => (
+                        <option key={u.id} value={u.id}>{u.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Date Filter */}
+                  <div className="flex items-center gap-2 border border-gray-250 dark:border-gray-800 px-3 py-2 rounded-xl bg-white dark:bg-transparent">
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Tanggal:</span>
+                    <input
+                      type="date"
+                      value={filterDate}
+                      onChange={(e) => setFilterDate(e.target.value)}
+                      className="bg-transparent text-xs font-bold text-black dark:text-white outline-none cursor-pointer"
+                    />
+                    {filterDate && (
+                      <button onClick={() => setFilterDate("")} className="text-xs text-gray-400 font-bold hover:text-brand-500">×</button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -878,68 +1291,162 @@ export default function LaporanHarianPage() {
             {historyLoading ? (
               <div className="space-y-3 animate-pulse">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-16 bg-gray-100 dark:bg-gray-800/40 rounded-2xl"></div>
+                  <div key={i} className="h-24 bg-gray-100 dark:bg-gray-800/40 rounded-2xl"></div>
                 ))}
               </div>
             ) : historyList.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {historyList.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => setSelectedHistoryItem(item)}
-                    className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 p-5 rounded-2xl shadow-sm hover:border-brand-500 transition-all cursor-pointer flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-2 mb-3">
-                        <span className="text-[10px] font-black text-brand-500 uppercase tracking-widest flex items-center gap-1.5">
-                          <UserCircleIcon />
-                          {item.user.name}
-                        </span>
-                        <span className="text-[10px] font-bold text-gray-400 capitalize">
-                          {formatDateIndo(item.tanggal)}
-                        </span>
-                      </div>
-                      
-                      {/* Snippet outputs */}
-                      <div className="space-y-2 mt-2">
-                        <div>
-                          <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">Output Hari Ini:</span>
-                          <ul className="list-disc list-inside text-xs font-bold text-gray-700 dark:text-gray-300 mt-1 pl-1 line-clamp-2">
-                            {(() => {
-                              try {
-                                const outs = JSON.parse(item.hasilKerja) || [];
-                                return outs.length > 0 ? outs.map((o: string, idx: number) => (
-                                  <li key={idx} className="truncate">{o}</li>
-                                )) : <span className="italic text-gray-400 font-semibold">-</span>;
-                              } catch (e) {
-                                return <span className="italic text-gray-400 font-semibold">-</span>;
-                              }
-                            })()}
-                          </ul>
+              historySubTab === "skala" ? (
+                /* SKALA PRIORITAS VIEW */
+                <div className="grid grid-cols-1 gap-6">
+                  {historyList.map((item) => {
+                    let q1List: TaskItem[] = [];
+                    let q2List: TaskItem[] = [];
+                    let q3List: TaskItem[] = [];
+                    try {
+                      const prio = JSON.parse(item.prioritas);
+                      q1List = prio.q1 || [];
+                      q2List = prio.q2 || [];
+                      q3List = prio.q3 || [];
+                    } catch (e) {}
+
+                    return (
+                      <div key={item.id} className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl shadow-sm space-y-4">
+                        <div className="flex justify-between items-center border-b border-gray-150 dark:border-gray-800 pb-2">
+                          <span className="text-[11px] font-black text-brand-500 uppercase tracking-widest flex items-center gap-1.5">
+                            <UserCircleIcon />
+                            {item.user.name}
+                          </span>
+                          <span className="text-[10px] font-bold text-gray-450 capitalize">
+                            {formatDateIndo(item.tanggal)}
+                          </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                          {/* Q1 */}
+                          <div className="space-y-2 bg-red-500/[0.03] dark:bg-red-500/[0.01] p-3 rounded-xl border border-red-500/10">
+                            <span className="text-[9px] font-black text-red-600 dark:text-red-400 uppercase tracking-wider block border-b border-red-500/10 pb-1">Q1 (Tinggi / Mendesak)</span>
+                            {q1List.length > 0 ? (
+                              <ol className="list-decimal pl-4 space-y-1.5 mt-1.5 font-semibold text-gray-700 dark:text-gray-300">
+                                {q1List.map((t, idx) => (
+                                  <li key={idx}>
+                                    {t.task} ({t.duration}m) - <span className="italic text-gray-400 font-medium">{t.desc || "-"}</span>
+                                    {t.attachment && <a href={t.attachment.url} target="_blank" rel="noopener noreferrer" className="ml-1 text-brand-500">📎</a>}
+                                  </li>
+                                ))}
+                              </ol>
+                            ) : <span className="text-[10px] text-gray-400 italic pl-1 block py-1">-</span>}
+                          </div>
+
+                          {/* Q2 */}
+                          <div className="space-y-2 bg-blue-500/[0.03] dark:bg-blue-500/[0.01] p-3 rounded-xl border border-blue-500/10">
+                            <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider block border-b border-blue-500/10 pb-1">Q2 (Sedang / Penting)</span>
+                            {q2List.length > 0 ? (
+                              <ol className="list-decimal pl-4 space-y-1.5 mt-1.5 font-semibold text-gray-700 dark:text-gray-300">
+                                {q2List.map((t, idx) => (
+                                  <li key={idx}>
+                                    {t.task} ({t.duration}m) - <span className="italic text-gray-400 font-medium">{t.desc || "-"}</span>
+                                    {t.attachment && <a href={t.attachment.url} target="_blank" rel="noopener noreferrer" className="ml-1 text-brand-500">📎</a>}
+                                  </li>
+                                ))}
+                              </ol>
+                            ) : <span className="text-[10px] text-gray-400 italic pl-1 block py-1">-</span>}
+                          </div>
+
+                          {/* Q3 */}
+                          <div className="space-y-2 bg-gray-50 dark:bg-white/[0.01] p-3 rounded-xl border border-gray-200 dark:border-gray-800">
+                            <span className="text-[9px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider block border-b border-gray-200 dark:border-gray-800 pb-1">Q3 (Rendah / Rutinitas)</span>
+                            {q3List.length > 0 ? (
+                              <ol className="list-decimal pl-4 space-y-1.5 mt-1.5 font-semibold text-gray-700 dark:text-gray-300">
+                                {q3List.map((t, idx) => (
+                                  <li key={idx}>
+                                    {t.task} ({t.duration}m) - <span className="italic text-gray-400 font-medium">{t.desc || "-"}</span>
+                                    {t.attachment && <a href={t.attachment.url} target="_blank" rel="noopener noreferrer" className="ml-1 text-brand-500">📎</a>}
+                                  </li>
+                                ))}
+                              </ol>
+                            ) : <span className="text-[10px] text-gray-400 italic pl-1 block py-1">-</span>}
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-end gap-3 pt-2.5 border-t border-gray-100 dark:border-gray-800/60">
+                          <button
+                            onClick={() => handleDeleteReport(item.id)}
+                            className="text-[10px] font-black text-rose-500 hover:text-rose-600 uppercase cursor-pointer"
+                          >
+                            Hapus
+                          </button>
+                          <button
+                            onClick={() => setSelectedHistoryItem(item)}
+                            className="text-[10px] font-black text-brand-500 hover:text-brand-600 uppercase cursor-pointer"
+                          >
+                            Rincian
+                          </button>
                         </div>
                       </div>
-                    </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                /* LAPORAN HARIAN VIEW */
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {historyList.map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => setSelectedHistoryItem(item)}
+                      className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 p-5 rounded-2xl shadow-sm hover:border-brand-500 transition-all cursor-pointer flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-2 mb-3">
+                          <span className="text-[10px] font-black text-brand-500 uppercase tracking-widest flex items-center gap-1.5">
+                            <UserCircleIcon />
+                            {item.user.name}
+                          </span>
+                          <span className="text-[10px] font-bold text-gray-400 capitalize">
+                            {formatDateIndo(item.tanggal)}
+                          </span>
+                        </div>
+                        
+                        {/* Snippet outputs */}
+                        <div className="space-y-2 mt-2">
+                          <div>
+                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">Output Hari Ini:</span>
+                            <ul className="list-disc list-inside text-xs font-bold text-gray-700 dark:text-gray-300 mt-1 pl-1 line-clamp-2">
+                              {(() => {
+                                try {
+                                  const outs = JSON.parse(item.hasilKerja) || [];
+                                  return outs.length > 0 ? outs.map((o: string, idx: number) => (
+                                    <li key={idx} className="truncate">{o}</li>
+                                  )) : <span className="italic text-gray-400 font-semibold">-</span>;
+                                } catch (e) {
+                                  return <span className="italic text-gray-400 font-semibold">-</span>;
+                                }
+                              })()}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
 
-                    <div className="flex justify-end items-center gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-gray-800/80">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteReport(item.id);
-                        }}
-                        className="text-[9px] font-black text-rose-500 hover:text-rose-600 uppercase tracking-wider"
-                      >
-                        Hapus
-                      </button>
-                      <button
-                        type="button"
-                        className="text-[9px] font-black text-brand-500 uppercase tracking-wider pl-2"
-                      >
-                        Detail
-                      </button>
+                      <div className="flex justify-end items-center gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-gray-800/80">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteReport(item.id);
+                          }}
+                          className="text-[10px] font-black text-rose-500 hover:text-rose-600 uppercase tracking-wider cursor-pointer"
+                        >
+                          Hapus
+                        </button>
+                        <button
+                          type="button"
+                          className="text-[10px] font-black text-brand-500 uppercase tracking-wider pl-2 cursor-pointer"
+                        >
+                          Detail
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )
             ) : (
               <div className="text-center py-20 text-gray-400 italic bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 rounded-2xl">
                 Belum ada riwayat laporan harian terekam.
