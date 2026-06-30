@@ -164,3 +164,104 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Failed to delete backup file" }, { status: 500 });
   }
 }
+
+export async function PUT(req: NextRequest) {
+  try {
+    if (!(await isAdmin())) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const filename = searchParams.get("filename");
+
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) {
+      return NextResponse.json({ error: "DATABASE_URL not found in .env" }, { status: 500 });
+    }
+
+    const dbUrlObj = new URL(databaseUrl);
+    const username = dbUrlObj.username;
+    const password = decodeURIComponent(dbUrlObj.password);
+    const host = dbUrlObj.hostname || "localhost";
+    const port = dbUrlObj.port || "3306";
+    const database = dbUrlObj.pathname.replace(/^\//, "");
+
+    const backupsDir = path.join(process.cwd(), "backups");
+    let filePath = "";
+
+    // Case 1: Restore from an existing backup filename
+    if (filename) {
+      if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+        return NextResponse.json({ error: "Invalid filename" }, { status: 400 });
+      }
+      filePath = path.join(backupsDir, filename);
+      if (!fs.existsSync(filePath)) {
+        return NextResponse.json({ error: "File not found" }, { status: 404 });
+      }
+    } else {
+      // Case 2: Restore from a newly uploaded database file
+      const contentType = req.headers.get("content-type") || "";
+      if (!contentType.includes("multipart/form-data")) {
+        return NextResponse.json({ error: "Invalid content type or missing filename" }, { status: 400 });
+      }
+
+      const formData = await req.formData();
+      const file = formData.get("file") as File | null;
+      if (!file) {
+        return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+      }
+
+      // Save file temporarily in backups directory
+      const tempFilename = `temp_import_${Date.now()}_${file.name}`;
+      filePath = path.join(backupsDir, tempFilename);
+
+      const buffer = Buffer.from(await file.arrayBuffer());
+      fs.writeFileSync(filePath, buffer);
+    }
+
+    const isGzipped = filePath.endsWith(".gz");
+
+    // Construct mysql import command
+    const importCmd = isGzipped
+      ? `gunzip < "${filePath}" | mysql -u ${username} -h ${host} -P ${port} ${database}`
+      : `mysql -u ${username} -h ${host} -P ${port} ${database} < "${filePath}"`;
+
+    return new Promise<NextResponse>((resolve) => {
+      exec(importCmd, { env: { ...process.env, MYSQL_PWD: password } }, async (error, stdout, stderr) => {
+        // Clean up uploaded temp file if it was a temporary import
+        if (!filename && fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+
+        if (error) {
+          console.error("Database import execution error:", error, stderr);
+          resolve(NextResponse.json({ error: `Restore failed: ${error.message}` }, { status: 500 }));
+          return;
+        }
+
+        // Log this action to the ActivityLog
+        const session = await getServerSession(authOptions);
+        await prisma.activityLog.create({
+          data: {
+            userId: (session?.user as any)?.id || null,
+            userName: session?.user?.name || "Admin",
+            action: "UPDATE",
+            target: "DATABASE",
+            details: filename
+              ? `Database berhasil di-restore dari backup: ${filename}`
+              : `Database berhasil di-import dari file sql baru yang diunggah`,
+          },
+        });
+
+        resolve(NextResponse.json({
+          success: true,
+          message: "Database imported/restored successfully"
+        }));
+      });
+    });
+
+  } catch (error: any) {
+    console.error("PUT restore error:", error);
+    return NextResponse.json({ error: `Restore trigger failed: ${error.message}` }, { status: 500 });
+  }
+}

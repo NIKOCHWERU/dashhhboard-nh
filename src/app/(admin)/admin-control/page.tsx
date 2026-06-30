@@ -99,6 +99,57 @@ export default function AdminControlPage() {
     }
   };
 
+  const handleRestoreBackup = async (filename: string) => {
+    if (!confirm(`PERINGATAN: Apakah Anda yakin ingin melakukan restore database dari file "${filename}"? Tindakan ini akan menimpa seluruh data saat ini.`)) return;
+    try {
+      setBackupSubmitting(true);
+      const res = await fetch(`/api/admin/backup?filename=${encodeURIComponent(filename)}`, { method: "PUT" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to restore database");
+      alert("Database berhasil di-restore/di-import!");
+    } catch (err: any) {
+      alert("Gagal melakukan restore: " + err.message);
+    } finally {
+      setBackupSubmitting(false);
+    }
+  };
+
+  const handleUploadImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!confirm(`PERINGATAN: Apakah Anda yakin ingin mengunggah dan mengimport file "${file.name}" ke database? Tindakan ini akan menimpa seluruh data saat ini.`)) {
+      e.target.value = "";
+      return;
+    }
+
+    try {
+      setBackupSubmitting(true);
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/admin/backup", {
+        method: "PUT",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to import database file");
+      
+      alert("Database berhasil di-import dari file SQL yang diunggah!");
+      
+      // Reload backups list
+      const reloadRes = await fetch("/api/admin/backup");
+      if (reloadRes.ok) {
+        setBackups(await reloadRes.json());
+      }
+    } catch (err: any) {
+      alert("Gagal melakukan import file SQL: " + err.message);
+    } finally {
+      setBackupSubmitting(false);
+      e.target.value = "";
+    }
+  };
+
   const handleToggle = (userId: string, field: keyof UserPermissions) => {
     setUsers((prev) =>
       prev.map((u) => {
@@ -486,19 +537,34 @@ export default function AdminControlPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-6 gap-4">
               <div>
-                <h4 className="text-xs font-bold text-gray-955 dark:text-white uppercase tracking-wider">Pencadangan Manual</h4>
-                <p className="text-[10px] text-gray-400 font-semibold">Buat backup database terbaru secara instan.</p>
+                <h4 className="text-xs font-bold text-gray-955 dark:text-white uppercase tracking-wider">Pencadangan & Pemulihan</h4>
+                <p className="text-[10px] text-gray-400 font-semibold">Buat backup baru, atau unggah file SQL/SQL.GZ untuk di-import langsung.</p>
               </div>
-              <button
-                onClick={handleTriggerBackup}
-                disabled={backupSubmitting}
-                className="px-4 py-2 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-[10px] font-black uppercase rounded-xl tracking-wider transition-all flex items-center gap-2"
-              >
-                <RotateCw className={`w-3.5 h-3.5 ${backupSubmitting ? "animate-spin" : ""}`} />
-                {backupSubmitting ? "Memproses Backup..." : "Backup Sekarang"}
-              </button>
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Upload & Import */}
+                <label className="px-4 py-2 border border-dashed border-gray-300 dark:border-gray-700 hover:border-brand-500 text-gray-600 dark:text-gray-400 hover:text-brand-500 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer transition-all flex items-center gap-2">
+                  <span>Unggah & Import SQL</span>
+                  <input
+                    type="file"
+                    accept=".sql,.gz"
+                    onChange={handleUploadImport}
+                    className="hidden"
+                    disabled={backupSubmitting}
+                  />
+                </label>
+                
+                {/* Backup Now */}
+                <button
+                  onClick={handleTriggerBackup}
+                  disabled={backupSubmitting}
+                  className="px-4 py-2 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-[10px] font-black uppercase rounded-xl tracking-wider transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <RotateCw className={`w-3.5 h-3.5 ${backupSubmitting ? "animate-spin" : ""}`} />
+                  {backupSubmitting ? "Memproses..." : "Backup Sekarang"}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -550,6 +616,13 @@ export default function AdminControlPage() {
                           {b.sizeMB} MB
                         </td>
                         <td className="p-4 pr-6 text-right whitespace-nowrap space-x-2">
+                          <button
+                            onClick={() => handleRestoreBackup(b.filename)}
+                            disabled={backupSubmitting}
+                            className="inline-flex items-center px-3 py-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-black uppercase rounded-lg border border-amber-500/20 hover:bg-amber-500/20 disabled:opacity-50 transition-all cursor-pointer"
+                          >
+                            Restore
+                          </button>
                           <a
                             href={`/api/admin/backup?filename=${encodeURIComponent(b.filename)}`}
                             download
@@ -559,7 +632,8 @@ export default function AdminControlPage() {
                           </a>
                           <button
                             onClick={() => handleDeleteBackup(b.filename)}
-                            className="inline-flex items-center px-3 py-1.5 bg-rose-500/10 text-rose-600 dark:text-rose-455 text-[10px] font-black uppercase rounded-lg border border-rose-500/20 hover:bg-rose-500/20 transition-all cursor-pointer"
+                            disabled={backupSubmitting}
+                            className="inline-flex items-center px-3 py-1.5 bg-rose-500/10 text-rose-600 dark:text-rose-455 text-[10px] font-black uppercase rounded-lg border border-rose-500/20 hover:bg-rose-500/20 disabled:opacity-50 transition-all cursor-pointer"
                           >
                             Hapus
                           </button>
