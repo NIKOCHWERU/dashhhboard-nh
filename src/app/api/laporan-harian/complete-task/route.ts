@@ -55,6 +55,11 @@ export async function POST(req: Request) {
           attachments: JSON.stringify(updatedAttachments),
         },
       });
+    } else if (taskId.startsWith("esok_") || taskId.startsWith("prio_")) {
+      const parts = taskId.split("_");
+      taskName = parts.slice(3).join("_");
+      taskPriority = parts[2].toUpperCase();
+      taskLabel = "LAPORAN TASK";
     } else {
       let personalTask = await prisma.personalTask.findUnique({
         where: { id: taskId },

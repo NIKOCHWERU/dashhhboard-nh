@@ -119,6 +119,11 @@ export default function Dashboard() {
       setAllAgendas(agendas);
       setDisplayAgendas(agendas.slice(0, 5));
 
+      const sessionUser = session?.user as any;
+      const userLaporanUrl = sessionUser?.id 
+        ? `/api/laporan-harian?userId=${sessionUser.id}`
+        : "/api/laporan-harian";
+
       const [
         resKaryawan, 
         resPersonalTasks,
@@ -142,7 +147,7 @@ export default function Dashboard() {
         fetch("/api/progress-pekerjaan?type=RETAINER&limit=3"),
         fetch("/api/progress-pekerjaan?type=NON_RETAINER&limit=3"),
         fetch("/api/progress-pekerjaan?type=INTERNAL&limit=3"),
-        fetch("/api/laporan-harian?date=" + new Date().toISOString().slice(0, 10))
+        fetch(userLaporanUrl)
       ]);
 
       const team = resKaryawan.ok ? await resKaryawan.json() : [];
@@ -151,16 +156,67 @@ export default function Dashboard() {
       const calonKlienData = resCalonKlien.ok ? await resCalonKlien.json() : [];
       const reports = resLaporan.ok ? await resLaporan.json() : [];
       
-      const sessionUser = session?.user as any;
-      const myReport = reports.find((r: any) => r.userId === sessionUser?.id) || reports[0];
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayReport = reports.find((r: any) => r.tanggal.slice(0, 10) === todayStr);
       let q1Tasks: string[] = [];
-      if (myReport && myReport.prioritas) {
+      if (todayReport && todayReport.prioritas) {
         try {
-          const parsed = JSON.parse(myReport.prioritas);
-          q1Tasks = parsed.q1 || [];
+          const parsed = JSON.parse(todayReport.prioritas);
+          q1Tasks = (parsed.q1 || []).map((t: any) => typeof t === "string" ? t : t.task);
         } catch (e) {}
       }
       setTodayQ1Tasks(q1Tasks);
+
+      // Build Laporan Kerja list from all reports
+      const mappedLaporanKerja: any[] = [];
+      reports.forEach((report: any) => {
+        // Today's scale priority (Selesai)
+        if (report.prioritas) {
+          try {
+            const parsed = JSON.parse(report.prioritas);
+            ["q1", "q2", "q3"].forEach((pKey) => {
+              const list = parsed[pKey] || [];
+              list.forEach((item: any) => {
+                const taskName = typeof item === "string" ? item : item.task;
+                if (!taskName) return;
+                mappedLaporanKerja.push({
+                  id: `prio_${report.id}_${pKey}_${taskName}`,
+                  title: taskName,
+                  priority: pKey.toUpperCase(),
+                  endDate: report.tanggal,
+                  status: "COMPLETED",
+                });
+              });
+            });
+          } catch (e) {}
+        }
+
+        // Tomorrow's planned priority (Selesaikan)
+        if (report.tugasEsok) {
+          try {
+            const parsed = JSON.parse(report.tugasEsok);
+            ["q1", "q2", "q3"].forEach((pKey) => {
+              const list = parsed[pKey] || [];
+              list.forEach((item: any) => {
+                const taskName = typeof item === "string" ? item : item.task;
+                if (!taskName) return;
+                
+                const tomorrowDate = new Date(report.tanggal);
+                tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+
+                mappedLaporanKerja.push({
+                  id: `esok_${report.id}_${pKey}_${taskName}`,
+                  title: taskName,
+                  priority: pKey.toUpperCase(),
+                  endDate: tomorrowDate.toISOString(),
+                  status: "PENDING",
+                });
+              });
+            });
+          } catch (e) {}
+        }
+      });
+
       const recentArsip = resRecentArsip.ok ? await resRecentArsip.json() : [];
       const arsipSummaryObj = resArsipSummary.ok ? await resArsipSummary.json() : { total: 0 };
       const progressSummaryObj = resProgressSummary.ok ? await resProgressSummary.json() : {};
@@ -177,7 +233,7 @@ export default function Dashboard() {
       });
 
       setKaryawanList(team);
-      setPersonalTasks(tasks);
+      setPersonalTasks(mappedLaporanKerja);
       setAnnouncements(ann.slice(0, 3));
       setRecentCalonKlien(calonKlienData.slice(0, 5));
       setRecentArsipFiles(Array.isArray(recentArsip) ? recentArsip : recentArsip.items || []);

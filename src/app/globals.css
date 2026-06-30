@@ -1141,5 +1141,16 @@ html {
   background: rgba(156, 163, 175, 0.5);
 }
 
-
-
+/* Force uppercase on GDrive folders, files, explorer paths, and folder tree nodes */
+.group\/node,
+.group\/node span,
+.max-h-\[500px\] span,
+[class*="dokumentasi"] span,
+[class*="dokumentasi"] h5,
+[class*="dokumentasi"] h4,
+[class*="narasumber-hukum"] span,
+[class*="narasumber-hukum"] h5,
+[class*="narasumber-hukum"] h4,
+.truncate {
+  text-transform: uppercase !important;
+}
