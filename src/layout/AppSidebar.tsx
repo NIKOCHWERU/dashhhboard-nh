@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
+import { Database } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { APP_LABELS } from "../config/app-labels";
 import {
@@ -148,6 +149,7 @@ const AppSidebar: React.FC = () => {
         title: APP_LABELS.sidebar.groups.hrm,
         items: [
           { name: APP_LABELS.sidebar.items.dashboardHrm, icon: <GridIcon />, path: "/hrm" },
+          { name: "Sistem & Integrasi", icon: <Database className="w-5 h-5" />, path: "/import-database" },
           { name: APP_LABELS.sidebar.items.daftarKaryawan, icon: <KaryawanIcon />, path: "/hrm/karyawan" },
           { name: APP_LABELS.sidebar.items.daftarRetainer, icon: <RetainerIcon />, path: "/hrm/retainer" },
           { name: APP_LABELS.sidebar.items.dataPelamar, icon: <KaryawanIcon />, path: "/hrm/pelamar" },

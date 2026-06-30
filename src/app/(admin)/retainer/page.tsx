@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { FeatureModal } from "@/components/common/FeatureModal";
+import PicSelect from "@/components/common/PicSelect";
 import { PlusIcon, BoxIconLine } from "@/icons";
 
 interface Retainer {
@@ -536,19 +537,14 @@ export default function RetainerPage() {
 
           {/* PIC SELECT DROPDOWN */}
           <div>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Person in Charge (PIC)</label>
-            <select
-              className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark rounded-none px-4 py-3 text-sm focus:border-brand-500 outline-none font-bold text-gray-700 dark:text-gray-300"
-              value={formData.picEmail}
-              onChange={(e) => setFormData({ ...formData, picEmail: e.target.value })}
-            >
-              <option value="">-- PILIH PIC KARYAWAN --</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.email || ""}>
-                  {u.name || "Karyawan"} ({u.email})
-                </option>
-              ))}
-            </select>
+            <PicSelect
+              label="Person in Charge (PIC)"
+              users={users}
+              selectedValues={formData.picEmail ? formData.picEmail.split(",").map(p => p.trim()).filter(Boolean) : []}
+              onChange={(selected) => setFormData({ ...formData, picEmail: selected.join(", ") })}
+              placeholder="Pilih Karyawan PIC..."
+              valueKey="email"
+            />
           </div>
 
           <button className="w-full bg-brand-500 text-white py-3.5 rounded-none font-black uppercase tracking-widest text-xs hover:bg-brand-600 transition-all shadow-sm">
