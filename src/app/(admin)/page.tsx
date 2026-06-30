@@ -116,8 +116,18 @@ export default function Dashboard() {
 
       const resAgenda = await fetch("/api/laporan-operasional?agenda=true");
       const agendas = resAgenda.ok ? await resAgenda.json() : [];
-      setAllAgendas(agendas);
-      setDisplayAgendas(agendas.slice(0, 5));
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const upcomingAgendas = agendas.filter((a: any) => {
+        const aDate = new Date(a.startDate);
+        aDate.setHours(0, 0, 0, 0);
+        return aDate.getTime() >= today.getTime();
+      }).sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+
+      setAllAgendas(upcomingAgendas);
+      setDisplayAgendas(upcomingAgendas.slice(0, 5));
 
       const sessionUser = session?.user as any;
       const userLaporanUrl = sessionUser?.id 

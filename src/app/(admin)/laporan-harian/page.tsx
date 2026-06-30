@@ -83,7 +83,7 @@ export default function LaporanHarianPage() {
   // --- Drag & Drop, Editing, Bulk addition, and Dual actions States ---
   const [draggedItem, setDraggedItem] = useState<{ index: number; sourceCategory: "q1" | "q2" | "q3"; type: "today" | "tomorrow" } | null>(null);
   const [editingItem, setEditingItem] = useState<{ index: number; category: "q1" | "q2" | "q3"; type: "today" | "tomorrow"; task: string; duration: number; desc: string } | null>(null);
-  const [bulkAddArea, setBulkAddArea] = useState<{ category: "q1" | "q2" | "q3"; type: "today" | "tomorrow"; text: string } | null>(null);
+  const [bulkAddList, setBulkAddList] = useState<{ category: "q1" | "q2" | "q3"; type: "today" | "tomorrow"; items: { task: string; duration: number; desc: string }[] } | null>(null);
   const [historySubTab, setHistorySubTab] = useState<"skala" | "laporan">("skala");
 
   // Drag handlers
@@ -171,30 +171,16 @@ export default function LaporanHarianPage() {
 
   // Bulk add handlers
   const handleBulkAddSave = () => {
-    if (!bulkAddArea) return;
-    const { category, type, text } = bulkAddArea;
-    const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
-
-    const newTasks: TaskItem[] = lines.map(line => {
-      let task = line;
-      let duration = category === "q1" ? 120 : category === "q2" ? 60 : 30;
-      let desc = "";
-
-      const match = line.match(/^(.*?)\((.*?)\)$/);
-      if (match) {
-        task = match[1].trim();
-        const details = match[2].split(",").map(s => s.trim());
-        if (details[0]) {
-          const durMatch = details[0].match(/\d+/);
-          if (durMatch) duration = parseInt(durMatch[0]);
-        }
-        if (details[1]) {
-          desc = details[1];
-        }
-      }
-
-      return { task, duration, desc, attachment: null };
-    });
+    if (!bulkAddList) return;
+    const { category, type, items } = bulkAddList;
+    
+    // Filter out empty tasks
+    const newTasks: TaskItem[] = items.filter(item => item.task.trim() !== "").map(item => ({
+      task: item.task,
+      duration: item.duration || (category === "q1" ? 120 : category === "q2" ? 60 : 30),
+      desc: item.desc,
+      attachment: null,
+    }));
 
     let list = category === "q1" 
       ? (type === "today" ? q1Today : q1Tomorrow) 
@@ -214,7 +200,7 @@ export default function LaporanHarianPage() {
       else setQ3Tomorrow(updatedList);
     }
 
-    setBulkAddArea(null);
+    setBulkAddList(null);
   };
 
   // --- Riwayat States ---
@@ -665,7 +651,7 @@ export default function LaporanHarianPage() {
                     <span className="text-xs font-black text-brand-500 uppercase tracking-wide block">{label}</span>
                     <button
                       type="button"
-                      onClick={() => setBulkAddArea({ category: q, type: "today", text: "" })}
+                      onClick={() => setBulkAddList({ category: q, type: "today", items: [{ task: "", duration: q === "q1" ? 120 : q === "q2" ? 60 : 30, desc: "" }] })}
                       className="text-[10px] font-black text-brand-500 hover:underline uppercase cursor-pointer"
                     >
                       + Tambah Beberapa
@@ -960,7 +946,7 @@ export default function LaporanHarianPage() {
                     <span className="text-xs font-black text-brand-500 uppercase tracking-wide block">{label}</span>
                     <button
                       type="button"
-                      onClick={() => setBulkAddArea({ category: q, type: "tomorrow", text: "" })}
+                      onClick={() => setBulkAddList({ category: q, type: "tomorrow", items: [{ task: "", duration: q === "q1" ? 120 : q === "q2" ? 60 : 30, desc: "" }] })}
                       className="text-[10px] font-black text-brand-500 hover:underline uppercase cursor-pointer"
                     >
                       + Tambah Beberapa
@@ -1183,40 +1169,102 @@ export default function LaporanHarianPage() {
             </button>
           </div>
 
-          {/* Bulk Add Textarea Modal */}
-          {bulkAddArea && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-boxdark rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 max-w-md w-full p-6 space-y-4 animate-in zoom-in-95 duration-250">
+          {/* Bulk Add Modal with Dynamic Inputs */}
+          {bulkAddList && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 overflow-y-auto">
+              <div className="bg-white dark:bg-boxdark rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 max-w-3xl w-full p-6 space-y-4 animate-in zoom-in-95 duration-250 my-auto">
                 <div>
                   <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-wider">
-                    Tambah Beberapa Tugas ({bulkAddArea.category.toUpperCase()} - {bulkAddArea.type === "today" ? "Hari Ini" : "Esok Hari"})
+                    Tambah Beberapa Tugas ({bulkAddList.category.toUpperCase()} - {bulkAddList.type === "today" ? "Hari Ini" : "Esok Hari"})
                   </h3>
                   <p className="text-[9px] text-gray-400 font-bold uppercase mt-1">
-                    Masukkan satu tugas per baris. Format opsional: Nama Tugas (Durasi Menit, Keterangan)
+                    Masukkan detail tugas untuk setiap baris
                   </p>
                 </div>
-                <textarea
-                  rows={6}
-                  value={bulkAddArea.text}
-                  onChange={(e) => setBulkAddArea({ ...bulkAddArea, text: e.target.value })}
-                  placeholder="Contoh:&#10;Memperbaiki file-file PT OBG (120, perbaikan database)&#10;Update dashboard NH (60, modul baru)"
-                  className="w-full bg-gray-55 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-4 py-3 rounded-xl text-xs font-semibold text-black dark:text-white focus:border-brand-500 outline-none resize-none"
-                />
-                <div className="flex justify-end gap-2">
+                
+                <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2">
+                  {bulkAddList.items.map((item, idx) => (
+                    <div key={idx} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                      <input
+                        type="text"
+                        placeholder="Nama Tugas..."
+                        value={item.task}
+                        onChange={(e) => {
+                          const newItems = [...bulkAddList.items];
+                          newItems[idx].task = e.target.value;
+                          setBulkAddList({ ...bulkAddList, items: newItems });
+                        }}
+                        className="sm:col-span-5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-3 py-2.5 rounded-xl text-xs font-semibold focus:border-brand-500 outline-none"
+                      />
+                      <input
+                        type="number"
+                        placeholder="Menit"
+                        value={item.duration || ""}
+                        onChange={(e) => {
+                          const newItems = [...bulkAddList.items];
+                          newItems[idx].duration = parseInt(e.target.value) || 0;
+                          setBulkAddList({ ...bulkAddList, items: newItems });
+                        }}
+                        className="sm:col-span-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-3 py-2.5 rounded-xl text-xs font-semibold focus:border-brand-500 outline-none"
+                      />
+                      <div className="sm:col-span-5 flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Keterangan..."
+                          value={item.desc}
+                          onChange={(e) => {
+                            const newItems = [...bulkAddList.items];
+                            newItems[idx].desc = e.target.value;
+                            setBulkAddList({ ...bulkAddList, items: newItems });
+                          }}
+                          className="flex-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-3 py-2.5 rounded-xl text-xs font-semibold focus:border-brand-500 outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newItems = bulkAddList.items.filter((_, i) => i !== idx);
+                            setBulkAddList({ ...bulkAddList, items: newItems });
+                          }}
+                          className="text-rose-500 hover:text-rose-600 px-2 cursor-pointer transition-colors"
+                          title="Hapus Baris"
+                        >
+                          <TrashBinIcon />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex justify-between items-center pt-2">
                   <button
                     type="button"
-                    onClick={() => setBulkAddArea(null)}
-                    className="bg-gray-150 dark:bg-white/10 text-black dark:text-white px-4 py-2 font-bold uppercase tracking-widest text-[9px] rounded-xl hover:bg-gray-250 cursor-pointer"
+                    onClick={() => {
+                      setBulkAddList({
+                        ...bulkAddList,
+                        items: [...bulkAddList.items, { task: "", duration: bulkAddList.category === "q1" ? 120 : bulkAddList.category === "q2" ? 60 : 30, desc: "" }]
+                      });
+                    }}
+                    className="text-[10px] font-black text-brand-500 uppercase tracking-wider hover:text-brand-600 transition-colors cursor-pointer flex items-center gap-1"
                   >
-                    Batal
+                    <PlusIcon /> Tambah Baris
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleBulkAddSave}
-                    className="bg-brand-500 text-white px-4 py-2 font-bold uppercase tracking-widest text-[9px] rounded-xl hover:bg-brand-600 cursor-pointer"
-                  >
-                    Tambah
-                  </button>
+                  
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setBulkAddList(null)}
+                      className="bg-gray-150 dark:bg-white/10 text-black dark:text-white px-4 py-2 font-bold uppercase tracking-widest text-[9px] rounded-xl hover:bg-gray-250 cursor-pointer"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleBulkAddSave}
+                      className="bg-brand-500 text-white px-4 py-2 font-bold uppercase tracking-widest text-[9px] rounded-xl hover:bg-brand-600 cursor-pointer"
+                    >
+                      Simpan Tugas
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1387,46 +1435,49 @@ export default function LaporanHarianPage() {
                   })}
                 </div>
               ) : (
-                /* LAPORAN HARIAN VIEW */
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                /* LAPORAN HARIAN VIEW (SEMI-CARD TABLE) */
+                <div className="flex flex-col gap-3">
+                  <div className="hidden md:grid grid-cols-12 gap-4 px-5 py-3 text-[10px] font-black text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-white/[0.02] rounded-xl border border-gray-200 dark:border-gray-800">
+                    <div className="col-span-3">Karyawan</div>
+                    <div className="col-span-3">Tanggal</div>
+                    <div className="col-span-4">Ringkasan Output</div>
+                    <div className="col-span-2 text-right">Aksi</div>
+                  </div>
                   {historyList.map((item) => (
                     <div
                       key={item.id}
                       onClick={() => setSelectedHistoryItem(item)}
-                      className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 p-5 rounded-2xl shadow-sm hover:border-brand-500 transition-all cursor-pointer flex flex-col justify-between"
+                      className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 p-4 md:px-5 md:py-4 rounded-xl shadow-sm hover:border-brand-500 transition-all cursor-pointer"
                     >
-                      <div>
-                        <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-2 mb-3">
-                          <span className="text-[10px] font-black text-brand-500 uppercase tracking-widest flex items-center gap-1.5">
-                            <UserCircleIcon />
-                            {item.user.name}
-                          </span>
-                          <span className="text-[10px] font-bold text-gray-400 capitalize">
-                            {formatDateIndo(item.tanggal)}
-                          </span>
-                        </div>
-                        
-                        {/* Snippet outputs */}
-                        <div className="space-y-2 mt-2">
-                          <div>
-                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">Output Hari Ini:</span>
-                            <ul className="list-disc list-inside text-xs font-bold text-gray-700 dark:text-gray-300 mt-1 pl-1 line-clamp-2">
-                              {(() => {
-                                try {
-                                  const outs = JSON.parse(item.hasilKerja) || [];
-                                  return outs.length > 0 ? outs.map((o: string, idx: number) => (
-                                    <li key={idx} className="truncate">{o}</li>
-                                  )) : <span className="italic text-gray-400 font-semibold">-</span>;
-                                } catch (e) {
-                                  return <span className="italic text-gray-400 font-semibold">-</span>;
-                                }
-                              })()}
-                            </ul>
-                          </div>
-                        </div>
+                      <div className="md:col-span-3 flex items-center gap-2">
+                        <UserCircleIcon />
+                        <span className="text-[11px] font-black text-brand-500 uppercase tracking-widest truncate">
+                          {item.user.name}
+                        </span>
                       </div>
-
-                      <div className="flex justify-end items-center gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-gray-800/80">
+                      
+                      <div className="md:col-span-3">
+                        <span className="text-[10px] font-bold text-gray-500 capitalize">
+                          {formatDateIndo(item.tanggal)}
+                        </span>
+                      </div>
+                      
+                      <div className="md:col-span-4">
+                        {(() => {
+                          try {
+                            const outs = JSON.parse(item.hasilKerja) || [];
+                            return outs.length > 0 ? (
+                              <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 truncate block">
+                                {outs[0]} {outs.length > 1 && `(+${outs.length - 1} lainnya)`}
+                              </span>
+                            ) : <span className="italic text-gray-400 text-[10px] font-semibold">-</span>;
+                          } catch (e) {
+                            return <span className="italic text-gray-400 text-[10px] font-semibold">-</span>;
+                          }
+                        })()}
+                      </div>
+                      
+                      <div className="md:col-span-2 flex justify-end items-center gap-3">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -1438,7 +1489,7 @@ export default function LaporanHarianPage() {
                         </button>
                         <button
                           type="button"
-                          className="text-[10px] font-black text-brand-500 uppercase tracking-wider pl-2 cursor-pointer"
+                          className="text-[10px] font-black text-brand-500 uppercase tracking-wider cursor-pointer"
                         >
                           Detail
                         </button>
