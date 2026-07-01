@@ -17,26 +17,58 @@ async function initializeNarasumberHukumFolders() {
   const accessToken = await getAccessToken();
   const nhFolderId = "1mIfFQSMviTEO8wCm8YXWAMKLMjA1jRoq";
 
-  // 1. Create default category folders
+  // 1. List all existing items in the main folder to prevent duplicate queries
+  const existingItems = await listFiles(nhFolderId);
+  const existingNamesSet = new Set(
+    existingItems
+      .filter((item: any) => item.mimeType === "application/vnd.google-apps.folder")
+      .map((item: any) => item.name.trim().toUpperCase())
+  );
+
+  // 2. Create default category folders if missing
   const categories = ["Drafting Kontrak", "Legal Opinion", "Somasi / Peringatan", "Arsip Umum"];
   for (const cat of categories) {
-    await getOrCreateFolder(accessToken, cat, nhFolderId);
+    if (!existingNamesSet.has(cat.toUpperCase())) {
+      await getOrCreateFolder(accessToken, cat, nhFolderId);
+    }
   }
 
-  // 1b. Create Dokumentasi Internal folder and its subfolders
-  const docInternalId = await getOrCreateFolder(accessToken, "Dokumentasi Internal", nhFolderId);
-  await getOrCreateFolder(accessToken, "Foto", docInternalId);
-  await getOrCreateFolder(accessToken, "Video", docInternalId);
-  await getOrCreateFolder(accessToken, "Dokumen", docInternalId);
+  // 3. Create Dokumentasi Internal folder and its subfolders if missing
+  let docInternalId = "";
+  const internalFolder = existingItems.find(
+    (item: any) =>
+      item.mimeType === "application/vnd.google-apps.folder" &&
+      item.name.trim().toUpperCase() === "DOKUMENTASI INTERNAL"
+  );
 
-  // 2. Create folders for each registered PT
+  if (internalFolder) {
+    docInternalId = internalFolder.id;
+  } else {
+    docInternalId = await getOrCreateFolder(accessToken, "Dokumentasi Internal", nhFolderId);
+  }
+
+  const existingInternalItems = await listFiles(docInternalId);
+  const existingInternalNamesSet = new Set(
+    existingInternalItems
+      .filter((item: any) => item.mimeType === "application/vnd.google-apps.folder")
+      .map((item: any) => item.name.trim().toUpperCase())
+  );
+
+  const internalSubs = ["Foto", "Video", "Dokumen"];
+  for (const sub of internalSubs) {
+    if (!existingInternalNamesSet.has(sub.toUpperCase())) {
+      await getOrCreateFolder(accessToken, sub, docInternalId);
+    }
+  }
+
+  // 4. Create folders for each registered PT if missing
   const retainers = await prisma.retainer.findMany({
     select: { clientName: true },
     distinct: ["clientName"],
   });
 
   for (const ret of retainers) {
-    if (ret.clientName) {
+    if (ret.clientName && !existingNamesSet.has(ret.clientName.trim().toUpperCase())) {
       await getOrCreateFolder(accessToken, ret.clientName, nhFolderId);
     }
   }
