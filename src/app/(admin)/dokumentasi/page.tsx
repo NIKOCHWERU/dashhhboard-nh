@@ -10,6 +10,7 @@ interface ClientData {
   projectName?: string;
   caseType?: string;
   googleFolderId: string | null;
+  isRetainer?: boolean;
 }
 
 interface GDriveFile {
@@ -109,8 +110,18 @@ export default function DokumentasiPage() {
       ]);
       const retData = await resRet.json();
       const perData = await resPer.json();
-      setRetainers(Array.isArray(retData) ? retData : []);
-      setPerorangan(Array.isArray(perData) ? perData : []);
+      
+      const formattedRet = (Array.isArray(retData) ? retData : []).map((r: any) => ({
+        ...r,
+        isRetainer: true,
+      }));
+      const formattedPer = (Array.isArray(perData) ? perData : []).map((p: any) => ({
+        ...p,
+        isRetainer: false,
+      }));
+
+      setRetainers(formattedRet);
+      setPerorangan(formattedPer);
     } catch (e) {
       console.error(e);
     } finally {
@@ -177,7 +188,7 @@ export default function DokumentasiPage() {
       let resMain = await fetch(`/api/gdrive?folderId=${baseFolderId}`);
       
       if (!resMain.ok && client.id !== "internal-root") {
-        const cType = client.projectName ? "Retainer" : "Perorangan";
+        const cType = (client as any).isRetainer ? "Retainer" : "Perorangan";
         const resRecreate = await fetch("/api/gdrive/recreate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
