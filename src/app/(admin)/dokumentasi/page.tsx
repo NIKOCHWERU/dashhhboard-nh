@@ -50,8 +50,7 @@ export default function DokumentasiPage() {
 
   // Upload modal state
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [mediaDescription, setMediaDescription] = useState("");
+  const [selectedUploads, setSelectedUploads] = useState<{ file: File; name: string; category: string; description: string; }[]>([]);
   const [previewItem, setPreviewItem] = useState<GDriveFile | null>(null);
 
   const { uploadFiles, activeUploadsCount } = useUpload();
@@ -291,15 +290,26 @@ export default function DokumentasiPage() {
 
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedFiles.length === 0 || !activeFolderId || !selectedClient) return;
+    if (selectedUploads.length === 0 || !activeFolderId || !selectedClient) return;
 
     try {
-      uploadFiles(selectedFiles, activeFolderId, mediaDescription.trim());
+      const files = selectedUploads.map((up) => up.file);
+      const customMetadata = selectedUploads.map((up) => {
+        const descJson = {
+          text: up.description.trim() || "",
+          category: up.category.trim(),
+        };
+        return {
+          fileName: up.name.trim(),
+          description: JSON.stringify(descJson),
+        };
+      });
+
+      uploadFiles(files, activeFolderId, "", customMetadata);
       setUploadModalOpen(false);
-      setSelectedFiles([]);
-      setMediaDescription("");
+      setSelectedUploads([]);
       
-      alert(`Berhasil menambahkan ${selectedFiles.length} berkas ke antrean unggahan latar belakang!`);
+      alert(`Berhasil menambahkan ${selectedUploads.length} berkas ke antrean unggahan latar belakang!`);
       
       await browseFolder(activeFolderId, activeFolderName, false);
     } catch (error) {
@@ -660,7 +670,7 @@ export default function DokumentasiPage() {
       </FeatureModal>
 
       {/* UPLOAD FILE MODAL */}
-      <FeatureModal isOpen={uploadModalOpen} onClose={() => setUploadModalOpen(false)} title={`Unggah ${activeTab}`}>
+      <FeatureModal isOpen={uploadModalOpen} onClose={() => { setUploadModalOpen(false); setSelectedUploads([]); }} title={`Unggah ${activeTab}`}>
         <form onSubmit={handleFileUpload} className="space-y-4 pt-2">
           <div>
             <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Pilih Berkas {activeTab}</label>
@@ -670,20 +680,85 @@ export default function DokumentasiPage() {
               multiple
               accept={activeTab === "Foto" ? "image/*" : activeTab === "Video" ? "video/*" : ".pdf,.doc,.docx,.xls,.xlsx"}
               className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-none file:border file:border-stroke file:text-xs file:font-black file:uppercase file:bg-white hover:file:bg-gray-50 file:cursor-pointer"
-              onChange={(e) => setSelectedFiles(e.target.files ? Array.from(e.target.files) : [])}
+              onChange={(e) => {
+                if (!e.target.files) return;
+                const files = Array.from(e.target.files);
+                setSelectedUploads(
+                  files.map((file) => ({
+                    file,
+                    name: file.name,
+                    category: "",
+                    description: "",
+                  }))
+                );
+              }}
             />
           </div>
-          <div>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Keterangan</label>
-            <textarea
-              className="w-full px-4 py-2 border border-stroke rounded-none bg-white text-gray-700 outline-none focus:border-brand-500 text-xs font-semibold h-24 resize-none"
-              value={mediaDescription}
-              onChange={(e) => setMediaDescription(e.target.value)}
-            />
-          </div>
+
+          {selectedUploads.length > 0 && (
+            <div className="max-h-72 overflow-y-auto border border-stroke dark:border-strokedark p-3 bg-gray-50 dark:bg-gray-900/50 space-y-4 rounded-none custom-scrollbar">
+              <span className="block text-[10px] font-black uppercase text-gray-400 tracking-wider">Sesuaikan Detail Berkas ({selectedUploads.length})</span>
+              {selectedUploads.map((up, idx) => (
+                <div key={idx} className="p-3 bg-white dark:bg-[#1a1d27] border border-stroke dark:border-strokedark space-y-2 rounded-none">
+                  <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-1.5 mb-1.5">
+                    <span className="text-[10px] font-bold text-gray-500 truncate max-w-[200px]">{up.file.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedUploads(prev => prev.filter((_, i) => i !== idx))}
+                      className="text-[9px] font-bold text-red-500 hover:underline uppercase cursor-pointer"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[8px] font-black uppercase text-gray-450 mb-1">Nama Berkas</label>
+                      <input
+                        required
+                        type="text"
+                        className="w-full bg-gray-50 dark:bg-gray-805 border border-stroke dark:border-strokedark rounded-none px-3 py-1.5 text-xs focus:border-brand-500 outline-none font-semibold text-black dark:text-white"
+                        value={up.name}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setSelectedUploads(prev => prev.map((item, i) => i === idx ? { ...item, name: val } : item));
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[8px] font-black uppercase text-gray-450 mb-1">Kategori / Tag</label>
+                      <input
+                        type="text"
+                        placeholder="Contoh: Laporan, Somasi, Kontrak"
+                        className="w-full bg-gray-50 dark:bg-gray-805 border border-stroke dark:border-strokedark rounded-none px-3 py-1.5 text-xs focus:border-brand-500 outline-none font-semibold text-black dark:text-white"
+                        value={up.category}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setSelectedUploads(prev => prev.map((item, i) => i === idx ? { ...item, category: val } : item));
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[8px] font-black uppercase text-gray-450 mb-1">Keterangan / Deskripsi</label>
+                    <input
+                      type="text"
+                      placeholder="Tambahkan keterangan berkas..."
+                      className="w-full bg-gray-50 dark:bg-gray-805 border border-stroke dark:border-strokedark rounded-none px-3 py-1.5 text-xs focus:border-brand-500 outline-none font-semibold text-black dark:text-white"
+                      value={up.description}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSelectedUploads(prev => prev.map((item, i) => i === idx ? { ...item, description: val } : item));
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setUploadModalOpen(false)} className="px-4 py-2 border border-stroke rounded-none text-xs font-black uppercase text-gray-600 hover:bg-gray-50">Batal</button>
-            <button type="submit" disabled={selectedFiles.length === 0} className="px-4 py-2 bg-brand-500 text-white rounded-none hover:bg-brand-600 text-xs font-black uppercase">Mulai Unggah</button>
+            <button type="button" onClick={() => { setUploadModalOpen(false); setSelectedUploads([]); }} className="px-4 py-2 border border-stroke rounded-none text-xs font-black uppercase text-gray-600 hover:bg-gray-50 dark:border-strokedark dark:text-gray-300 dark:hover:bg-gray-850">Batal</button>
+            <button type="submit" disabled={selectedUploads.length === 0} className="px-4 py-2 bg-brand-500 text-white rounded-none hover:bg-brand-600 text-xs font-black uppercase disabled:opacity-50">Mulai Unggah</button>
           </div>
         </form>
       </FeatureModal>
@@ -693,6 +768,7 @@ export default function DokumentasiPage() {
         let uploaderName = "Tenaga Kerja (Sistem)";
         let uploaderImage = "";
         let descriptionText = "Tidak ada keterangan.";
+        let categoryText = "";
 
         if (previewItem.description) {
           try {
@@ -700,6 +776,7 @@ export default function DokumentasiPage() {
             uploaderName = parsed.uploaderName || "Tenaga Kerja (Sistem)";
             uploaderImage = parsed.uploaderImage || "";
             descriptionText = parsed.text || "Tidak ada keterangan.";
+            categoryText = parsed.category || "";
           } catch (e) {
             descriptionText = previewItem.description;
           }
@@ -747,7 +824,14 @@ export default function DokumentasiPage() {
               <div className="mt-6 border-t border-white/10 pt-4 space-y-4">
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                   <div className="space-y-1">
-                    <h4 className="text-sm font-black text-white uppercase tracking-wider">{previewItem.name}</h4>
+                    <h4 className="text-sm font-black text-white uppercase tracking-wider">
+                      {previewItem.name}
+                      {categoryText && (
+                        <span className="ml-2.5 inline-block px-2.5 py-0.5 bg-brand-500/20 text-brand-400 border border-brand-500/30 text-[9px] font-black uppercase tracking-widest rounded-none">
+                          {categoryText}
+                        </span>
+                      )}
+                    </h4>
                     <p className="text-[10px] text-gray-400 font-semibold">TIPE: {previewItem.mimeType.split("/")[1]?.toUpperCase() || "UNKNOWN"}</p>
                   </div>
                   

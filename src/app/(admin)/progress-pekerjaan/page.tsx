@@ -1579,6 +1579,7 @@ export default function ProgressPekerjaanPage() {
             </div>
           </form>
         </div>
+      )}
       {isSaving && (
         <div className="fixed inset-0 z-[999999] flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mb-4"></div>

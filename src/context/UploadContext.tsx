@@ -19,7 +19,12 @@ export interface UploadTask {
 
 interface UploadContextType {
   tasks: UploadTask[];
-  uploadFiles: (files: FileList | File[], folderId: string, description?: string) => void;
+  uploadFiles: (
+    files: FileList | File[], 
+    folderId: string, 
+    description?: string, 
+    customMetadata?: { fileName: string; description: string; }[]
+  ) => void;
   cancelUpload: (taskId: string) => void;
   clearCompleted: () => void;
   activeUploadsCount: number;
@@ -36,19 +41,28 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
   const xhrMapRef = useRef<{ [taskId: string]: XMLHttpRequest }>({});
   const fileCacheRef = useRef<{ [taskId: string]: File }>({});
 
-  const uploadFiles = (files: FileList | File[], folderId: string, description = "") => {
+  const uploadFiles = (
+    files: FileList | File[], 
+    folderId: string, 
+    description = "", 
+    customMetadata?: { fileName: string; description: string; }[]
+  ) => {
     const fileList = Array.from(files);
-    const newTasks: UploadTask[] = fileList.map((file) => {
+    const newTasks: UploadTask[] = fileList.map((file, index) => {
       const isTooLarge = file.size > MAX_FILE_SIZE;
+      const custom = customMetadata && customMetadata[index];
+      const finalFileName = custom ? custom.fileName : file.name;
+      const finalDescription = custom ? custom.description : description;
+
       return {
         id: Math.random().toString(36).substring(2, 11),
-        fileName: file.name,
+        fileName: finalFileName,
         fileSize: file.size,
         progress: 0,
         status: isTooLarge ? "error" : "pending",
         error: isTooLarge ? "Ukuran file melebihi batas maksimal 2GB" : undefined,
         folderId,
-        description,
+        description: finalDescription,
         mimeType: file.type || "application/octet-stream",
         uploadedBytes: 0,
       };
@@ -128,7 +142,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fileName: file.name,
+          fileName: task.fileName,
           fileType: task.mimeType,
           fileSize: file.size,
           folderId: task.folderId,
@@ -141,11 +155,11 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
         throw new Error(errJson.error || "Gagal inisialisasi sesi upload.");
       }
 
-      const { uploadUrl } = await initRes.json();
+      const { uploadUrl, fileName: serverFileName } = await initRes.json();
 
       // Store uploadUrl in the state so cancelUpload can access it
       setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, uploadUrl } : t))
+        prev.map((t) => (t.id === taskId ? { ...t, uploadUrl, fileName: serverFileName || t.fileName } : t))
       );
 
       // 3. PUT raw data to the session URL
