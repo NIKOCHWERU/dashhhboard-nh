@@ -1,5 +1,6 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { CloseIcon } from "@/icons";
 
 interface ModalProps {
@@ -21,7 +22,13 @@ export const FeatureModal: React.FC<ModalProps> = ({
   children,
   width = "max-w-2xl"
 }) => {
-  React.useEffect(() => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (isOpen) {
       document.body.classList.add("modal-open");
     } else {
@@ -32,10 +39,10 @@ export const FeatureModal: React.FC<ModalProps> = ({
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-[12px] animate-in fade-in duration-300">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-[12px] animate-in fade-in duration-300">
       <div 
         className={`bg-white dark:bg-boxdark w-full ${width} rounded-2xl shadow-2xl border border-gray-250 dark:border-white/[0.08] overflow-hidden animate-in zoom-in duration-300`}
         onClick={(e) => e.stopPropagation()}
@@ -66,6 +73,7 @@ export const FeatureModal: React.FC<ModalProps> = ({
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
