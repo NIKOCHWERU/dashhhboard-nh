@@ -366,7 +366,7 @@ const Calendar: React.FC = () => {
     // Permission: admin bisa semua, atau user yang namanya ada di PIC
     const userName = (session?.user as any)?.name || "";
     const picList = (ev.extendedProps?.pic || "").split(", ");
-    const isCreatorOrAdmin = canManage && (isAdminUser || picList.includes(userName));
+    const isCreatorOrAdmin = isAdminUser || (session?.user as any)?.canCreateAgenda || ev.extendedProps?.userId === (session?.user as any)?.id;
 
     let priorityText = "Rendah";
     let priorityColorClass = "bg-brand-500/10 text-brand-600 border border-brand-200/30 dark:border-brand-800/30";
@@ -699,13 +699,14 @@ const Calendar: React.FC = () => {
   const userName = userObj?.name || "";
   const isAdminUser = userObj?.role === "admin";
   const isRegularUser = userObj?.role?.toLowerCase() === "user";
-  const canManage = !isRegularUser && (isAdminUser || userObj?.canCreateAgenda);
+  const isManager = isAdminUser || userObj?.canCreateAgenda;
+  const canManage = true;
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
   const eventUserId = selectedEvent?.extendedProps?.userId;
   const eventPic = selectedEvent?.extendedProps?.pic || "";
   const eventPicList = eventPic.split(", ").filter(Boolean);
-  const isCreatorOrAdminForSelected = canManage && (isAdminUser || eventUserId === userObj?.id || eventPicList.includes(userName));
+  const isCreatorOrAdminForSelected = isAdminUser || userObj?.canCreateAgenda || eventUserId === userObj?.id;
 
   const handleDateSelect = (selectInfo: DateSelectArg) => {
     if (!canManage) return;
@@ -956,7 +957,11 @@ const Calendar: React.FC = () => {
     setPengingatWaktu("09:00");
     setPengingatHari("0");
     setPengingatPengulangan("none");
-    setSelectedPeserta([]);
+    if (isAdminUser || userObj?.canCreateAgenda) {
+      setSelectedPeserta([]);
+    } else {
+      setSelectedPeserta(userObj?.name ? [userObj.name] : []);
+    }
     setFileLink("");
     setUploadingFile(false);
     setPesertaSearchQuery("");
@@ -1979,7 +1984,7 @@ const Calendar: React.FC = () => {
 
                 {/* Peserta (Multi-select using PicSelect) */}
                 <div className="md:col-span-2 relative z-50">
-                  {canManage ? (
+                  {isManager ? (
                     <div className="relative">
                       <div className="absolute top-0.5 right-0 z-10">
                         <button

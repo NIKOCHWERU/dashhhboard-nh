@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { FeatureModal } from "@/components/common/FeatureModal";
 import PicSelect from "@/components/common/PicSelect";
 import { PlusIcon, BoxIconLine } from "@/icons";
@@ -25,6 +26,10 @@ interface User {
 }
 
 export default function RetainerPage() {
+  const { data: session } = useSession();
+  const user = session?.user as any;
+  const isAdminOrPIC = user?.role === "admin" || user?.canManageRetainer;
+
   const [data, setData] = useState<Retainer[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -222,12 +227,14 @@ export default function RetainerPage() {
             Kelola dan pantau kontrak kerja sama jangka panjang secara detail dan teratur.
           </p>
         </div>
-        <button
-          onClick={handleOpenCreate}
-          className="bg-brand-500 text-white px-5 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-brand-600 shadow-sm transition-all"
-        >
-          <PlusIcon /> Tambah Retainer Baru
-        </button>
+        {isAdminOrPIC && (
+          <button
+            onClick={handleOpenCreate}
+            className="bg-brand-500 text-white px-5 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-brand-600 shadow-sm transition-all"
+          >
+            <PlusIcon /> Tambah Retainer Baru
+          </button>
+        )}
       </div>
 
       {/* Expiration warning alerts panel if any contract is ending */}
@@ -419,18 +426,22 @@ export default function RetainerPage() {
                     >
                       Detail
                     </button>
-                    <button
-                      onClick={() => handleOpenEdit(item)}
-                      className="px-3 py-1.5 border border-gray-250 dark:border-gray-800 text-[10px] font-black uppercase tracking-wider hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                    >
-                      Ubah
-                    </button>
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="px-3 py-1.5 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 text-[10px] font-black uppercase tracking-wider rounded-lg transition-colors"
-                    >
-                      Hapus
-                    </button>
+                    {isAdminOrPIC && (
+                      <>
+                        <button
+                          onClick={() => handleOpenEdit(item)}
+                          className="px-3 py-1.5 border border-gray-250 dark:border-gray-800 text-[10px] font-black uppercase tracking-wider hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                        >
+                          Ubah
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="px-3 py-1.5 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 text-[10px] font-black uppercase tracking-wider rounded-lg transition-colors"
+                        >
+                          Hapus
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

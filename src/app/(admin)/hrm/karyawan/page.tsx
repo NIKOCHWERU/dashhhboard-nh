@@ -301,9 +301,9 @@ export default function DaftarKaryawanPage() {
       {/* Welcome Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-stroke dark:border-strokedark pb-4">
         <div>
-          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">Daftar Karyawan (HRM)</h1>
+          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">Daftar Tenaga Kerja (HRM)</h1>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Pilih Perusahaan (PT) di bawah untuk menampilkan data karyawan lengkap, pendaftaran baru, dan manajemen berkas arsip.
+            Pilih Perusahaan (PT) di bawah untuk menampilkan data tenaga kerja lengkap, pendaftaran baru, dan manajemen berkas arsip.
           </p>
         </div>
         <button
@@ -311,7 +311,7 @@ export default function DaftarKaryawanPage() {
           className="bg-brand-500 text-white px-5 py-2.5 rounded-none font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-brand-600 shadow-sm transition-all"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          Daftarkan Karyawan Baru
+          Daftarkan Tenaga Kerja Baru
         </button>
       </div>
 
@@ -364,7 +364,7 @@ export default function DaftarKaryawanPage() {
             <option value="date-newest">Terbaru Ditambahkan</option>
           </select>
           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-4">
-            Total: {sortedEmployees.length} Karyawan
+            Total: {sortedEmployees.length} Tenaga Kerja
           </span>
         </div>
       </div>
@@ -405,7 +405,7 @@ export default function DaftarKaryawanPage() {
               ) : sortedEmployees.length === 0 ? (
                 <tr>
                   <td colSpan={18} className="text-center py-16 text-gray-400 italic">
-                    Belum ada data karyawan terdaftar untuk PT ini.
+                    Belum ada data tenaga kerja terdaftar untuk PT ini.
                   </td>
                 </tr>
               ) : (
@@ -484,7 +484,7 @@ export default function DaftarKaryawanPage() {
         <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-none w-full shadow-2xl border border-stroke dark:border-strokedark">
           <div className="p-5 border-b border-stroke dark:border-strokedark flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
             <h3 className="text-sm font-black text-black dark:text-white uppercase tracking-wider">
-              {isEditMode ? "Ubah Data Karyawan" : "Daftarkan Karyawan Baru"}
+              {isEditMode ? "Ubah Data Tenaga Kerja" : "Daftarkan Tenaga Kerja Baru"}
             </h3>
           </div>
           
@@ -604,10 +604,10 @@ export default function DaftarKaryawanPage() {
 
             {/* SECTION 3: UPLOAD DOCUMENTS */}
             <div className="space-y-4">
-              <h4 className="text-[10px] font-black text-brand-500 uppercase tracking-widest border-b border-stroke dark:border-strokedark pb-1">3. Upload Dokumen Karyawan</h4>
+              <h4 className="text-[10px] font-black text-brand-500 uppercase tracking-widest border-b border-stroke dark:border-strokedark pb-1">3. Upload Dokumen Tenaga Kerja</h4>
               
               <div className="p-3 border border-stroke dark:border-strokedark bg-gray-50 dark:bg-gray-800/20 text-[10px] text-gray-500 font-semibold">
-                Pilih file untuk diupload langsung ke folder Google Drive PT Karyawan. Ekstensi disarankan PDF/Gambar.
+                Pilih file untuk diupload langsung ke folder Google Drive PT Tenaga Kerja. Ekstensi disarankan PDF/Gambar.
               </div>
 
               <div>
@@ -671,7 +671,7 @@ export default function DaftarKaryawanPage() {
                   Menyimpan...
                 </>
               ) : (
-                "Simpan Data Karyawan"
+                "Simpan Data Tenaga Kerja"
               )}
             </button>
           </div>
@@ -684,7 +684,7 @@ export default function DaftarKaryawanPage() {
           <div className="bg-white dark:bg-gray-900 rounded-none w-full shadow-2xl border border-stroke dark:border-strokedark overflow-hidden">
             <div className="p-5 border-b border-stroke dark:border-strokedark flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
               <div>
-                <span className="text-[9px] font-black text-brand-500 uppercase tracking-widest">Detail Karyawan Lengkap</span>
+                <span className="text-[9px] font-black text-brand-500 uppercase tracking-widest">Detail Tenaga Kerja Lengkap</span>
                 <h3 className="text-sm font-black text-black dark:text-white uppercase tracking-wider mt-0.5">{selectedEmployee.name}</h3>
               </div>
               <span className={`px-2.5 py-0.5 rounded-none text-[9px] font-black uppercase tracking-wider ${
@@ -789,7 +789,7 @@ export default function DaftarKaryawanPage() {
                     </a>
                   )}
                   {Object.keys(getParsedDocs(selectedEmployee.documents)).length === 0 && !selectedEmployee.sim && (
-                    <span className="text-gray-400 italic text-xs">Belum ada dokumen yang terunggah untuk karyawan ini.</span>
+                    <span className="text-gray-400 italic text-xs">Belum ada dokumen yang terunggah untuk tenaga kerja ini.</span>
                   )}
                 </div>
                 <div className="p-3 border border-stroke dark:border-strokedark bg-blue-50 dark:bg-blue-900/10 text-[9px] text-blue-700 dark:text-blue-400 font-bold uppercase tracking-wider flex items-center gap-2">

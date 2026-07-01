@@ -112,6 +112,12 @@ export const authOptions: NextAuthOptions = {
             (session.user as any).canManageHRM = dbUser.canManageHRM;
             (session.user as any).canManageRetainer = dbUser.canManageRetainer;
             (session.user as any).canManagePerorangan = dbUser.canManagePerorangan;
+            (session.user as any).canAccessPekerjaan = dbUser.canAccessPekerjaan;
+            (session.user as any).canAccessDokumentasi = dbUser.canAccessDokumentasi;
+            (session.user as any).canAccessPengumuman = dbUser.canAccessPengumuman;
+            (session.user as any).canAccessArsip = dbUser.canAccessArsip;
+            (session.user as any).canAccessTenagaKerja = dbUser.canAccessTenagaKerja;
+            (session.user as any).canManageLegal = dbUser.canManageLegal;
           }
         } catch (error) {
           console.error("Error in session callback:", error);

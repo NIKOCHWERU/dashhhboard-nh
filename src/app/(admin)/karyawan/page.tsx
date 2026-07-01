@@ -101,7 +101,7 @@ export default function TimPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-4">
         <div>
-          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">Direktori Karyawan & Staf</h1>
+          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">Direktori Tenaga Kerja & Staf</h1>
           <p className="text-xs text-gray-500">Daftar pengguna terdaftar dan staf kantor yang aktif di sistem.</p>
         </div>
         
@@ -139,14 +139,14 @@ export default function TimPage() {
               </div>
             ) : filteredData.length === 0 ? (
               <div className="text-center py-20 text-xs text-gray-450 dark:text-gray-500 italic">
-                Tidak ada karyawan ditemukan.
+                Tidak ada tenaga kerja ditemukan.
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[600px]">
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-gray-800 text-[10px] font-bold text-gray-405 uppercase tracking-widest bg-gray-50/20 dark:bg-white/[0.01]">
-                      <th className="p-4 pl-6">Karyawan</th>
+                      <th className="p-4 pl-6">Tenaga Kerja</th>
                       <th className="p-4">Jabatan</th>
                       <th className="p-4">Sumber</th>
                       <th className="p-4 pr-6 text-right">Aksi</th>
@@ -283,7 +283,7 @@ export default function TimPage() {
               <svg className="w-12 h-12 text-gray-300 dark:text-gray-700 mb-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
               </svg>
-              <p className="text-xs text-gray-400 italic">Pilih salah satu karyawan di daftar sebelah kiri untuk melihat detail lengkap profil.</p>
+              <p className="text-xs text-gray-400 italic">Pilih salah satu tenaga kerja di daftar sebelah kiri untuk melihat detail lengkap profil.</p>
             </div>
           )}
         </div>

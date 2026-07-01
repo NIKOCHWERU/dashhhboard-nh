@@ -206,7 +206,7 @@ export default function ImportDatabasePage() {
       case "klien": return "Kolom minimal: NAMA KLIEN, SUMBER, JENIS PEKERJAAN, TELEPHONE";
       case "retainer": return "Kolom minimal: NAMA PT, NAMA PEKERJAAN, TANGGAL MULAI, PIC EMAIL";
       case "perorangan": return "Kolom minimal: NAMA PERORANGAN, NAMA PEKERJAAN, TANGGAL MULAI, PIC EMAIL";
-      case "karyawan": return "Kolom minimal: NAMA KARYAWAN, JABATAN, EMAIL, NO HP";
+      case "karyawan": return "Kolom minimal: NAMA TENAGA KERJA, JABATAN, EMAIL, NO HP";
       default: return "Pilih tabel tujuan terlebih dahulu untuk melihat format yang dibutuhkan.";
     }
   };
@@ -246,7 +246,7 @@ export default function ImportDatabasePage() {
                   <option value="klien">Progress Pekerjaan (Klien Reguler)</option>
                   <option value="retainer">Pekerjaan Retainer (PT)</option>
                   <option value="perorangan">Pekerjaan Perorangan (Individu)</option>
-                  <option value="karyawan">Direktori Karyawan & Staff</option>
+                  <option value="karyawan">Direktori Tenaga Kerja & Staff</option>
                 </select>
               </div>
 

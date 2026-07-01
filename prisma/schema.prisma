@@ -45,10 +45,17 @@ model User {
   emailVerified   DateTime?
   image           String?
   role            String    @default("user") // admin, user
-  canCreateAgenda Boolean   @default(false)
-  canManageHRM    Boolean   @default(false)
-  canManageRetainer Boolean @default(false)
-  canManagePerorangan Boolean @default(false)
+  canCreateAgenda     Boolean   @default(false)
+  canManageHRM        Boolean   @default(false)
+  canManageRetainer   Boolean   @default(false)
+  canManagePerorangan Boolean   @default(false)
+  // Granular per-menu access control
+  canAccessPekerjaan   Boolean  @default(false)
+  canAccessDokumentasi Boolean  @default(true)
+  canAccessPengumuman  Boolean  @default(false)
+  canAccessArsip       Boolean  @default(false)
+  canAccessTenagaKerja Boolean  @default(false)
+  canManageLegal       Boolean  @default(false)
   accounts        Account[]
   sessions        Session[]
   agendas         Agenda[]

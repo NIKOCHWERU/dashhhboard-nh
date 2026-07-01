@@ -19,6 +19,12 @@ export async function GET() {
         canManageHRM: true,
         canManageRetainer: true,
         canManagePerorangan: true,
+        canAccessPekerjaan: true,
+        canAccessDokumentasi: true,
+        canAccessPengumuman: true,
+        canAccessArsip: true,
+        canAccessTenagaKerja: true,
+        canManageLegal: true,
       },
     });
 
@@ -32,7 +38,13 @@ export async function GET() {
       dbUser.canCreateAgenda !== sessionUser.canCreateAgenda ||
       dbUser.canManageHRM !== sessionUser.canManageHRM ||
       dbUser.canManageRetainer !== sessionUser.canManageRetainer ||
-      dbUser.canManagePerorangan !== sessionUser.canManagePerorangan;
+      dbUser.canManagePerorangan !== sessionUser.canManagePerorangan ||
+      dbUser.canAccessPekerjaan !== sessionUser.canAccessPekerjaan ||
+      dbUser.canAccessDokumentasi !== sessionUser.canAccessDokumentasi ||
+      dbUser.canAccessPengumuman !== sessionUser.canAccessPengumuman ||
+      dbUser.canAccessArsip !== sessionUser.canAccessArsip ||
+      dbUser.canAccessTenagaKerja !== sessionUser.canAccessTenagaKerja ||
+      dbUser.canManageLegal !== sessionUser.canManageLegal;
 
     return NextResponse.json({
       isSessionStale,

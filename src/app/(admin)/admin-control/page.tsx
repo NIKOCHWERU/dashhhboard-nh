@@ -22,6 +22,12 @@ interface UserPermissions {
   canManageHRM: boolean;
   canManageRetainer: boolean;
   canManagePerorangan: boolean;
+  canAccessPekerjaan: boolean;
+  canAccessDokumentasi: boolean;
+  canAccessPengumuman: boolean;
+  canAccessArsip: boolean;
+  canAccessTenagaKerja: boolean;
+  canManageLegal: boolean;
 }
 
 export default function AdminControlPage() {
@@ -185,6 +191,12 @@ export default function AdminControlPage() {
           canManageHRM: user.canManageHRM,
           canManageRetainer: user.canManageRetainer,
           canManagePerorangan: user.canManagePerorangan,
+          canAccessPekerjaan: user.canAccessPekerjaan,
+          canAccessDokumentasi: user.canAccessDokumentasi,
+          canAccessPengumuman: user.canAccessPengumuman,
+          canAccessArsip: user.canAccessArsip,
+          canAccessTenagaKerja: user.canAccessTenagaKerja,
+          canManageLegal: user.canManageLegal,
         }),
       });
 
@@ -250,7 +262,7 @@ export default function AdminControlPage() {
             Manajemen Akses & Monitoring
           </h1>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Pantau log aktivitas CRUD seluruh sistem secara real-time dan kelola hak akses karyawan secara terpusat.
+            Pantau log aktivitas CRUD seluruh sistem secara real-time dan kelola hak akses tenaga kerja secara terpusat.
           </p>
         </div>
       </div>
@@ -397,19 +409,25 @@ export default function AdminControlPage() {
             </div>
           ) : users.length === 0 ? (
             <div className="text-center py-20 text-xs text-gray-400 font-bold uppercase tracking-wider italic">
-              Tidak ada data karyawan ditemukan.
+              Tidak ada data tenaga kerja ditemukan.
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-850/20 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                    <th className="p-4 pl-6">Nama & Email Karyawan</th>
+                    <th className="p-4 pl-6">Nama & Email Tenaga Kerja</th>
                     <th className="p-4">Role Utama</th>
                     <th className="p-4 text-center whitespace-nowrap">Atur Jadwal</th>
                     <th className="p-4 text-center whitespace-nowrap">Akses HRM</th>
                     <th className="p-4 text-center whitespace-nowrap">Akses Retainer</th>
                     <th className="p-4 text-center whitespace-nowrap">Akses Perorangan</th>
+                    <th className="p-4 text-center whitespace-nowrap">Akses Pekerjaan</th>
+                    <th className="p-4 text-center whitespace-nowrap">Akses Dokumentasi</th>
+                    <th className="p-4 text-center whitespace-nowrap">Akses Pengumuman</th>
+                    <th className="p-4 text-center whitespace-nowrap">Akses Arsip</th>
+                    <th className="p-4 text-center whitespace-nowrap">Akses Tim</th>
+                    <th className="p-4 text-center whitespace-nowrap">Akses Legal</th>
                     <th className="p-4 pr-6 text-right">Aksi</th>
                   </tr>
                 </thead>
@@ -486,6 +504,66 @@ export default function AdminControlPage() {
                           <ToggleSwitch
                             checked={user.canManagePerorangan}
                             onChange={() => handleToggle(user.id, "canManagePerorangan")}
+                          />
+                        </div>
+                      </td>
+
+                      {/* canAccessPekerjaan Toggle Switch */}
+                      <td className="p-4 text-center">
+                        <div className="flex justify-center items-center h-full">
+                          <ToggleSwitch
+                            checked={user.canAccessPekerjaan}
+                            onChange={() => handleToggle(user.id, "canAccessPekerjaan")}
+                          />
+                        </div>
+                      </td>
+
+                      {/* canAccessDokumentasi Toggle Switch */}
+                      <td className="p-4 text-center">
+                        <div className="flex justify-center items-center h-full">
+                          <ToggleSwitch
+                            checked={user.canAccessDokumentasi}
+                            onChange={() => handleToggle(user.id, "canAccessDokumentasi")}
+                          />
+                        </div>
+                      </td>
+
+                      {/* canAccessPengumuman Toggle Switch */}
+                      <td className="p-4 text-center">
+                        <div className="flex justify-center items-center h-full">
+                          <ToggleSwitch
+                            checked={user.canAccessPengumuman}
+                            onChange={() => handleToggle(user.id, "canAccessPengumuman")}
+                          />
+                        </div>
+                      </td>
+
+                      {/* canAccessArsip Toggle Switch */}
+                      <td className="p-4 text-center">
+                        <div className="flex justify-center items-center h-full">
+                          <ToggleSwitch
+                            checked={user.canAccessArsip}
+                            onChange={() => handleToggle(user.id, "canAccessArsip")}
+                          />
+                        </div>
+                      </td>
+
+                      {/* canAccessTenagaKerja Toggle Switch */}
+                      <td className="p-4 text-center">
+                        <div className="flex justify-center items-center h-full">
+                          <ToggleSwitch
+                            checked={user.canAccessTenagaKerja}
+                            onChange={() => handleToggle(user.id, "canAccessTenagaKerja")}
+                          />
+                        </div>
+                      </td>
+
+                      {/* canManageLegal Toggle Switch */}
+                      <td className="p-4 text-center">
+                        <div className="flex justify-center items-center h-full">
+                          <ToggleSwitch
+                            checked={user.canManageLegal}
+                            onChange={() => handleToggle(user.id, "canManageLegal")}
                           />
                         </div>
                       </td>

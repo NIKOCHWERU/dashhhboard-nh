@@ -110,23 +110,31 @@ const AppSidebar: React.FC = () => {
     const menuItems = [
       { name: APP_LABELS.sidebar.items.dashboard, icon: <GridIcon />, path: "/" },
       { name: APP_LABELS.sidebar.items.calendar, icon: <CalenderIcon />, path: "/calendar" },
-      { name: APP_LABELS.sidebar.items.tasks, icon: <CatatanIcon />, path: "/daftar-potensi-klien" },
-      { name: "Pekerjaan", icon: <SkalaPrioritasIcon />, path: "/progress-pekerjaan" },
+      ...(isAdminUser || userObj.canAccessPekerjaan ? [
+        { name: APP_LABELS.sidebar.items.tasks, icon: <CatatanIcon />, path: "/daftar-potensi-klien" },
+        { name: "Pekerjaan", icon: <SkalaPrioritasIcon />, path: "/progress-pekerjaan" }
+      ] : []),
       { name: "Laporan", icon: <CatatanIcon />, path: "/laporan-harian" },
-      { name: APP_LABELS.sidebar.items.dokumentasi, icon: <DokumentasiIcon />, path: "/dokumentasi" },
-      { name: APP_LABELS.sidebar.items.pengumuman, icon: <PengumumanIcon />, path: "/pengumuman" }
+      ...(isAdminUser || userObj.canAccessDokumentasi ? [
+        { name: APP_LABELS.sidebar.items.dokumentasi, icon: <DokumentasiIcon />, path: "/dokumentasi" }
+      ] : []),
+      ...(isAdminUser || userObj.canAccessPengumuman ? [
+        { name: APP_LABELS.sidebar.items.pengumuman, icon: <PengumumanIcon />, path: "/pengumuman" }
+      ] : [])
     ];
     groups.push({ title: APP_LABELS.sidebar.groups.menu, items: menuItems });
 
     // 2. NARASUMBER HUKUM Group
-    groups.push({
-      title: APP_LABELS.sidebar.groups.archiveManagement,
-      items: [
-        { name: APP_LABELS.sidebar.items.arsipDokumen, icon: <DokumenIcon />, path: "/narasumber-hukum" }
-      ]
-    });
+    if (isAdminUser || userObj.canAccessArsip) {
+      groups.push({
+        title: APP_LABELS.sidebar.groups.archiveManagement,
+        items: [
+          { name: APP_LABELS.sidebar.items.arsipDokumen, icon: <DokumenIcon />, path: "/narasumber-hukum" }
+        ]
+      });
+    }
 
-    // 3. Project Group
+    // 3. Project Group (Retainer & Perorangan - visible to all but restricted internally)
     groups.push({
       title: APP_LABELS.sidebar.groups.project,
       items: [
@@ -136,12 +144,14 @@ const AppSidebar: React.FC = () => {
     });
 
     // 4. Karyawan Group (renamed to Tim)
-    groups.push({
-      title: APP_LABELS.sidebar.groups.employee,
-      items: [
-        { name: APP_LABELS.sidebar.items.daftarKaryawan, icon: <KaryawanIcon />, path: "/karyawan" }
-      ]
-    });
+    if (isAdminUser || userObj.canAccessTenagaKerja) {
+      groups.push({
+        title: APP_LABELS.sidebar.groups.employee,
+        items: [
+          { name: APP_LABELS.sidebar.items.daftarKaryawan, icon: <KaryawanIcon />, path: "/karyawan" }
+        ]
+      });
+    }
 
     // 5. HRM Group
     if (isAdminUser || userObj.canManageHRM) {

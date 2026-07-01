@@ -21,6 +21,12 @@ export async function GET() {
         canManageHRM: true,
         canManageRetainer: true,
         canManagePerorangan: true,
+        canAccessPekerjaan: true,
+        canAccessDokumentasi: true,
+        canAccessPengumuman: true,
+        canAccessArsip: true,
+        canAccessTenagaKerja: true,
+        canManageLegal: true,
       },
       orderBy: { name: "asc" },
     });
@@ -38,7 +44,20 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { id, role, canCreateAgenda, canManageHRM, canManageRetainer, canManagePerorangan } = body;
+    const { 
+      id, 
+      role, 
+      canCreateAgenda, 
+      canManageHRM, 
+      canManageRetainer, 
+      canManagePerorangan,
+      canAccessPekerjaan,
+      canAccessDokumentasi,
+      canAccessPengumuman,
+      canAccessArsip,
+      canAccessTenagaKerja,
+      canManageLegal
+    } = body;
 
     if (!id) {
       return NextResponse.json({ error: "User ID is required" }, { status: 400 });
@@ -52,6 +71,12 @@ export async function PUT(req: Request) {
         canManageHRM,
         canManageRetainer,
         canManagePerorangan,
+        canAccessPekerjaan,
+        canAccessDokumentasi,
+        canAccessPengumuman,
+        canAccessArsip,
+        canAccessTenagaKerja,
+        canManageLegal,
       },
     });
 

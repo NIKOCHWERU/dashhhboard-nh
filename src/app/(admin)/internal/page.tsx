@@ -209,7 +209,7 @@ export default function InternalDocumentsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-900/50 p-4 border border-stroke dark:border-strokedark rounded-none">
         <input
           type="text"
-          placeholder="Cari berdasarkan nama karyawan, nomor surat, jenis..."
+          placeholder="Cari berdasarkan nama tenaga kerja, nomor surat, jenis..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="px-4 py-2 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 text-xs font-semibold rounded-none focus:outline-none focus:border-brand-500"
@@ -252,7 +252,7 @@ export default function InternalDocumentsPage() {
                 <tr className="border-b border-stroke dark:border-strokedark bg-gray-50 dark:bg-gray-900/50 text-[10px] font-black text-gray-400 uppercase tracking-wider">
                   <th className="p-4 pl-6">Jenis Surat</th>
                   <th className="p-4">Nomor Surat</th>
-                  <th className="p-4">Penerima (Karyawan)</th>
+                  <th className="p-4">Penerima (Tenaga Kerja)</th>
                   <th className="p-4">Tanggal Keluar</th>
                   <th className="p-4">Tanggal Habis</th>
                   <th className="p-4">Arsip Digital</th>
@@ -400,7 +400,7 @@ export default function InternalDocumentsPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Nama Penerima / Karyawan</label>
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Nama Penerima / Tenaga Kerja</label>
             <input
               required
               placeholder="Contoh: Ahmad Budiman"
@@ -502,7 +502,7 @@ export default function InternalDocumentsPage() {
 
             <div className="grid grid-cols-2 gap-4 pb-4 border-b border-stroke dark:border-strokedark">
               <div>
-                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Penerima / Karyawan</span>
+                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Penerima / Tenaga Kerja</span>
                 <span className="text-xs font-black text-gray-800 dark:text-white uppercase">{viewItem.recipientName}</span>
               </div>
               <div>

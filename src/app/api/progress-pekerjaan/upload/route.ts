@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAccessToken, getOrCreateFolder, uploadFile } from "@/lib/googleDrive";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    const user = session?.user as any;
+
     const formData = await req.formData();
     const rowId = formData.get("rowId") as string;
     const files = formData.getAll("files") as File[];
@@ -68,8 +73,15 @@ export async function POST(req: Request) {
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
+      const uploaderDesc = user ? JSON.stringify({
+        uploaderId: user.id,
+        uploaderName: user.name || user.email || "Tenaga Kerja",
+        uploaderImage: user.image || "",
+        text: "Lampiran Pekerjaan",
+      }) : "";
+
       console.log(`Uploading file '${file.name}' (${file.size} bytes) to Google Drive folder '${rowFolderName}'...`);
-      const result = await uploadFile(rowFolderId, file.name, file.type, buffer);
+      const result = await uploadFile(rowFolderId, file.name, file.type, buffer, uploaderDesc);
       
       const fileInfo = {
         fileId: result.id,

@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { FeatureModal } from "@/components/common/FeatureModal";
 import { useUpload } from "@/context/UploadContext";
 
@@ -24,6 +25,7 @@ interface GDriveFile {
 }
 
 export default function DokumentasiPage() {
+  const { data: session } = useSession();
   const [retainers, setRetainers] = useState<ClientData[]>([]);
   const [perorangan, setPerorangan] = useState<ClientData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -285,11 +287,31 @@ export default function DokumentasiPage() {
     }
   };
 
-  const handleFileDelete = async (fileId: string) => {
+  const handleFileDelete = async (file: GDriveFile) => {
+    let isAllowedToDelete = false;
+    const sessionUser = session?.user as any;
+    if (sessionUser?.role === "admin") {
+      isAllowedToDelete = true;
+    } else if (file.description) {
+      try {
+        const parsed = JSON.parse(file.description);
+        if (parsed.uploaderId === sessionUser?.id) {
+          isAllowedToDelete = true;
+        }
+      } catch (e) {
+        // legacy file
+      }
+    }
+
+    if (!isAllowedToDelete) {
+      alert("Anda hanya diizinkan menghapus berkas yang Anda unggah sendiri!");
+      return;
+    }
+
     if (!confirm("Hapus dokumentasi ini?")) return;
     try {
       setLoadingMedia(true);
-      const res = await fetch(`/api/gdrive/delete?fileId=${fileId}`, {
+      const res = await fetch(`/api/gdrive/delete?fileId=${file.id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Delete failed");
@@ -542,7 +564,7 @@ export default function DokumentasiPage() {
                           {file.webViewLink && (
                             <a href={file.webViewLink} target="_blank" rel="noreferrer" className="px-3 py-1.5 bg-brand-50 text-brand-700 hover:bg-brand-100 text-[10px] font-black rounded-none uppercase transition-colors">Buka</a>
                           )}
-                          <button onClick={() => handleFileDelete(file.id)} className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 text-[10px] font-black rounded-none uppercase transition-colors">Hapus</button>
+                          <button onClick={() => handleFileDelete(file)} className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 text-[10px] font-black rounded-none uppercase transition-colors">Hapus</button>
                         </div>
                       </div>
                     </div>
@@ -583,7 +605,7 @@ export default function DokumentasiPage() {
                             {!isFolder && file.webViewLink && (
                               <a href={file.webViewLink} target="_blank" rel="noreferrer" className="text-brand-500 font-bold text-[10px] uppercase tracking-wider hover:underline mr-3">Buka</a>
                             )}
-                            <button onClick={(e) => { e.stopPropagation(); handleFileDelete(file.id); }} className="text-red-500 font-bold text-[10px] uppercase tracking-wider hover:underline">Hapus</button>
+                            <button onClick={(e) => { e.stopPropagation(); handleFileDelete(file); }} className="text-red-500 font-bold text-[10px] uppercase tracking-wider hover:underline">Hapus</button>
                           </td>
                         </tr>
                       );
@@ -647,31 +669,101 @@ export default function DokumentasiPage() {
       </FeatureModal>
 
       {/* FULLSCREEN PREVIEW */}
-      {previewItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4" onClick={() => setPreviewItem(null)}>
-          <button className="absolute top-6 right-6 text-white text-4xl font-light">&times;</button>
-          <div className="max-w-4xl w-full flex flex-col bg-gray-900 border border-white/10 p-6 rounded-none relative" onClick={(e) => e.stopPropagation()}>
-            <div className="flex-1 flex items-center justify-center overflow-hidden max-h-[60vh] bg-black/40">
-              {previewItem.thumbnailLink ? (
-                <img src={previewItem.thumbnailLink.replace(/=s\d+$/, "=s1200")} alt={previewItem.name} className="max-w-full max-h-[58vh] object-contain" />
-              ) : (
-                <div className="text-white">Berkas tidak memiliki preview</div>
-              )}
-            </div>
-            <div className="mt-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-t border-white/10 pt-4">
-              <div>
-                <h4 className="text-sm font-black text-white uppercase tracking-wider">{previewItem.name}</h4>
-              </div>
-              <div className="flex gap-3">
-                {previewItem.webViewLink && (
-                  <a href={previewItem.webViewLink} target="_blank" rel="noreferrer" className="px-5 py-2.5 bg-brand-500 text-white font-black text-xs uppercase rounded-none">Buka di Drive</a>
+      {previewItem && (() => {
+        let uploaderName = "Tenaga Kerja (Sistem)";
+        let uploaderImage = "";
+        let descriptionText = "Tidak ada keterangan.";
+
+        if (previewItem.description) {
+          try {
+            const parsed = JSON.parse(previewItem.description);
+            uploaderName = parsed.uploaderName || "Tenaga Kerja (Sistem)";
+            uploaderImage = parsed.uploaderImage || "";
+            descriptionText = parsed.text || "Tidak ada keterangan.";
+          } catch (e) {
+            descriptionText = previewItem.description;
+          }
+        }
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4" onClick={() => setPreviewItem(null)}>
+            <button className="absolute top-6 right-6 text-white text-4xl font-light hover:text-red-500 transition-colors">&times;</button>
+            <div className="max-w-4xl w-full flex flex-col bg-gray-900 border border-white/10 p-6 rounded-none relative" onClick={(e) => e.stopPropagation()}>
+              
+              {/* Clickable Large Thumbnail Container */}
+              <div className="flex-1 flex items-center justify-center overflow-hidden max-h-[60vh] bg-black/40 relative group/link">
+                {previewItem.webViewLink ? (
+                  <a href={previewItem.webViewLink} target="_blank" rel="noreferrer" className="block w-full text-center" title="Klik untuk membuka file viewer Google Drive">
+                    {previewItem.thumbnailLink ? (
+                      <div className="relative inline-block">
+                        <img 
+                          src={previewItem.thumbnailLink.replace(/=s\d+$/, "=s1200")} 
+                          alt={previewItem.name} 
+                          className="max-w-full max-h-[55vh] object-contain mx-auto transition-opacity group-hover/link:opacity-80 duration-200" 
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/link:opacity-100 transition-opacity bg-black/30">
+                          <span className="bg-brand-500 text-white px-4 py-2 text-xs font-black uppercase tracking-widest shadow-lg">📂 Buka File Viewer</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-white py-20 flex flex-col items-center gap-3">
+                        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span className="text-xs uppercase font-bold tracking-widest text-brand-400 underline">Buka di Google Drive</span>
+                      </div>
+                    )}
+                  </a>
+                ) : (
+                  previewItem.thumbnailLink ? (
+                    <img src={previewItem.thumbnailLink.replace(/=s\d+$/, "=s1200")} alt={previewItem.name} className="max-w-full max-h-[55vh] object-contain" />
+                  ) : (
+                    <div className="text-white py-12">Berkas tidak memiliki preview</div>
+                  )
                 )}
-                <button onClick={() => setPreviewItem(null)} className="px-5 py-2.5 bg-gray-800 text-gray-300 font-black text-xs uppercase rounded-none">Tutup</button>
+              </div>
+
+              {/* Detail Info Panel */}
+              <div className="mt-6 border-t border-white/10 pt-4 space-y-4">
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-black text-white uppercase tracking-wider">{previewItem.name}</h4>
+                    <p className="text-[10px] text-gray-400 font-semibold">TIPE: {previewItem.mimeType.split("/")[1]?.toUpperCase() || "UNKNOWN"}</p>
+                  </div>
+                  
+                  {/* Uploader Details */}
+                  <div className="flex items-center gap-3 bg-white/[0.03] border border-white/5 p-3 rounded-lg min-w-[250px]">
+                    {uploaderImage ? (
+                      <img src={uploaderImage} alt={uploaderName} className="w-8 h-8 rounded-full object-cover border border-white/10" referrerPolicy="no-referrer" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-brand-500/20 text-brand-400 font-black flex items-center justify-center text-[10px] uppercase border border-brand-500/30">
+                        {uploaderName.substring(0, 2)}
+                      </div>
+                    )}
+                    <div>
+                      <span className="block text-[8px] font-black text-gray-500 uppercase tracking-widest">Pengunggah berkas</span>
+                      <span className="block text-xs font-bold text-gray-300">{uploaderName}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description Text */}
+                <div className="bg-white/[0.02] border border-white/5 p-3 rounded-lg">
+                  <span className="block text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1">Keterangan / Deskripsi</span>
+                  <p className="text-xs text-gray-300 font-medium leading-relaxed">{descriptionText}</p>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  {previewItem.webViewLink && (
+                    <a href={previewItem.webViewLink} target="_blank" rel="noreferrer" className="px-5 py-2.5 bg-brand-500 text-white font-black text-xs uppercase tracking-wider hover:bg-brand-600 transition-colors">Buka di Drive</a>
+                  )}
+                  <button onClick={() => setPreviewItem(null)} className="px-5 py-2.5 bg-gray-800 text-gray-300 font-black text-xs uppercase tracking-wider hover:bg-gray-700 transition-colors">Tutup</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
