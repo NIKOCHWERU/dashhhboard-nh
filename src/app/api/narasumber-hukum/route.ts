@@ -152,7 +152,7 @@ export async function GET(req: Request) {
 
         // Check PIC access based on associated PT
         if (meta && meta.pt) {
-          const matchedClient = allClients.find(c => c.clientName?.trim().toUpperCase() === meta.pt.trim().toUpperCase());
+          const matchedClient = allClients.find(c => c.clientName?.trim().toUpperCase() === meta.pt!.trim().toUpperCase());
           if (matchedClient && !isAdmin) {
             const picEmails = (matchedClient.picEmail || "").split(",").map(e => e.trim().toLowerCase());
             if (!picEmails.includes(userEmail)) {
