@@ -173,7 +173,11 @@ export async function getOrCreateFolder(
     }
 
     const createData = await createRes.json();
-    await shareFolderWithAnyone(accessToken, createData.id);
+    try {
+      await shareFolderWithAnyone(accessToken, createData.id);
+    } catch (shareErr) {
+      console.error("Failed to share folder but continuing:", shareErr);
+    }
     return createData.id;
   } catch (error) {
     console.error(`Error in getOrCreateFolder for '${name}':`, error);
