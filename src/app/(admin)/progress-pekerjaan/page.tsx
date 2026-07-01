@@ -58,6 +58,7 @@ export default function ProgressPekerjaanPage() {
     (activeTab === "NON_RETAINER" && user?.canManagePerorangan);
   const [data, setData] = useState<ProgressRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string | null>(null);
   
@@ -214,6 +215,7 @@ export default function ProgressPekerjaanPage() {
     e.preventDefault();
     if (!formRow) return;
 
+    setIsSaving(true);
     try {
       const isEdit = !!formRow.id;
       const url = "/api/progress-pekerjaan";
@@ -241,11 +243,14 @@ export default function ProgressPekerjaanPage() {
     } catch (e) {
       console.error(e);
       alert("Terjadi kesalahan saat menyimpan data.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleDeleteRow = async (id: string) => {
     if (!confirm("Apakah Anda yakin ingin menghapus baris pekerjaan ini?")) return;
+    setIsSaving(true);
     try {
       const res = await fetch(`/api/progress-pekerjaan?id=${id}`, {
         method: "DELETE",
@@ -258,6 +263,9 @@ export default function ProgressPekerjaanPage() {
       }
     } catch (e) {
       console.error(e);
+      alert("Terjadi kesalahan saat menghapus data.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1570,6 +1578,11 @@ export default function ProgressPekerjaanPage() {
               </button>
             </div>
           </form>
+        </div>
+      {isSaving && (
+        <div className="fixed inset-0 z-[999999] flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-white text-xs font-black uppercase tracking-widest animate-pulse">Sedang memproses perubahan, mohon tunggu...</p>
         </div>
       )}
     </div>

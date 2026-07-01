@@ -125,38 +125,56 @@ export default function RetainerPage() {
     setIsViewOpen(true);
   };
 
+  const [isSaving, setIsSaving] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = {
-      ...formData,
-      categories: formData.categories.join(","),
-    };
+    setIsSaving(true);
+    try {
+      const payload = {
+        ...formData,
+        categories: formData.categories.join(","),
+      };
 
-    const method = isEditMode ? "PUT" : "POST";
-    const url = isEditMode ? `/api/retainer?id=${selectedId}` : "/api/retainer";
+      const method = isEditMode ? "PUT" : "POST";
+      const url = isEditMode ? `/api/retainer?id=${selectedId}` : "/api/retainer";
 
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-    if (res.ok) {
-      setIsModalOpen(false);
-      fetchData();
-    } else {
-      alert("Gagal menyimpan data retainer.");
+      if (res.ok) {
+        setIsModalOpen(false);
+        fetchData();
+      } else {
+        alert("Gagal menyimpan data retainer.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan sistem saat menyimpan data.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Apakah Anda yakin ingin menghapus data retainer ini? Folder Google Drive klien ini juga akan ikut dihapus secara otomatis.")) return;
 
-    const res = await fetch(`/api/retainer?id=${id}`, { method: "DELETE" });
-    if (res.ok) {
-      fetchData();
-    } else {
-      alert("Gagal menghapus data.");
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/retainer?id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        fetchData();
+      } else {
+        alert("Gagal menghapus data.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan sistem saat menghapus data.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -690,6 +708,13 @@ export default function RetainerPage() {
           </div>
         )}
       </FeatureModal>
+
+      {isSaving && (
+        <div className="fixed inset-0 z-[999999] flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-white text-xs font-black uppercase tracking-widest animate-pulse">Sedang sinkronisasi Google Drive, mohon tunggu...</p>
+        </div>
+      )}
     </div>
   );
 }

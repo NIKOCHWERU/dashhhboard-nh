@@ -9,6 +9,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { UploadProvider } from "@/context/UploadContext";
 import { motion, AnimatePresence } from "framer-motion";
+import FloatingUploadWidget from "@/components/ui/FloatingUploadWidget";
 
 export default function AdminLayout({
   children,
@@ -144,6 +145,7 @@ export default function AdminLayout({
           </div>
         </div>
       </div>
+      <FloatingUploadWidget />
     </UploadProvider>
   );
 }
