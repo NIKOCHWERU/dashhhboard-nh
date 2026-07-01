@@ -28,7 +28,11 @@ export async function GET() {
     } else {
       // Non-admin can only see retainers where they are the PIC
       data = await prisma.retainer.findMany({
-        where: { picEmail: user.email },
+        where: {
+          picEmail: {
+            contains: user.email,
+          },
+        },
         orderBy: { startDate: "desc" },
       });
     }

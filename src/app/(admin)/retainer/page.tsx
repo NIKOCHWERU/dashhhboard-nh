@@ -634,10 +634,32 @@ export default function RetainerPage() {
                   </span>
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-800/40 p-3 border border-stroke dark:border-strokedark rounded-none">
-                  <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">PIC Karyawan</span>
-                  <span className="font-bold text-black dark:text-white">
-                    👤 {viewItem.picEmail || "-"}
-                  </span>
+                  <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">PIC Tenaga Kerja</span>
+                  {viewItem.picEmail ? (
+                    <div className="flex flex-col gap-2">
+                      {viewItem.picEmail.split(",").map(p => p.trim()).filter(Boolean).map((email) => {
+                        const matchedUser = users.find(u => u.email === email || u.name === email);
+                        const name = matchedUser?.name || email;
+                        const image = (matchedUser as any)?.image;
+                        return (
+                          <div key={email} className="flex items-center gap-2.5 bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 p-2 rounded-xl">
+                            {image ? (
+                              <img src={image} alt={name} className="w-7 h-7 rounded-full object-cover border border-gray-200 dark:border-gray-700" referrerPolicy="no-referrer" />
+                            ) : (
+                              <div className="w-7 h-7 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 font-black flex items-center justify-center text-[9px] uppercase border border-brand-500/20">
+                                {name.substring(0, 2)}
+                              </div>
+                            )}
+                            <div className="overflow-hidden">
+                              <span className="block text-xs font-bold text-gray-900 dark:text-white truncate">{name}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <span className="text-gray-400 italic">No PIC</span>
+                  )}
                 </div>
               </div>
 

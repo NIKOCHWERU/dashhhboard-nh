@@ -112,11 +112,29 @@ export async function GET(req: Request) {
     const userEmail = user.email?.toLowerCase();
     const isAdmin = user.role === "admin";
 
+    // Fetch all Retainer and Perorangan clients (with picEmail) to check ownership of folders
+    const allClients = await Promise.all([
+      prisma.retainer.findMany({ select: { clientName: true, picEmail: true } }),
+      prisma.perorangan.findMany({ select: { clientName: true, picEmail: true } })
+    ]).then(([r, p]) => [...r, ...p]);
+
     // 3. Merge items and apply PIC viewing restrictions
     const filteredItems = gdriveItems
       .map((item: any) => {
-        // If it's a folder, anyone can browse it
-        if (item.mimeType === "application/vnd.google-apps.folder") {
+        const isFolder = item.mimeType === "application/vnd.google-apps.folder";
+
+        // If it's a folder, check if it matches a PT client name
+        if (isFolder) {
+          const matchedClient = allClients.find(c => c.clientName?.trim().toUpperCase() === item.name.trim().toUpperCase());
+          if (matchedClient) {
+            // It's a PT client folder. Check if user is Admin or PIC
+            if (!isAdmin) {
+              const picEmails = (matchedClient.picEmail || "").split(",").map(e => e.trim().toLowerCase());
+              if (!picEmails.includes(userEmail)) {
+                return null; // Hide this PT folder from non-PIC users!
+              }
+            }
+          }
           return { ...item, isFolder: true };
         }
 
@@ -129,6 +147,17 @@ export async function GET(req: Request) {
           const hasAccess = allowedPICs.includes(userEmail) || isAdmin;
           if (!hasAccess) {
             return null; // Restricted
+          }
+        }
+
+        // Check PIC access based on associated PT
+        if (meta && meta.pt) {
+          const matchedClient = allClients.find(c => c.clientName?.trim().toUpperCase() === meta.pt.trim().toUpperCase());
+          if (matchedClient && !isAdmin) {
+            const picEmails = (matchedClient.picEmail || "").split(",").map(e => e.trim().toLowerCase());
+            if (!picEmails.includes(userEmail)) {
+              return null; // Restricted
+            }
           }
         }
 

@@ -28,7 +28,11 @@ export async function GET() {
     } else {
       // User only sees cases where they are the PIC
       data = await prisma.perorangan.findMany({
-        where: { picEmail: user.email },
+        where: {
+          picEmail: {
+            contains: user.email,
+          },
+        },
         orderBy: { startDate: "desc" },
       });
     }
