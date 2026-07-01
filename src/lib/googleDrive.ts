@@ -143,7 +143,9 @@ export async function getOrCreateFolder(
 
     const data = await res.json();
     if (data.files && data.files.length > 0) {
-      return data.files[0].id;
+      const folderId = data.files[0].id;
+      shareFolderWithAnyone(accessToken, folderId).catch(() => {});
+      return folderId;
     }
 
     // Create the folder
@@ -171,10 +173,34 @@ export async function getOrCreateFolder(
     }
 
     const createData = await createRes.json();
+    await shareFolderWithAnyone(accessToken, createData.id);
     return createData.id;
   } catch (error) {
     console.error(`Error in getOrCreateFolder for '${name}':`, error);
     throw error;
+  }
+}
+
+export async function shareFolderWithAnyone(accessToken: string, fileId: string): Promise<void> {
+  try {
+    const url = `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        role: "reader",
+        type: "anyone",
+      }),
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`Failed to share file/folder ${fileId} with anyone: ${errText}`);
+    }
+  } catch (error) {
+    console.error(`Error in shareFolderWithAnyone for ${fileId}:`, error);
   }
 }
 
@@ -378,7 +404,9 @@ export async function uploadFile(
       throw new Error(`Failed to upload file to Google Drive: ${errText}`);
     }
 
-    return await res.json();
+    const result = await res.json();
+    await shareFolderWithAnyone(accessToken, result.id);
+    return result;
   } catch (error) {
     console.error(`Failed to upload file '${fileName}' to parent '${parentId}':`, error);
     throw error;
