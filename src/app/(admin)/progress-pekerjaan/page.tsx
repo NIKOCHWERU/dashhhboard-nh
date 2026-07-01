@@ -48,13 +48,14 @@ const STATUS_METADATA = [
 
 export default function ProgressPekerjaanPage() {
   const { data: session } = useSession();
+  
+  // Tabs & general state
+  const [activeTab, setActiveTab] = useState<ActiveTab>("RETAINER");
+
   const user = session?.user as any;
   const isAdminOrPIC = user?.role === "admin" || 
     (activeTab === "RETAINER" && user?.canManageRetainer) || 
     (activeTab === "NON_RETAINER" && user?.canManagePerorangan);
-  
-  // Tabs & general state
-  const [activeTab, setActiveTab] = useState<ActiveTab>("RETAINER");
   const [data, setData] = useState<ProgressRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
