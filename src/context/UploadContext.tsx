@@ -14,6 +14,7 @@ export interface UploadTask {
   speed?: string;
   eta?: string;
   uploadedBytes: number;
+  uploadUrl?: string;
 }
 
 interface UploadContextType {
@@ -62,7 +63,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
     setTasks((prev) => [...newTasks, ...prev]);
   };
 
-  const cancelUpload = (taskId: string) => {
+  const cancelUpload = async (taskId: string) => {
     const xhr = xhrMapRef.current[taskId];
     if (xhr) {
       xhr.abort();
@@ -70,9 +71,21 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
     }
     delete fileCacheRef.current[taskId];
 
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, status: "error" as const, error: "Dibatalkan" } : t))
-    );
+    // Find task in local state to retrieve GDrive upload URL
+    setTasks((prev) => {
+      const task = prev.find((t) => t.id === taskId);
+      if (task && task.uploadUrl) {
+        // Asynchronously cancel upload session on Google Drive
+        fetch(task.uploadUrl, { method: "DELETE" }).catch((e) =>
+          console.error("Failed to cancel upload session on Google Drive:", e)
+        );
+      }
+      return prev.map((t) =>
+        t.id === taskId
+          ? { ...t, status: "error" as const, error: "Upload dibatalkan" }
+          : t
+      );
+    });
   };
 
   const clearCompleted = () => {
@@ -129,6 +142,11 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
       }
 
       const { uploadUrl } = await initRes.json();
+
+      // Store uploadUrl in the state so cancelUpload can access it
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, uploadUrl } : t))
+      );
 
       // 3. PUT raw data to the session URL
       const xhr = new XMLHttpRequest();
@@ -209,12 +227,40 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
           delete fileCacheRef.current[taskId];
           delete xhrMapRef.current[taskId];
         } else {
-          throw new Error(`Google API mengembalikan status ${xhr.status}`);
+          setTasks((prev) =>
+            prev.map((t) =>
+              t.id === taskId
+                ? {
+                    ...t,
+                    status: "error" as const,
+                    error: `Google API error: ${xhr.status}`,
+                    speed: undefined,
+                    eta: undefined,
+                  }
+                : t
+            )
+          );
+          delete fileCacheRef.current[taskId];
+          delete xhrMapRef.current[taskId];
         }
       };
 
       xhr.onerror = () => {
-        throw new Error("Koneksi jaringan terputus.");
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.id === taskId
+              ? {
+                  ...t,
+                  status: "error" as const,
+                  error: "Koneksi jaringan terputus.",
+                  speed: undefined,
+                  eta: undefined,
+                }
+              : t
+          )
+        );
+        delete fileCacheRef.current[taskId];
+        delete xhrMapRef.current[taskId];
       };
 
       xhr.send(file);

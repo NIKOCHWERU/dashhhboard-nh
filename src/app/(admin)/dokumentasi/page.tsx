@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { FeatureModal } from "@/components/common/FeatureModal";
 import { useUpload } from "@/context/UploadContext";
@@ -55,8 +55,17 @@ export default function DokumentasiPage() {
 
   const { uploadFiles, activeUploadsCount } = useUpload();
 
+  const prevUploadsCount = useRef(0);
+
   useEffect(() => {
-    if (activeUploadsCount === 0 || !activeFolderId) return;
+    if (activeUploadsCount === 0) {
+      if (prevUploadsCount.current > 0 && activeFolderId) {
+        browseFolder(activeFolderId, activeFolderName, false);
+      }
+      prevUploadsCount.current = 0;
+      return;
+    }
+    prevUploadsCount.current = activeUploadsCount;
     const interval = setInterval(() => {
       browseFolder(activeFolderId, activeFolderName, false);
     }, 5000);
