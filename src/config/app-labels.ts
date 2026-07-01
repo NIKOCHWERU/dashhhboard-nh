@@ -52,7 +52,7 @@ export const APP_LABELS = {
       laporanOperasional: "Laporan Operasional",
       retainer: "Retainer",
       perorangan: "Non Retainer",
-      daftarKaryawan: "Daftar Tim",
+      daftarKaryawan: "Tim",
       skalaPrioritas: "Skala Prioritas",
       suratInternal: "Surat Internal",
       dashboardHrm: "Dashboard HRM",
