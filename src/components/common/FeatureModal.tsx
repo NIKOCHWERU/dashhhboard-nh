@@ -30,11 +30,14 @@ export const FeatureModal: React.FC<ModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      document.body.style.overflow = "hidden";
       document.body.classList.add("modal-open");
     } else {
+      document.body.style.overflow = "unset";
       document.body.classList.remove("modal-open");
     }
     return () => {
+      document.body.style.overflow = "unset";
       document.body.classList.remove("modal-open");
     };
   }, [isOpen]);
@@ -42,7 +45,7 @@ export const FeatureModal: React.FC<ModalProps> = ({
   if (!isOpen || !mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-[12px] animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-[12px] animate-in fade-in duration-300" onClick={onClose}>
       <div 
         className={`bg-white dark:bg-boxdark w-full ${width} rounded-2xl shadow-2xl border border-gray-250 dark:border-white/[0.08] overflow-hidden animate-in zoom-in duration-300`}
         onClick={(e) => e.stopPropagation()}

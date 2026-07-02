@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { PlusIcon, UserCircleIcon, TrashBinIcon } from "@/icons";
 import { FeatureModal } from "@/components/common/FeatureModal";
+import TimePickerInput from "@/components/form/TimePickerInput";
+import DatePickerInput from "@/components/form/DatePickerInput";
 
 interface TaskItem {
   task: string;
@@ -1000,18 +1002,16 @@ export default function LaporanHarianPage() {
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
-              <input
-                type="time"
+              <TimePickerInput
                 value={tempTimeLog.start}
-                onChange={(e) => setTempTimeLog({ ...tempTimeLog, start: e.target.value })}
-                className="sm:col-span-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-3 py-1.5 rounded-xl text-xs outline-none focus:border-brand-500 font-semibold"
+                onChange={(v) => setTempTimeLog({ ...tempTimeLog, start: v })}
+                className="sm:col-span-2"
               />
               <span className="sm:col-span-1 flex items-center justify-center text-gray-400 text-xs">s/d</span>
-              <input
-                type="time"
+              <TimePickerInput
                 value={tempTimeLog.end}
-                onChange={(e) => setTempTimeLog({ ...tempTimeLog, end: e.target.value })}
-                className="sm:col-span-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-3 py-1.5 rounded-xl text-xs outline-none focus:border-brand-500 font-semibold"
+                onChange={(v) => setTempTimeLog({ ...tempTimeLog, end: v })}
+                className="sm:col-span-2"
               />
               <input
                 type="text"
@@ -1486,11 +1486,11 @@ export default function LaporanHarianPage() {
                   {/* Date Filter */}
                   <div className="flex items-center gap-2 border border-gray-250 dark:border-gray-800 px-3 py-2 rounded-xl bg-white dark:bg-transparent">
                     <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Tanggal:</span>
-                    <input
-                      type="date"
+                    <DatePickerInput
                       value={filterDate}
-                      onChange={(e) => setFilterDate(e.target.value)}
-                      className="bg-transparent text-xs font-bold text-black dark:text-white outline-none cursor-pointer"
+                      onChange={setFilterDate}
+                      placeholder="Semua"
+                      className="w-40"
                     />
                     {filterDate && (
                       <button onClick={() => setFilterDate("")} className="text-xs text-gray-400 font-bold hover:text-brand-500">×</button>
@@ -1906,22 +1906,16 @@ export default function LaporanHarianPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Jam Mulai</label>
-                <input
-                  type="time"
-                  required
+                <TimePickerInput
                   value={completeStartTime}
-                  onChange={(e) => setCompleteStartTime(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark rounded-none px-4 py-2.5 text-xs font-bold text-black dark:text-white outline-none focus:border-brand-500"
+                  onChange={setCompleteStartTime}
                 />
               </div>
               <div>
                 <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Jam Selesai</label>
-                <input
-                  type="time"
-                  required
+                <TimePickerInput
                   value={completeEndTime}
-                  onChange={(e) => setCompleteEndTime(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark rounded-none px-4 py-2.5 text-xs font-bold text-black dark:text-white outline-none focus:border-brand-500"
+                  onChange={setCompleteEndTime}
                 />
               </div>
             </div>

@@ -16,6 +16,8 @@ import { useSession } from "next-auth/react";
 import { CalenderIcon } from "@/icons";
 import { HOLIDAYS_2026 } from "@/components/dashboard/DashboardWidgets";
 import PicSelect from "@/components/common/PicSelect";
+import DatePickerInput from "@/components/form/DatePickerInput";
+import TimePickerInput from "@/components/form/TimePickerInput";
 
 
 interface AgendaEvent extends EventInput {
@@ -1879,19 +1881,18 @@ const Calendar: React.FC = () => {
                 <div className="space-y-3">
                   <label className="block text-sm font-bold text-black dark:text-white">Waktu Mulai</label>
                   <div className="flex gap-3">
-                    <input
-                      type="date"
-                      disabled={!canManage}
+                    <DatePickerInput
                       value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="flex-1 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
-                    />
-                    <input
-                      type="time"
+                      onChange={setStartDate}
                       disabled={!canManage}
+                      placeholder="Pilih tanggal"
+                      className="flex-1"
+                    />
+                    <TimePickerInput
                       value={startTime}
-                      onChange={(e) => setStartTime(e.target.value)}
-                      className="w-32 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-semibold text-sm"
+                      onChange={setStartTime}
+                      disabled={!canManage}
+                      className="w-36"
                     />
                   </div>
                 </div>
@@ -1900,19 +1901,18 @@ const Calendar: React.FC = () => {
                 <div className="space-y-3">
                   <label className="block text-sm font-bold text-black dark:text-white">Waktu Selesai</label>
                   <div className="flex gap-3">
-                    <input
-                      type="date"
-                      disabled={!canManage}
+                    <DatePickerInput
                       value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="flex-1 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
-                    />
-                    <input
-                      type="time"
+                      onChange={setEndDate}
                       disabled={!canManage}
+                      placeholder="Pilih tanggal"
+                      className="flex-1"
+                    />
+                    <TimePickerInput
                       value={endTime}
-                      onChange={(e) => setEndTime(e.target.value)}
-                      className="w-32 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-semibold text-sm"
+                      onChange={setEndTime}
+                      disabled={!canManage}
+                      className="w-36"
                     />
                   </div>
                 </div>
@@ -1933,12 +1933,10 @@ const Calendar: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in slide-in-from-top-1 duration-200">
                       <div>
                         <label className="block text-xs font-bold text-gray-500 mb-2">Waktu Pengingat</label>
-                        <input
-                          type="time"
-                          disabled={!canManage}
+                        <TimePickerInput
                           value={pengingatWaktu}
-                          onChange={(e) => setPengingatWaktu(e.target.value)}
-                          className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-3 py-2 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white font-semibold text-sm"
+                          onChange={setPengingatWaktu}
+                          disabled={!canManage}
                         />
                       </div>
                       <div>

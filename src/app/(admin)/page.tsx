@@ -8,6 +8,7 @@ import Link from "next/link";
 import { APP_LABELS } from "@/config/app-labels";
 import { useAnimeSlideInLeft, useAnimeSlideInRight } from "@/hooks/useAnime";
 import { FeatureModal } from "@/components/common/FeatureModal";
+import TimePickerInput from "@/components/form/TimePickerInput";
 
 interface Agenda {
   id: string;
@@ -841,22 +842,16 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-black uppercase text-gray-400 mb-1.5">Jam Mulai</label>
-              <input
-                type="time"
-                required
+              <TimePickerInput
                 value={completeStartTime}
-                onChange={(e) => setCompleteStartTime(e.target.value)}
-                className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-2.5 text-xs font-bold text-black dark:text-white outline-none focus:border-brand-500"
+                onChange={setCompleteStartTime}
               />
             </div>
             <div>
               <label className="block text-xs font-black uppercase text-gray-400 mb-1.5">Jam Selesai</label>
-              <input
-                type="time"
-                required
+              <TimePickerInput
                 value={completeEndTime}
-                onChange={(e) => setCompleteEndTime(e.target.value)}
-                className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-2.5 text-xs font-bold text-black dark:text-white outline-none focus:border-brand-500"
+                onChange={setCompleteEndTime}
               />
             </div>
           </div>

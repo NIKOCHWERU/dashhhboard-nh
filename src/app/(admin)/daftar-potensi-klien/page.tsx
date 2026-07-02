@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { useAnimeSlideInLeft, useAnimeSlideInRight } from '@/hooks/useAnime';
+import DatePickerInput from '@/components/form/DatePickerInput';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -919,8 +920,10 @@ export default function DaftarCalonKlienPage() {
     <div className="space-y-4">
       <FormGrid>
         <FormField label="Tanggal">
-          <input type="date" className={inputClass} value={formCalon.tanggal}
-            onChange={e => setFormCalon(p => ({ ...p, tanggal: e.target.value }))} />
+          <DatePickerInput
+            value={formCalon.tanggal}
+            onChange={(v) => setFormCalon(p => ({ ...p, tanggal: v }))}
+          />
         </FormField>
         <FormField label="Nama Prospek">
           <input type="text" className={inputClass} placeholder="Nama lengkap prospek"
@@ -1084,8 +1087,10 @@ export default function DaftarCalonKlienPage() {
     <div className="space-y-4">
       <FormGrid>
         <FormField label="Tanggal">
-          <input type="date" className={inputClass} value={formKonten.tanggal}
-            onChange={e => setFormKonten(p => ({ ...p, tanggal: e.target.value }))} />
+          <DatePickerInput
+            value={formKonten.tanggal}
+            onChange={(v) => setFormKonten(p => ({ ...p, tanggal: v }))}
+          />
         </FormField>
         <FormField label="Topik">
           <input type="text" className={inputClass} placeholder="Topik konten"

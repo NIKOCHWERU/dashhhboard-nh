@@ -5,7 +5,8 @@ import Label from '../Label';
 import Input from '../input/InputField';
 import Select from '../Select';
 import { ChevronDownIcon, EyeCloseIcon, EyeIcon, TimeIcon } from '../../../icons';
-import DatePicker from '@/components/form/date-picker';
+import DatePickerInput from '@/components/form/DatePickerInput';
+import TimePickerInput from '@/components/form/TimePickerInput';
 
 export default function DefaultInputs() {
   const [showPassword, setShowPassword] = useState(false);
@@ -63,25 +64,22 @@ export default function DefaultInputs() {
         </div>
 
         <div>
-          <DatePicker
-            id="date-picker"
-            label="Date Picker Input"
+          <Label>Date Picker Input</Label>
+          <DatePickerInput
+            value=""
+            onChange={(value) => console.log(value)}
             placeholder="Select a date"
-            onChange={(dates, currentDateString) => {
-              // Handle your logic
-              console.log({ dates, currentDateString });
-            }}
+            className="w-full"
           />
         </div>
 
         <div>
           <Label htmlFor="tm">Time Picker Input</Label>
           <div className="relative">
-            <Input
-              type="time"
-              id="tm"
-              name="tm"
-              onChange={(e) => console.log(e.target.value)}
+            <TimePickerInput
+              value=""
+              onChange={(value) => console.log(value)}
+              className="w-full"
             />
             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
               <TimeIcon />
