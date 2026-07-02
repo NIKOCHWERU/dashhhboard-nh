@@ -84,6 +84,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<Pengumuman | null>(null);
 
   // Task completion modal states
   const [completeModalOpen, setCompleteModalOpen] = useState(false);
@@ -106,6 +107,18 @@ export default function Dashboard() {
 
   const bottomLeftRef = useAnimeSlideInLeft(2500, 1000, animTrigger);
   const bottomRightRef = useAnimeSlideInRight(3000, 1000, animTrigger);
+
+  const user = session?.user as any;
+  const canViewPekerjaan = user?.role === "admin" || user?.canAccessPekerjaan;
+  const canViewDokumentasi = user?.role === "admin" || user?.canAccessDokumentasi;
+  const canViewLegal = user?.role === "admin" || user?.canManageLegal;
+  const canViewSkala = user?.role === "admin" || user?.canAccessPekerjaan;
+  const quickAccessItems = [
+    { href: "/daftar-potensi-klien", label: "Potensi", show: canViewPekerjaan },
+    { href: "/legal/template-management", label: "Formulir", show: canViewLegal },
+    { href: "/dokumentasi", label: "Pedoman", show: canViewDokumentasi },
+    { href: "/skala-prioritas", label: "P3", show: canViewSkala },
+  ];
 
   const recentKlienRef = useAnimeSlideInLeft(3500, 1000, animTrigger);
   const recentArsipRef = useAnimeSlideInRight(4000, 1000, animTrigger);
@@ -568,7 +581,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5" suppressHydrationWarning>
         
         <div ref={bottomLeftRef} className="lg:col-span-6">
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[260px] flex flex-col justify-between overflow-x-auto">
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[420px] max-h-[520px] flex flex-col overflow-hidden">
             <div className="flex items-center justify-between mb-2 border-b border-gray-100 pb-2 dark:border-gray-800 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <span className="w-1.5 h-3.5 bg-brand-500 rounded-full"></span>
@@ -576,7 +589,7 @@ export default function Dashboard() {
               </div>
             </div>
             
-            <div className="flex-1 min-w-[500px]">
+            <div className="flex-1 min-w-[500px] overflow-x-auto overflow-y-auto no-scrollbar">
               <table className="w-full text-left border-collapse text-[10px]">
                 <thead>
                   <tr className="border-b border-gray-150 dark:border-gray-800 text-gray-400 uppercase tracking-wider font-bold">
@@ -639,7 +652,7 @@ export default function Dashboard() {
         </div>
 
         <div ref={bottomRightRef} className="lg:col-span-6">
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[260px] flex flex-col justify-between">
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-850 dark:bg-gray-900 min-h-[420px] max-h-[520px] flex flex-col overflow-hidden">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full overflow-hidden">
               
               <div className="flex flex-col h-full overflow-hidden">
@@ -658,7 +671,12 @@ export default function Dashboard() {
                     [1, 2].map(i => <div key={i} className="h-10 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
                   ) : announcements.length > 0 ? (
                     announcements.map((ann) => (
-                      <div key={ann.id} className="p-2.5 rounded-xl border border-gray-155 dark:border-gray-800 bg-gray-50/20 dark:bg-white/[0.002] flex justify-between items-start gap-3">
+                      <button
+                        key={ann.id}
+                        type="button"
+                        onClick={() => setSelectedAnnouncement(ann)}
+                        className="w-full text-left p-2.5 rounded-xl border border-gray-155 dark:border-gray-800 bg-gray-50/20 dark:bg-white/[0.002] flex justify-between items-start gap-3 hover:border-brand-500 transition-all"
+                      >
                         <div className="overflow-hidden">
                           <h4 className="text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-wide truncate">{ann.title}</h4>
                           <p className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">{ann.content}</p>
@@ -670,7 +688,7 @@ export default function Dashboard() {
                             {ann.priority}
                           </span>
                         </div>
-                      </div>
+                      </button>
                     ))
                   ) : (
                     <div className="text-center py-8">
@@ -691,18 +709,23 @@ export default function Dashboard() {
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2 flex-1 items-center">
-                  <Link href="/daftar-potensi-klien" className="flex flex-col items-center justify-center p-2 text-center border border-gray-100 dark:border-gray-850 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] group h-12">
-                    <span className="text-[9px] font-black text-gray-800 dark:text-gray-200 group-hover:text-brand-500 uppercase tracking-wider">Potensi</span>
-                  </Link>
-                  <Link href="/legal/template-management" className="flex flex-col items-center justify-center p-2 text-center border border-gray-100 dark:border-gray-850 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] group h-12">
-                    <span className="text-[9px] font-black text-gray-800 dark:text-gray-200 group-hover:text-brand-500 uppercase tracking-wider">Formulir</span>
-                  </Link>
-                  <Link href="/dokumentasi" className="flex flex-col items-center justify-center p-2 text-center border border-gray-100 dark:border-gray-850 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] group h-12">
-                    <span className="text-[9px] font-black text-gray-800 dark:text-gray-200 group-hover:text-brand-500 uppercase tracking-wider">Pedoman</span>
-                  </Link>
-                  <Link href="/skala-prioritas" className="flex flex-col items-center justify-center p-2 text-center border border-gray-100 dark:border-gray-855 bg-gray-55/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] group h-12">
-                    <span className="text-[9px] font-black text-gray-800 dark:text-gray-200 group-hover:text-brand-500 uppercase tracking-wider">P3</span>
-                  </Link>
+                  {quickAccessItems.filter((item) => item.show).length > 0 ? (
+                    quickAccessItems.filter((item) => item.show).map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="flex flex-col items-center justify-center p-2 text-center border border-gray-100 dark:border-gray-850 bg-gray-50/50 dark:bg-white/[0.005] hover:border-brand-500 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] group h-12"
+                      >
+                        <span className="text-[9px] font-black text-gray-800 dark:text-gray-200 group-hover:text-brand-500 uppercase tracking-wider">
+                          {item.label}
+                        </span>
+                      </Link>
+                    ))
+                  ) : (
+                    <div className="col-span-2 py-6 text-center text-[10px] font-black uppercase tracking-wider text-gray-400">
+                      Tidak ada shortcut tersedia.
+                    </div>
+                  )}
                 </div>
               </div>
 

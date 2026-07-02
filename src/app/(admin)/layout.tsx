@@ -81,8 +81,6 @@ export default function AdminLayout({
     isAllowed = false;
   } else if (pathname.startsWith("/dokumentasi") && !isAdmin && !user?.canAccessDokumentasi) {
     isAllowed = false;
-  } else if (pathname.startsWith("/pengumuman") && !isAdmin && !user?.canAccessPengumuman) {
-    isAllowed = false;
   } else if (pathname.startsWith("/legal") && !isAdmin && !user?.canManageLegal) {
     isAllowed = false;
   }

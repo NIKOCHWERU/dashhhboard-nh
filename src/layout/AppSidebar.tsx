@@ -118,9 +118,7 @@ const AppSidebar: React.FC = () => {
       ...(isAdminUser || userObj.canAccessDokumentasi ? [
         { name: APP_LABELS.sidebar.items.dokumentasi, icon: <DokumentasiIcon />, path: "/dokumentasi" }
       ] : []),
-      ...(isAdminUser || userObj.canAccessPengumuman ? [
-        { name: APP_LABELS.sidebar.items.pengumuman, icon: <PengumumanIcon />, path: "/pengumuman" }
-      ] : [])
+      { name: APP_LABELS.sidebar.items.pengumuman, icon: <PengumumanIcon />, path: "/pengumuman" }
     ];
     groups.push({ title: APP_LABELS.sidebar.groups.menu, items: menuItems });
 
