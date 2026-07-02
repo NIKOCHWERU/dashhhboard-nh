@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const origin = new URL(req.url).origin;
+  const origin = process.env.NEXTAUTH_URL || new URL(req.url).origin;
   const redirectUri = `${origin}/api/gdrive/auth/callback`;
 
   const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +

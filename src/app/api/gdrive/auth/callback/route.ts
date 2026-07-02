@@ -4,7 +4,7 @@ import { storeRefreshToken } from "@/lib/googleDrive";
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get("code");
-  const origin = new URL(req.url).origin;
+  const origin = process.env.NEXTAUTH_URL || new URL(req.url).origin;
   const redirectUri = `${origin}/api/gdrive/auth/callback`;
 
   if (!code) {
