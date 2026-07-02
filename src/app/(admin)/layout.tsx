@@ -75,8 +75,8 @@ export default function AdminLayout({
     isAllowed = false;
   } else if (pathname.startsWith("/karyawan") && !isAdmin && !user?.canAccessTenagaKerja) {
     isAllowed = false;
-  } else if (pathname.startsWith("/narasumber-hukum") && !isAdmin && !user?.canAccessArsip) {
-    isAllowed = false;
+  // } else if (pathname.startsWith("/narasumber-hukum") && !isAdmin && !user?.canAccessArsip) {
+  //   isAllowed = false;
   } else if ((pathname.startsWith("/daftar-potensi-klien") || pathname.startsWith("/progress-pekerjaan")) && !isAdmin && !user?.canAccessPekerjaan) {
     isAllowed = false;
   } else if (pathname.startsWith("/dokumentasi") && !isAdmin && !user?.canAccessDokumentasi) {

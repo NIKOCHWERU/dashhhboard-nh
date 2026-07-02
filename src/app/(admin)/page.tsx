@@ -116,7 +116,7 @@ export default function Dashboard() {
   const quickAccessItems = [
     { href: "/daftar-potensi-klien", label: "Potensi", show: canViewPekerjaan },
     { href: "/legal/template-management", label: "Formulir", show: canViewLegal },
-    { href: "/dokumentasi", label: "Pedoman", show: canViewDokumentasi },
+    { href: "/dokumentasi", label: "Dokumentasi", show: canViewDokumentasi },
     { href: "/skala-prioritas", label: "P3", show: canViewSkala },
   ];
 

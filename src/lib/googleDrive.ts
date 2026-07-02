@@ -1,45 +1,131 @@
 import fs from "fs";
 import path from "path";
+import { Readable } from "stream";
+import { google, drive_v3 } from "googleapis";
 import { prisma } from "./prisma";
 
 const TOKEN_FILE_PATH = path.join(process.cwd(), "src/data/gdrive-token.json");
+const AUTH_PROVIDER = "company_gdrive";
+const AUTH_PROVIDER_ACCOUNT_ID = "company_gdrive_account";
+const SYSTEM_USER_ID = "system_company_gdrive";
+const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
+
+let refreshTokenCache: string | null | undefined;
+let oauthClient: any = null;
+let driveClient: drive_v3.Drive | null = null;
+
+interface GoogleDriveFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  size?: string;
+  webViewLink?: string;
+  webContentLink?: string;
+  thumbnailLink?: string;
+  createdTime?: string;
+  modifiedTime?: string;
+  owners?: Array<{ displayName?: string; emailAddress?: string }>;
+  description?: string;
+}
+
+interface RefreshTokenFile {
+  refreshToken?: string;
+}
+
+function logError(message: string, error: unknown): void {
+  console.error("[GoogleDrive]", message, error);
+}
+
+function escapeQueryValue(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+function isRetryableStatus(status?: number): boolean {
+  return status !== undefined && RETRYABLE_STATUS_CODES.has(status);
+}
+
+function getGoogleErrorStatus(error: unknown): number | undefined {
+  const err = error as { code?: number; response?: { status?: number } };
+  if (typeof err.code === "number") {
+    return err.code;
+  }
+  return err.response?.status;
+}
+
+function getGoogleErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error) {
+    return error.message || fallback;
+  }
+  const err = error as { message?: string };
+  return err?.message || fallback;
+}
+
+async function getDatabaseRefreshToken(): Promise<string | null> {
+  const account = await prisma.account.findUnique({
+    where: {
+      provider_providerAccountId: {
+        provider: AUTH_PROVIDER,
+        providerAccountId: AUTH_PROVIDER_ACCOUNT_ID,
+      },
+    },
+    select: {
+      refresh_token: true,
+    },
+  });
+  return account?.refresh_token ?? null;
+}
+
+async function getFileRefreshToken(): Promise<string | null> {
+  if (!fs.existsSync(TOKEN_FILE_PATH)) {
+    return null;
+  }
+
+  const content = await fs.promises.readFile(TOKEN_FILE_PATH, "utf8");
+  const parsed = JSON.parse(content) as RefreshTokenFile;
+  return parsed.refreshToken ?? null;
+}
+
+async function writeRefreshTokenFile(token: string): Promise<void> {
+  await fs.promises.mkdir(path.dirname(TOKEN_FILE_PATH), { recursive: true });
+  await fs.promises.writeFile(TOKEN_FILE_PATH, JSON.stringify({ refreshToken: token }), "utf8");
+}
 
 export async function getStoredRefreshToken(): Promise<string | null> {
-  try {
-    const account = await prisma.account.findUnique({
-      where: {
-        provider_providerAccountId: {
-          provider: "company_gdrive",
-          providerAccountId: "company_gdrive_account",
-        },
-      },
-    });
-    if (account?.refresh_token) {
-      return account.refresh_token;
-    }
-  } catch (e) {
-    console.error("Error reading stored refresh token from database:", e);
+  if (refreshTokenCache !== undefined) {
+    return refreshTokenCache;
   }
 
   try {
-    if (fs.existsSync(TOKEN_FILE_PATH)) {
-      const data = JSON.parse(fs.readFileSync(TOKEN_FILE_PATH, "utf8"));
-      return data.refreshToken || null;
+    const dbToken = await getDatabaseRefreshToken();
+    if (dbToken) {
+      refreshTokenCache = dbToken;
+      return dbToken;
     }
-  } catch (e) {
-    console.error("Error reading stored refresh token from file:", e);
+  } catch (error) {
+    logError("Failed to read refresh token from database:", error);
   }
-  return process.env.GOOGLE_DRIVE_REFRESH_TOKEN || null;
+
+  try {
+    const fileToken = await getFileRefreshToken();
+    if (fileToken) {
+      refreshTokenCache = fileToken;
+      return fileToken;
+    }
+  } catch (error) {
+    logError("Failed to read refresh token from file:", error);
+  }
+
+  refreshTokenCache = process.env.GOOGLE_DRIVE_REFRESH_TOKEN ?? null;
+  return refreshTokenCache;
 }
 
 export async function storeRefreshToken(token: string): Promise<void> {
   try {
-    const systemUserId = "system_company_gdrive";
     await prisma.user.upsert({
-      where: { id: systemUserId },
+      where: { id: SYSTEM_USER_ID },
       update: {},
       create: {
-        id: systemUserId,
+        id: SYSTEM_USER_ID,
         name: "Company Google Drive",
         email: "company-gdrive@narasumberhukum.online",
         role: "admin",
@@ -49,66 +135,146 @@ export async function storeRefreshToken(token: string): Promise<void> {
     await prisma.account.upsert({
       where: {
         provider_providerAccountId: {
-          provider: "company_gdrive",
-          providerAccountId: "company_gdrive_account",
+          provider: AUTH_PROVIDER,
+          providerAccountId: AUTH_PROVIDER_ACCOUNT_ID,
         },
       },
       update: {
         refresh_token: token,
       },
       create: {
-        userId: systemUserId,
+        userId: SYSTEM_USER_ID,
         type: "oauth",
-        provider: "company_gdrive",
-        providerAccountId: "company_gdrive_account",
+        provider: AUTH_PROVIDER,
+        providerAccountId: AUTH_PROVIDER_ACCOUNT_ID,
         refresh_token: token,
       },
     });
 
-    const dir = path.dirname(TOKEN_FILE_PATH);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    await writeRefreshTokenFile(token);
+    refreshTokenCache = token;
+
+    if (oauthClient) {
+      oauthClient.setCredentials({ refresh_token: token });
     }
-    fs.writeFileSync(TOKEN_FILE_PATH, JSON.stringify({ refreshToken: token }), "utf8");
-  } catch (e) {
-    console.error("Error storing refresh token in database/file:", e);
+  } catch (error) {
+    logError("Failed to store refresh token in database/file:", error);
+    throw new Error("Google Drive refresh token storage failed.");
   }
 }
 
-export async function getAccessToken(): Promise<string> {
+function getOAuthClient(): any {
+  if (oauthClient) {
+    return oauthClient;
+  }
+
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const refreshToken = await getStoredRefreshToken();
 
-  if (!clientId || !clientSecret || !refreshToken) {
+  if (!clientId || !clientSecret) {
     throw new Error(
-      "Missing Google credentials (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, or GOOGLE_DRIVE_REFRESH_TOKEN) in .env"
+      "Google Drive authentication failed. Missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET."
     );
   }
 
-  try {
-    const res = await fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
-        grant_type: "refresh_token",
-        refresh_token: refreshToken,
-      }),
-    });
+  // @ts-ignore - google namespace types are imported from googleapis
+  oauthClient = new google.auth.OAuth2(clientId, clientSecret);
+  return oauthClient;
+}
 
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`Failed to refresh access token: ${errText}`);
-    }
+async function getAuthorizedOAuthClient(): Promise<any> {
+  const client = getOAuthClient();
+  const refreshToken = await getStoredRefreshToken();
 
-    const data = await res.json();
-    return data.access_token;
-  } catch (error) {
-    console.error("Failed to get Google access token:", error);
-    throw error;
+  if (!refreshToken) {
+    throw new Error(
+      "Google Drive authentication failed. Refresh token is missing. Store it in Prisma, src/data/gdrive-token.json, or GOOGLE_DRIVE_REFRESH_TOKEN."
+    );
   }
+
+  client.setCredentials({ refresh_token: refreshToken });
+
+  try {
+    const response = await client.getAccessToken();
+    if (!response || !response.token) {
+      throw new Error("Google Drive authentication failed. Access token was not returned.");
+    }
+    return client;
+  } catch (error) {
+    const message = getGoogleErrorMessage(
+      error,
+      "Google Drive authentication failed. Refresh token has been revoked or is invalid."
+    );
+    logError("Google Drive authentication failed.", error);
+    throw new Error(message);
+  }
+}
+
+async function getDriveClient(): Promise<drive_v3.Drive> {
+  if (!driveClient) {
+    const auth = await getAuthorizedOAuthClient();
+    // @ts-ignore - google namespace types are imported from googleapis
+    driveClient = google.drive({ version: "v3", auth });
+  }
+
+  return driveClient;
+}
+
+async function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function executeDriveRequest<T>(operation: (drive: drive_v3.Drive) => Promise<T>): Promise<T> {
+  let attempt = 0;
+  let lastError: unknown;
+
+  while (attempt < 2) {
+    try {
+      const drive = await getDriveClient();
+      return await operation(drive);
+    } catch (error) {
+      lastError = error;
+      const status = getGoogleErrorStatus(error);
+      if (attempt === 0 && isRetryableStatus(status)) {
+        attempt += 1;
+        await delay(500);
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  throw lastError;
+}
+
+export async function getAccessToken(): Promise<string> {
+  const client = await getAuthorizedOAuthClient();
+  const tokenResponse = await client.getAccessToken();
+
+  if (!tokenResponse || !tokenResponse.token) {
+    throw new Error("Google Drive authentication failed. Access token missing.");
+  }
+
+  return tokenResponse.token;
+}
+
+async function findFolderIdByName(
+  drive: drive_v3.Drive,
+  name: string,
+  parentId?: string
+): Promise<string | null> {
+  const escapedName = escapeQueryValue(name);
+  const parentClause = parentId ? `'${parentId}' in parents` : `'root' in parents`;
+  const query = `mimeType='application/vnd.google-apps.folder' and trashed=false and name='${escapedName}' and ${parentClause}`;
+
+  const response = await drive.files.list({
+    q: query,
+    fields: "files(id,name)",
+    spaces: "drive",
+    pageSize: 1,
+  });
+
+  return response.data.files?.[0]?.id ?? null;
 }
 
 export async function getOrCreateFolder(
@@ -116,146 +282,85 @@ export async function getOrCreateFolder(
   name: string,
   parentId?: string
 ): Promise<string> {
-  const upperName = name.toUpperCase();
-  let query = `mimeType='application/vnd.google-apps.folder' and name='${upperName}' and trashed=false`;
-  if (parentId) {
-    query += ` and '${parentId}' in parents`;
-  } else {
-    query += ` and 'root' in parents`;
-  }
-
-  const searchUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(
-    query
-  )}&fields=files(id)`;
-
   try {
-    const res = await fetch(searchUrl, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`Failed to search folder '${upperName}': ${errText}`);
-    }
-
-    const data = await res.json();
-    if (data.files && data.files.length > 0) {
-      const folderId = data.files[0].id;
-      shareFolderWithAnyone(accessToken, folderId).catch(() => {});
+    const folderId = await executeDriveRequest((drive) => findFolderIdByName(drive, name, parentId));
+    if (folderId) {
+      await shareFolderWithAnyone(accessToken, folderId);
       return folderId;
     }
 
-    // Create the folder
-    const createUrl = "https://www.googleapis.com/drive/v3/files";
-    const body: any = {
-      name: upperName,
-      mimeType: "application/vnd.google-apps.folder",
-    };
-    if (parentId) {
-      body.parents = [parentId];
+    const response = await executeDriveRequest((drive) =>
+      drive.files.create({
+        requestBody: {
+          name,
+          mimeType: "application/vnd.google-apps.folder",
+          parents: parentId ? [parentId] : undefined,
+        },
+        fields: "id",
+      })
+    );
+
+    const createdFolderId = response.data.id;
+    if (!createdFolderId) {
+      throw new Error(`Folder creation failed for '${name}'.`);
     }
 
-    const createRes = await fetch(createUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!createRes.ok) {
-      const errText = await createRes.text();
-      throw new Error(`Failed to create folder '${name}': ${errText}`);
-    }
-
-    const createData = await createRes.json();
-    try {
-      await shareFolderWithAnyone(accessToken, createData.id);
-    } catch (shareErr) {
-      console.error("Failed to share folder but continuing:", shareErr);
-    }
-    return createData.id;
+    await shareFolderWithAnyone(accessToken, createdFolderId);
+    return createdFolderId;
   } catch (error) {
-    console.error(`Error in getOrCreateFolder for '${name}':`, error);
+    logError(`Error in getOrCreateFolder for '${name}':`, error);
     throw error;
   }
 }
 
 export async function shareFolderWithAnyone(accessToken: string, fileId: string): Promise<void> {
   try {
-    const url = `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        role: "reader",
-        type: "anyone",
-      }),
-    });
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error(`Failed to share file/folder ${fileId} with anyone: ${errText}`);
-    }
+    await executeDriveRequest((drive) =>
+      drive.permissions.create({
+        fileId,
+        requestBody: {
+          role: "reader",
+          type: "anyone",
+        },
+        supportsAllDrives: true,
+      })
+    );
   } catch (error) {
-    console.error(`Error in shareFolderWithAnyone for ${fileId}:`, error);
+    const status = getGoogleErrorStatus(error);
+    if (status === 409) {
+      return;
+    }
+
+    const message = getGoogleErrorMessage(error, "Google Drive permission update failed.");
+    logError(`Failed to share file or folder ${fileId} with anyone:`, error);
+    throw new Error(message);
   }
 }
 
-/**
- * Creates structured client folders inside `/Dashboard Office/[featureType]`
- * Structure:
- * Dashboard Office
- * └── [featureType] ("Retainer" or "Perorangan")
- *     └── [clientName]
- *         ├── Dokumen
- *         ├── Data Karyawan
- *         └── Dokumentasi
- *             ├── Foto
- *             └── Video
- */
 export async function createClientStructuredFolder(
   featureType: "Retainer" | "Perorangan",
   clientName: string
 ): Promise<string | null> {
   try {
     const accessToken = await getAccessToken();
-
-    // 1. Get or Create Main Office Folder
     const mainFolderId = await getOrCreateFolder(accessToken, "Dashboard Office");
-
-    // 2. Get or Create Feature Folder (e.g. "Retainer" or "Perorangan")
     const featureFolderId = await getOrCreateFolder(accessToken, featureType, mainFolderId);
-
-    // 3. Create Main Client Folder inside Feature Folder
     const clientFolderId = await getOrCreateFolder(accessToken, clientName, featureFolderId);
 
-    // 4. Create Subfolders inside Client Folder
     await getOrCreateFolder(accessToken, "Dokumen", clientFolderId);
     await getOrCreateFolder(accessToken, "Data Karyawan", clientFolderId);
     await getOrCreateFolder(accessToken, "Dokumen Pelamar", clientFolderId);
     const dokumentasiId = await getOrCreateFolder(accessToken, "Dokumentasi", clientFolderId);
-
-    // 5. Create Foto and Video subfolders inside Dokumentasi
     await getOrCreateFolder(accessToken, "Foto", dokumentasiId);
     await getOrCreateFolder(accessToken, "Video", dokumentasiId);
 
     return clientFolderId;
   } catch (error) {
-    console.error(`Failed to create structured folders for '${clientName}':`, error);
+    logError(`Failed to create structured folders for '${clientName}':`, error);
     return null;
   }
 }
 
-/**
- * Creates structured internal folder inside `/Dashboard Office/Internal Documents`
- */
 export async function createInternalDocumentFolder(
   documentType: string,
   documentNumber: string,
@@ -263,206 +368,133 @@ export async function createInternalDocumentFolder(
 ): Promise<string | null> {
   try {
     const accessToken = await getAccessToken();
-
-    // 1. Get or Create Main Office Folder
     const mainFolderId = await getOrCreateFolder(accessToken, "Dashboard Office");
-
-    // 2. Get or Create Internal Folder
     const internalFolderId = await getOrCreateFolder(accessToken, "Berkas Internal", mainFolderId);
-
-    // 3. Create Specific subfolder for this document
     const folderName = `${documentType} - ${documentNumber.replace(/\//g, "-")} - ${recipientName}`;
     const docFolderId = await getOrCreateFolder(accessToken, folderName, internalFolderId);
-
     return docFolderId;
   } catch (error) {
-    console.error(`Failed to create internal folders for document:`, error);
+    logError("Failed to create internal folders for document:", error);
     return null;
   }
 }
 
-/**
- * Renames any folder by ID
- */
 export async function renameFolder(folderId: string, newFolderName: string): Promise<void> {
   try {
-    const accessToken = await getAccessToken();
-    const updateUrl = `https://www.googleapis.com/drive/v3/files/${folderId}`;
-
-    const res = await fetch(updateUrl, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: newFolderName.toUpperCase(),
-      }),
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`Failed to rename folder: ${errText}`);
-    }
+    await executeDriveRequest((drive) =>
+      drive.files.update({
+        fileId: folderId,
+        requestBody: {
+          name: newFolderName.toUpperCase(),
+        },
+        fields: "id",
+      })
+    );
   } catch (error) {
-    console.error(`Failed to rename folder '${folderId}':`, error);
+    logError(`Failed to rename folder '${folderId}':`, error);
+    throw new Error(getGoogleErrorMessage(error, "Google Drive folder rename failed."));
   }
 }
 
-/**
- * Deletes any folder/file by ID
- */
 export async function deleteFolder(folderId: string): Promise<void> {
   try {
-    const accessToken = await getAccessToken();
-    const deleteUrl = `https://www.googleapis.com/drive/v3/files/${folderId}`;
-    const res = await fetch(deleteUrl, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`Failed to delete folder/file: ${errText}`);
-    }
+    await executeDriveRequest((drive) => drive.files.delete({ fileId: folderId }));
   } catch (error) {
-    console.error(`Failed to delete folder/file '${folderId}':`, error);
+    logError(`Failed to delete folder/file '${folderId}':`, error);
+    throw new Error(getGoogleErrorMessage(error, "Google Drive delete failed."));
   }
 }
 
-/**
- * Lists all files and subfolders inside a parent folder ID
- */
-export async function listFiles(parentId: string): Promise<any[]> {
+export async function listFiles(parentId: string): Promise<GoogleDriveFile[]> {
   try {
-    const accessToken = await getAccessToken();
-    const query = encodeURIComponent(`'${parentId}' in parents and trashed=false`);
-    const fields = encodeURIComponent("files(id,name,mimeType,size,webViewLink,webContentLink,thumbnailLink,createdTime,modifiedTime,owners,description)");
-    const searchUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=${fields}&orderBy=folder,name`;
+    const response = await executeDriveRequest((drive) =>
+      drive.files.list({
+        q: `'${escapeQueryValue(parentId)}' in parents and trashed=false`,
+        fields: "files(id,name,mimeType,size,webViewLink,webContentLink,thumbnailLink,createdTime,modifiedTime,owners,description)",
+        orderBy: "folder,name",
+        spaces: "drive",
+      })
+    );
 
-    const res = await fetch(searchUrl, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`Failed to list files: ${errText}`);
-    }
-
-    const data = await res.json();
-    return data.files || [];
+    const files = (response.data.files ?? []) as GoogleDriveFile[];
+    return files.filter((file): file is GoogleDriveFile => !!file.id);
   } catch (error) {
-    console.error(`Failed to list files in '${parentId}':`, error);
+    logError(`Failed to list files in '${parentId}':`, error);
     return [];
   }
 }
 
-/**
- * Uploads a file buffer directly to a parent folder in Google Drive with optional description
- */
+function getNextUniqueFileName(existingNames: string[], fileName: string): string {
+  const dotIndex = fileName.lastIndexOf(".");
+  const baseName = dotIndex !== -1 ? fileName.substring(0, dotIndex) : fileName;
+  const extension = dotIndex !== -1 ? fileName.substring(dotIndex) : "";
+
+  if (!existingNames.includes(fileName)) {
+    return fileName;
+  }
+
+  let counter = 1;
+  while (true) {
+    const candidate = `${baseName} (${counter})${extension}`;
+    if (!existingNames.includes(candidate)) {
+      return candidate;
+    }
+    counter += 1;
+  }
+}
+
+async function findDuplicateFileNames(parentId: string, baseName: string): Promise<string[]> {
+  const response = await executeDriveRequest((drive) =>
+    drive.files.list({
+      q: `'${escapeQueryValue(parentId)}' in parents and trashed=false`,
+      fields: "files(name)",
+      spaces: "drive",
+      pageSize: 1000,
+    })
+  );
+
+  return response.data.files?.map((file) => file.name || "") ?? [];
+}
+
 export async function uploadFile(
   parentId: string,
   fileName: string,
   mimeType: string,
   fileBuffer: Buffer,
   description?: string
-): Promise<any> {
+): Promise<GoogleDriveFile> {
   try {
-    const accessToken = await getAccessToken();
+    const existingNames = await findDuplicateFileNames(parentId, fileName);
+    const finalFileName = getNextUniqueFileName(existingNames, fileName);
 
-    // Ensure unique filename inside the parent folder by checking existing names
-    let finalFileName = fileName;
-    try {
-      const q = `name = '${fileName.replace(/'/g, "\\'")}' and '${parentId}' in parents and trashed = false`;
-      const searchUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)`;
-      const searchRes = await fetch(searchUrl, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (searchRes.ok) {
-        const searchData = await searchRes.json();
-        if (searchData.files && searchData.files.length > 0) {
-          const dotIdx = fileName.lastIndexOf(".");
-          const baseName = dotIdx !== -1 ? fileName.substring(0, dotIdx) : fileName;
-          const ext = dotIdx !== -1 ? fileName.substring(dotIdx) : "";
+    const response = await executeDriveRequest((drive) =>
+      drive.files.create({
+        requestBody: {
+          name: finalFileName,
+          parents: [parentId],
+          description: description ?? "",
+        },
+        media: {
+          mimeType,
+          body: Readable.from([fileBuffer]),
+        },
+        fields: "id,name,mimeType,size,webViewLink,webContentLink,thumbnailLink,createdTime,modifiedTime,owners,description",
+      })
+    );
 
-          let counter = 1;
-          let nameExists = true;
-          while (nameExists) {
-            const checkName = `${baseName} (${counter})${ext}`;
-            const checkQ = `name = '${checkName.replace(/'/g, "\\'")}' and '${parentId}' in parents and trashed = false`;
-            const checkUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(checkQ)}&fields=files(id)`;
-            const checkRes = await fetch(checkUrl, {
-              headers: { Authorization: `Bearer ${accessToken}` },
-            });
-            if (checkRes.ok) {
-              const checkData = await checkRes.json();
-              if (!checkData.files || checkData.files.length === 0) {
-                finalFileName = checkName;
-                nameExists = false;
-              } else {
-                counter++;
-              }
-            } else {
-              // If check fails, break and fallback to original name
-              nameExists = false;
-            }
-          }
-        }
-      }
-    } catch (e) {
-      console.error("Failed to check duplicate file name before multipart upload:", e);
+    const result = response.data as drive_v3.Schema$File;
+    if (!result.id) {
+      throw new Error("Google Drive upload failed. File did not return an ID.");
     }
 
-    const boundary = "foo_bar_boundary";
-    const metadata = JSON.stringify({
-      name: finalFileName,
-      parents: [parentId],
-      description: description || "",
-    });
-
-    const part1 = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n`;
-    const part2 = `\r\n--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n`;
-    const part3 = `\r\n--${boundary}--`;
-
-    const payload = Buffer.concat([
-      Buffer.from(part1, "utf8"),
-      Buffer.from(part2, "utf8"),
-      fileBuffer,
-      Buffer.from(part3, "utf8"),
-    ]);
-
-    const uploadUrl = "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart";
-    const res = await fetch(uploadUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": `multipart/related; boundary=${boundary}`,
-      },
-      body: payload,
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`Failed to upload file to Google Drive: ${errText}`);
-    }
-
-    const result = await res.json();
-    await shareFolderWithAnyone(accessToken, result.id);
-    return result;
+    await shareFolderWithAnyone("", result.id);
+    return result as GoogleDriveFile;
   } catch (error) {
-    console.error(`Failed to upload file '${fileName}' to parent '${parentId}':`, error);
-    throw error;
+    logError(`Failed to upload file '${fileName}' to folder '${parentId}':`, error);
+    throw new Error(getGoogleErrorMessage(error, "Google Drive upload failed."));
   }
 }
 
-/**
- * Gets or creates a subfolder by name inside a parent folder ID
- */
 export async function getSubfolderId(
   parentFolderId: string,
   subfolderName: string
@@ -471,21 +503,18 @@ export async function getSubfolderId(
     const accessToken = await getAccessToken();
     return await getOrCreateFolder(accessToken, subfolderName, parentFolderId);
   } catch (error) {
-    console.error("Failed to get subfolder:", error);
+    logError("Failed to get subfolder:", error);
     return null;
   }
 }
 
-/**
- * Gets or creates a global folder inside 'Dashboard Office'
- */
 export async function getGlobalFolderId(folderName: string): Promise<string | null> {
   try {
     const accessToken = await getAccessToken();
     const mainFolderId = await getOrCreateFolder(accessToken, "Dashboard Office");
     return await getOrCreateFolder(accessToken, folderName, mainFolderId);
   } catch (error) {
-    console.error("Failed to get global folder:", error);
+    logError("Failed to get global folder:", error);
     return null;
   }
 }
