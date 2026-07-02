@@ -57,9 +57,34 @@ export async function POST(req: Request) {
       });
     } else if (taskId.startsWith("esok_") || taskId.startsWith("prio_")) {
       const parts = taskId.split("_");
+      const reportId = parts[1];
+      const category = parts[2].toLowerCase(); // q1, q2, q3
       taskName = parts.slice(3).join("_");
       taskPriority = parts[2].toUpperCase();
       taskLabel = "LAPORAN TASK";
+
+      if (taskId.startsWith("prio_")) {
+        const report = await prisma.laporanHarian.findUnique({ where: { id: reportId } });
+        if (report) {
+          let prio = { q1: [], q2: [], q3: [] } as any;
+          try { prio = JSON.parse(report.prioritas); } catch (e) {}
+          
+          const list = prio[category] || [];
+          list.forEach((item: any) => {
+            if (item.task === taskName) {
+              item.completed = true;
+              item.startTime = startTime;
+              item.endTime = endTime;
+              item.completionDesc = keterangan;
+            }
+          });
+
+          await prisma.laporanHarian.update({
+            where: { id: reportId },
+            data: { prioritas: JSON.stringify(prio) }
+          });
+        }
+      }
     } else {
       let personalTask = await prisma.personalTask.findUnique({
         where: { id: taskId },

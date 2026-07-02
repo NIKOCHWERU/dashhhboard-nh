@@ -53,7 +53,7 @@ export default function Dashboard() {
   const [allAgendas, setAllAgendas] = useState<Agenda[]>([]);
   const [displayAgendas, setDisplayAgendas] = useState<Agenda[]>([]);
   const [personalTasks, setPersonalTasks] = useState<PersonalTask[]>([]);
-  const [todayQ1Tasks, setTodayQ1Tasks] = useState<string[]>([]);
+  const [todayQ1Tasks, setTodayQ1Tasks] = useState<any[]>([]);
   const [karyawanList, setKaryawanList] = useState<Member[]>([]);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [announcements, setAnnouncements] = useState<Pengumuman[]>([]);
@@ -168,11 +168,17 @@ export default function Dashboard() {
       
       const todayStr = new Date().toISOString().slice(0, 10);
       const todayReport = reports.find((r: any) => r.tanggal.slice(0, 10) === todayStr);
-      let q1Tasks: string[] = [];
+      let q1Tasks: any[] = [];
       if (todayReport && todayReport.prioritas) {
         try {
           const parsed = JSON.parse(todayReport.prioritas);
-          q1Tasks = (parsed.q1 || []).map((t: any) => typeof t === "string" ? t : t.task);
+          q1Tasks = (parsed.q1 || []).map((t: any) => {
+            const taskObj = typeof t === "string" ? { task: t } : t;
+            return {
+              ...taskObj,
+              id: `prio_${todayReport.id}_q1_${taskObj.task}`,
+            };
+          });
         } catch (e) {}
       }
       setTodayQ1Tasks(q1Tasks);
@@ -194,7 +200,7 @@ export default function Dashboard() {
                   title: taskName,
                   priority: pKey.toUpperCase(),
                   endDate: report.tanggal,
-                  status: "COMPLETED",
+                  status: item.completed ? "COMPLETED" : "PENDING",
                 });
               });
             });
@@ -494,20 +500,44 @@ export default function Dashboard() {
                     [1, 2, 3].map(i => <div key={i} className="h-12 bg-gray-50 dark:bg-gray-800/40 rounded-xl animate-pulse"></div>)
                   ) : todayQ1Tasks.length > 0 ? (
                     todayQ1Tasks.map((task, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-white/[0.005] hover:border-brand-500/30 transition-all group">
+                      <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-55/50 dark:hover:bg-white/[0.005] hover:border-brand-500/30 transition-all group">
                         <div className="flex items-center gap-3 overflow-hidden">
                           <div className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg font-black text-[9px] bg-red-50 text-red-500 dark:bg-red-950/20">
                             Q1
                           </div>
                           <div className="overflow-hidden">
-                            <h4 className="text-[11px] font-bold text-gray-905 dark:text-white leading-snug truncate">
-                              {task}
+                            <h4 className="text-[11px] font-bold text-gray-905 dark:text-white leading-snug truncate" title={task.task}>
+                              {task.task}
                             </h4>
                             <div className="text-[9px] text-gray-400 mt-0.5 flex items-center gap-2 font-semibold uppercase tracking-wider">
-                              <span className="text-red-555 font-black uppercase tracking-widest text-[8px]">On Duty</span>
+                              {task.completed ? (
+                                <span className="text-emerald-555 font-black uppercase tracking-widest text-[8px]">Selesai</span>
+                              ) : (
+                                <span className="text-red-555 font-black uppercase tracking-widest text-[8px]">On Duty</span>
+                              )}
                             </div>
                           </div>
                         </div>
+                        {!task.completed && (
+                          <button
+                            onClick={() => {
+                              setSelectedTask({
+                                id: task.id,
+                                title: task.task,
+                                priority: "Q1",
+                              });
+                              setCompleteStartTime("09:00");
+                              setCompleteEndTime("10:00");
+                              setCompleteKeterangan("");
+                              setCompleteCatatan("");
+                              setCompleteFile(null);
+                              setCompleteModalOpen(true);
+                            }}
+                            className="px-2 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-[6px] text-[8px] font-black uppercase tracking-wider transition-all shadow cursor-pointer active:scale-95 flex-shrink-0"
+                          >
+                            Selesai
+                          </button>
+                        )}
                       </div>
                     ))
                   ) : (

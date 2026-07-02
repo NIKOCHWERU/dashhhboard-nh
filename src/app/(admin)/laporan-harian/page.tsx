@@ -10,6 +10,10 @@ interface TaskItem {
   duration: number;
   desc: string;
   attachment?: { name: string; url: string } | null;
+  completed?: boolean;
+  startTime?: string;
+  endTime?: string;
+  completionDesc?: string;
 }
 
 interface TimeLog {
@@ -44,6 +48,11 @@ export default function LaporanHarianPage() {
 
   // --- Form States for "Buat Laporan Baru" ---
   const [reportDate, setReportDate] = useState("");
+  const [isScaleSubmitted, setIsScaleSubmitted] = useState(false);
+  const [completingTask, setCompletingTask] = useState<{ idx: number; category: "q1" | "q2" | "q3"; task: string } | null>(null);
+  const [completeStartTime, setCompleteStartTime] = useState("09:00");
+  const [completeEndTime, setCompleteEndTime] = useState("10:00");
+  const [completeKeterangan, setCompleteKeterangan] = useState("");
   
   // Section I: Skala Prioritas (Today)
   const [q1Today, setQ1Today] = useState<TaskItem[]>([]);
@@ -226,6 +235,73 @@ export default function LaporanHarianPage() {
     }
   }, [activeTab, filterUser, filterDate]);
 
+  const fetchTodayDraft = async (dateVal: string) => {
+    if (!dateVal || !user?.id) return;
+    try {
+      const res = await fetch(`/api/laporan-harian?userId=${user.id}&date=${dateVal}`);
+      if (res.ok) {
+        const data = await res.json();
+        const todayReport = data[0];
+        if (todayReport) {
+          try {
+            const prio = JSON.parse(todayReport.prioritas);
+            setQ1Today(prio.q1 || []);
+            setQ2Today(prio.q2 || []);
+            setQ3Today(prio.q3 || []);
+            if (prio.q1?.length > 0 || prio.q2?.length > 0 || prio.q3?.length > 0) {
+              setIsScaleSubmitted(true);
+            }
+          } catch(e){}
+          
+          try {
+            const logs = JSON.parse(todayReport.rincianKegiatan);
+            setTimeLogs(logs || []);
+          } catch(e){}
+
+          try {
+            const outs = JSON.parse(todayReport.hasilKerja);
+            setOutputs(outs || []);
+          } catch(e){}
+
+          try {
+            const esok = JSON.parse(todayReport.tugasEsok);
+            setQ1Tomorrow(esok.q1 || []);
+            setQ2Tomorrow(esok.q2 || []);
+            setQ3Tomorrow(esok.q3 || []);
+          } catch(e){}
+
+          try {
+            const ref = JSON.parse(todayReport.refleksi);
+            setLearning(ref.learning || "");
+            setObstacles(ref.obstacles || "");
+            setNotes(ref.notes || "");
+          } catch(e){}
+        } else {
+          setQ1Today([]);
+          setQ2Today([]);
+          setQ3Today([]);
+          setIsScaleSubmitted(false);
+          setTimeLogs([]);
+          setOutputs([]);
+          setQ1Tomorrow([]);
+          setQ2Tomorrow([]);
+          setQ3Tomorrow([]);
+          setLearning("");
+          setObstacles("");
+          setNotes("");
+        }
+      }
+    } catch(e) {
+      console.error("Failed to fetch draft for today", e);
+    }
+  };
+
+  useEffect(() => {
+    if (reportDate && user?.id) {
+      fetchTodayDraft(reportDate);
+    }
+  }, [reportDate, user?.id]);
+
   const fetchUsers = async () => {
     try {
       const res = await fetch("/api/users");
@@ -280,6 +356,73 @@ export default function LaporanHarianPage() {
     const hrs = Math.floor(diffMinutes / 60);
     const mins = diffMinutes % 60;
     return `durasi ${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:00`;
+  };
+
+  const handleMarkTaskCompleted = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!completingTask) return;
+
+    const { idx, category, task } = completingTask;
+    let targetList = category === "q1" ? q1Today : category === "q2" ? q2Today : q3Today;
+    const updatedList = targetList.map((item, i) => {
+      if (i === idx) {
+        return {
+          ...item,
+          completed: true,
+          startTime: completeStartTime,
+          endTime: completeEndTime,
+          completionDesc: completeKeterangan,
+        };
+      }
+      return item;
+    });
+
+    if (category === "q1") setQ1Today(updatedList);
+    else if (category === "q2") setQ2Today(updatedList);
+    else setQ3Today(updatedList);
+
+    const durationStr = getDurationStr(completeStartTime, completeEndTime);
+
+    // Automatically add to Rincian Kegiatan (timeLogs)
+    const logActivity = `[SKALA PRIORITAS] ${task} - Keterangan: ${completeKeterangan || "-"}`;
+    const newLog = {
+      start: completeStartTime,
+      end: completeEndTime,
+      duration: durationStr,
+      activity: logActivity,
+    };
+    const newTimeLogs = [...timeLogs, newLog];
+    setTimeLogs(newTimeLogs);
+
+    // Automatically update the database report immediately so status is persistent
+    const newQ1 = category === "q1" ? updatedList : q1Today;
+    const newQ2 = category === "q2" ? updatedList : q2Today;
+    const newQ3 = category === "q3" ? updatedList : q3Today;
+
+    const payload = {
+      date: reportDate,
+      prioritas: { q1: newQ1, q2: newQ2, q3: newQ3 },
+      rincianKegiatan: newTimeLogs,
+      hasilKerja: outputs,
+      tugasEsok: { q1: q1Tomorrow, q2: q2Tomorrow, q3: q3Tomorrow },
+      refleksi: { learning, obstacles, notes },
+      documents: [],
+    };
+
+    try {
+      const res = await fetch("/api/laporan-harian", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        alert("Tugas berhasil ditandai selesai dan ditambahkan ke Rincian Kegiatan!");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+
+    setCompletingTask(null);
   };
 
   // Item Upload Helper
@@ -512,14 +655,19 @@ export default function LaporanHarianPage() {
         navigator.clipboard.writeText(rawText);
 
         alert(`Laporan Aktivitas Harian berhasil disimpan ke database dan teks ${reportType} telah disalin ke clipboard!`);
-        if (isAdmin) {
-          setActiveTab("riwayat");
+        if (onlyScale) {
+          setIsScaleSubmitted(true);
         } else {
-          // Reset Form
-          setQ1Today([]); setQ2Today([]); setQ3Today([]);
-          setTimeLogs([]); setOutputs([]);
-          setQ1Tomorrow([]); setQ2Tomorrow([]); setQ3Tomorrow([]);
-          setLearning(""); setObstacles(""); setNotes("");
+          setIsScaleSubmitted(false);
+          if (isAdmin) {
+            setActiveTab("riwayat");
+          } else {
+            // Reset Form
+            setQ1Today([]); setQ2Today([]); setQ3Today([]);
+            setTimeLogs([]); setOutputs([]);
+            setQ1Tomorrow([]); setQ2Tomorrow([]); setQ3Tomorrow([]);
+            setLearning(""); setObstacles(""); setNotes("");
+          }
         }
       } else {
         const err = await res.json();
@@ -728,6 +876,25 @@ export default function LaporanHarianPage() {
                                   )}
                                 </span>
                                 <div className="flex items-center gap-2.5 flex-shrink-0">
+                                  {isScaleSubmitted && !item.completed && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setCompletingTask({ idx, category: q, task: item.task });
+                                        setCompleteStartTime("09:00");
+                                        setCompleteEndTime("10:00");
+                                        setCompleteKeterangan("");
+                                      }}
+                                      className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase cursor-pointer"
+                                    >
+                                      Selesai
+                                    </button>
+                                  )}
+                                  {item.completed && (
+                                    <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                      Selesai
+                                    </span>
+                                  )}
                                   <button
                                     onClick={() => startEditTask(idx, q, "today", item)}
                                     className="text-amber-500 hover:text-amber-600 cursor-pointer"
@@ -1727,6 +1894,66 @@ export default function LaporanHarianPage() {
             )}
           </div>
         )
+      )}
+      {completingTask && (
+        <FeatureModal
+          isOpen={!!completingTask}
+          onClose={() => setCompletingTask(null)}
+          title="Keterangan Tugas"
+          subtitle="Masukkan rincian jam dan keterangan tugas untuk menandainya sebagai selesai"
+        >
+          <form onSubmit={handleMarkTaskCompleted} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Jam Mulai</label>
+                <input
+                  type="time"
+                  required
+                  value={completeStartTime}
+                  onChange={(e) => setCompleteStartTime(e.target.value)}
+                  className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark rounded-none px-4 py-2.5 text-xs font-bold text-black dark:text-white outline-none focus:border-brand-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Jam Selesai</label>
+                <input
+                  type="time"
+                  required
+                  value={completeEndTime}
+                  onChange={(e) => setCompleteEndTime(e.target.value)}
+                  className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark rounded-none px-4 py-2.5 text-xs font-bold text-black dark:text-white outline-none focus:border-brand-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Keterangan</label>
+              <textarea
+                required
+                placeholder="Masukkan rincian apa saja yang dikerjakan pada tugas ini..."
+                value={completeKeterangan}
+                onChange={(e) => setCompleteKeterangan(e.target.value)}
+                className="w-full px-4 py-3 border border-stroke dark:border-strokedark rounded-none bg-white dark:bg-gray-800 text-gray-700 dark:text-white outline-none focus:border-brand-500 text-xs font-semibold h-24 resize-none"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setCompletingTask(null)}
+                className="px-4 py-2.5 border border-stroke dark:border-strokedark rounded-none text-xs font-black uppercase text-gray-600 hover:bg-gray-50"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-none text-xs font-black uppercase tracking-wider transition-all shadow"
+              >
+                Tandai Selesai
+              </button>
+            </div>
+          </form>
+        </FeatureModal>
       )}
     </div>
   );

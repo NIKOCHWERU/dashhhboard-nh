@@ -12,6 +12,15 @@ export async function POST(req: Request) {
     const formData = await req.formData();
     const rowId = formData.get("rowId") as string;
     const files = formData.getAll("files") as File[];
+    const metadataRaw = formData.get("metadata") as string | null;
+    let metadata: { fileName?: string; category?: string }[] = [];
+    if (metadataRaw) {
+      try {
+        metadata = JSON.parse(metadataRaw);
+      } catch (e) {
+        metadata = [];
+      }
+    }
 
     if (!rowId) {
       return NextResponse.json({ error: "rowId is required" }, { status: 400 });
@@ -67,25 +76,31 @@ export async function POST(req: Request) {
     const uploadResults: any[] = [];
 
     // 5. Upload files in loop
-    for (const file of files) {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileMeta = metadata[i] || {};
       if (file.size === 0) continue;
       
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
+      const desiredName = (fileMeta.fileName && fileMeta.fileName.trim()) ? fileMeta.fileName.trim() : file.name;
+      const categoryText = fileMeta.category || "Lampiran";
+
       const uploaderDesc = user ? JSON.stringify({
         uploaderId: user.id,
         uploaderName: user.name || user.email || "Tenaga Kerja",
         uploaderImage: user.image || "",
-        text: "Lampiran Pekerjaan",
-      }) : "";
+        text: `${categoryText}`,
+        category: categoryText,
+      }) : JSON.stringify({ text: categoryText, category: categoryText });
 
-      console.log(`Uploading file '${file.name}' (${file.size} bytes) to Google Drive folder '${rowFolderName}'...`);
-      const result = await uploadFile(rowFolderId, file.name, file.type, buffer, uploaderDesc);
-      
+      console.log(`Uploading file '${desiredName}' (original: '${file.name}', ${file.size} bytes) to Google Drive folder '${rowFolderName}'...`);
+      const result = await uploadFile(rowFolderId, desiredName, file.type, buffer, uploaderDesc);
+
       const fileInfo = {
         fileId: result.id,
-        name: file.name,
+        name: desiredName,
         url: result.webViewLink,
         size: file.size,
       };

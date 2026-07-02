@@ -94,6 +94,7 @@ export default function ProgressPekerjaanPage() {
   
   // File upload state
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+  const [uploadFileMeta, setUploadFileMeta] = useState<{ fileName: string; category: string }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [uploadStatusMsg, setUploadStatusMsg] = useState("");
@@ -285,6 +286,10 @@ export default function ProgressPekerjaanPage() {
       uploadFiles.forEach((file) => {
         formData.append("files", file);
       });
+
+      if (uploadFileMeta && uploadFileMeta.length > 0) {
+        formData.append("metadata", JSON.stringify(uploadFileMeta));
+      }
 
       setUploadProgress(30);
       setUploadStatusMsg("Menghubungkan ke Google Drive & Membuat folder...");
@@ -1468,7 +1473,9 @@ export default function ProgressPekerjaanPage() {
                   disabled={isUploading}
                   onChange={(e) => {
                     if (e.target.files) {
-                      setUploadFiles(Array.from(e.target.files));
+                      const filesArr = Array.from(e.target.files);
+                      setUploadFiles(filesArr);
+                      setUploadFileMeta(filesArr.map((f) => ({ fileName: f.name, category: "Umum" })));
                     }
                   }}
                   className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 file:cursor-pointer cursor-pointer border border-gray-250 dark:border-white/[0.05] rounded-xl p-2 bg-transparent"
@@ -1477,11 +1484,37 @@ export default function ProgressPekerjaanPage() {
 
               {/* List Selected Files */}
               {uploadFiles.length > 0 && (
-                <div className="max-h-32 overflow-y-auto space-y-1.5 no-scrollbar border border-gray-150 dark:border-white/[0.05] p-2.5 rounded-xl">
+                <div className="max-h-48 overflow-y-auto space-y-2 no-scrollbar border border-gray-150 dark:border-white/[0.05] p-2.5 rounded-xl">
                   {uploadFiles.map((file, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-[10px] text-gray-600 dark:text-gray-300 font-semibold">
-                      <span className="truncate max-w-[200px]">{file.name}</span>
-                      <span className="text-gray-400 font-bold">{(file.size / (1024 * 1024)).toFixed(2)} MB</span>
+                    <div key={idx} className="flex flex-col gap-2 text-[10px] text-gray-600 dark:text-gray-300 font-semibold">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="truncate max-w-[200px] font-bold">{file.name}</div>
+                        <div className="text-gray-400 font-bold">{(file.size / (1024 * 1024)).toFixed(2)} MB</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={uploadFileMeta[idx]?.fileName || file.name}
+                          onChange={(e) => setUploadFileMeta((m) => {
+                            const copy = [...m];
+                            copy[idx] = { ...(copy[idx] || { fileName: file.name, category: "Umum" }), fileName: e.target.value };
+                            return copy;
+                          })}
+                          className="flex-1 px-2 py-1 text-xs rounded-xl border border-gray-200 bg-white dark:bg-[#111216]"
+                          placeholder="Ubah nama file (opsional)"
+                        />
+                        <input
+                          type="text"
+                          value={uploadFileMeta[idx]?.category || "Umum"}
+                          onChange={(e) => setUploadFileMeta((m) => {
+                            const copy = [...m];
+                            copy[idx] = { ...(copy[idx] || { fileName: file.name, category: "Umum" }), category: e.target.value };
+                            return copy;
+                          })}
+                          className="w-28 px-2 py-1 text-xs rounded-xl border border-gray-200 bg-white dark:bg-[#111216]"
+                          placeholder="Kategori"
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
