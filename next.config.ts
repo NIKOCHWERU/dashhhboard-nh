@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  serverExternalPackages: ["@prisma/client"],
+  serverExternalPackages: ["@prisma/client", "googleapis", "exceljs", "mysql2"],
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,
