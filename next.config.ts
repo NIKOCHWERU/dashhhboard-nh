@@ -5,9 +5,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   serverExternalPackages: ["@prisma/client", "googleapis", "exceljs", "mysql2"],
   webpack(config) {
     config.module.rules.push({

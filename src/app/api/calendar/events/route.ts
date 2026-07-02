@@ -1,20 +1,22 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { getAccessToken } from "@/lib/googleDrive";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
 
-  if (!session || !(session as any).accessToken) {
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
+    const accessToken = await getAccessToken();
     const response = await fetch(
       "https://www.googleapis.com/calendar/v3/calendars/primary/events",
       {
         headers: {
-          Authorization: `Bearer ${(session as any).accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       }
     );
@@ -47,7 +49,7 @@ export async function GET() {
 export async function DELETE(req: Request) {
   const session = await getServerSession(authOptions);
 
-  if (!session || !(session as any).accessToken) {
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -59,12 +61,13 @@ export async function DELETE(req: Request) {
   }
 
   try {
+    const accessToken = await getAccessToken();
     const response = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/primary/events/${id}`,
       {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${(session as any).accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       }
     );
@@ -84,7 +87,7 @@ export async function DELETE(req: Request) {
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
 
-  if (!session || !(session as any).accessToken) {
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -118,13 +121,14 @@ export async function POST(req: Request) {
       };
     }
 
+    const accessToken = await getAccessToken();
     const response = await fetch(
       "https://www.googleapis.com/calendar/v3/calendars/primary/events",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${(session as any).accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify(eventData),
       }
