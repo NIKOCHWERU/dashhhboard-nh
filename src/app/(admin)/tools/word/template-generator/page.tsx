@@ -318,6 +318,39 @@ export default function DocumentTemplateGeneratorPage() {
     setFormData((prev) => ({ ...prev, [key]: val }));
   };
 
+  // Generate and Download Excel Template matching scanned placeholders
+  const handleDownloadExcelTemplate = () => {
+    if (placeholders.length === 0) {
+      showToast("error", "Tidak ada placeholder terdeteksi.");
+      return;
+    }
+
+    try {
+      // Create single row with header columns and sample empty row
+      const sampleRow: Record<string, string> = {};
+      placeholders.forEach((p) => {
+        sampleRow[p] = `Contoh ${p}`;
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet([sampleRow]);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Data Templat");
+
+      const wbout = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([wbout], { type: "application/octet-stream" });
+
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `format_excel_${activeTemplate?.title || "templat"}_${Date.now()}.xlsx`;
+      link.click();
+
+      showToast("success", "Format Templat Excel berhasil diunduh! Silakan isi baris data.");
+    } catch (err) {
+      console.error(err);
+      showToast("error", "Gagal mengunduh format Excel.");
+    }
+  };
+
   // Generate Word Documents
   const handleGenerate = async () => {
     if (!templateBuffer) {
@@ -865,11 +898,29 @@ export default function DocumentTemplateGeneratorPage() {
                 {/* Sub-Mode 2: Import Massal Excel */}
                 {inputMode === "excel" && (
                   <div className="space-y-4 pt-1">
+                    <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-brand-500/10 border border-brand-500/20 rounded-2xl gap-3">
+                      <div>
+                        <h4 className="text-xs font-black text-brand-500 uppercase tracking-wider">
+                          Unduh Format Templat Excel (Siap Isi)
+                        </h4>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                          Sistem akan otomatis membuatkan file Excel dengan header kolom: {placeholders.map((p) => `[${p}]`).join(" ")}
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleDownloadExcelTemplate}
+                        className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-500/20 shrink-0 flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        Download Format Excel
+                      </button>
+                    </div>
+
                     <div className="p-6 border-2 border-dashed border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-black/30 rounded-2xl text-center space-y-3">
                       <Table className="w-8 h-8 text-brand-500 mx-auto" />
                       <div className="space-y-1">
                         <h4 className="text-xs font-black uppercase text-black dark:text-white">
-                          Upload Berkas Excel (.XLSX / .CSV)
+                          Upload Berkas Excel Terisi (.XLSX / .CSV)
                         </h4>
                         <p className="text-[10px] text-gray-400">
                           Header kolom di Excel akan dicocokkan otomatis dengan placeholder:{" "}
