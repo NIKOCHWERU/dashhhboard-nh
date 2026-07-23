@@ -81,7 +81,7 @@ export default function PDFCombinePage() {
       }
 
       const mergedPdfBytes = await mergedPdf.save();
-      const blob = new Blob([mergedPdfBytes], { type: "application/pdf" });
+      const blob = new Blob([new Uint8Array(mergedPdfBytes)], { type: "application/pdf" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = `pdf_combined_${Date.now()}.pdf`;

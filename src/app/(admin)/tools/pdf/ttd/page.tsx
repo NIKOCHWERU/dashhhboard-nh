@@ -87,7 +87,7 @@ export default function PDFTTDPage() {
       }
 
       const finalPdfBytes = await pdfDoc.save();
-      const blob = new Blob([finalPdfBytes], { type: "application/pdf" });
+      const blob = new Blob([new Uint8Array(finalPdfBytes)], { type: "application/pdf" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = `pdf_ttd_${Date.now()}.pdf`;
