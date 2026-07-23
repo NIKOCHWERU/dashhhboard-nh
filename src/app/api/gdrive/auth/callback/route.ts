@@ -32,16 +32,16 @@ export async function GET(req: Request) {
 
     if (data.refresh_token) {
       await storeRefreshToken(data.refresh_token);
-      return NextResponse.redirect(`${origin}/narasumber-hukum?gdrive_connected=success`);
+      return NextResponse.redirect(`${baseUrl}/narasumber-hukum?gdrive_connected=success`);
     } else {
       // If no new refresh token returned, they might have approved before.
       // But since we specify prompt=consent, it should return a refresh token.
-      return NextResponse.redirect(`${origin}/narasumber-hukum?gdrive_connected=no_refresh_token`);
+      return NextResponse.redirect(`${baseUrl}/narasumber-hukum?gdrive_connected=no_refresh_token`);
     }
   } catch (error: any) {
     console.error("OAuth callback error:", error);
     return NextResponse.redirect(
-      `${origin}/narasumber-hukum?gdrive_connected=error&message=${encodeURIComponent(error.message)}`
+      `${baseUrl}/narasumber-hukum?gdrive_connected=error&message=${encodeURIComponent(error.message)}`
     );
   }
 }
