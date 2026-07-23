@@ -134,7 +134,39 @@ export default function BackgroundEraserPage() {
     };
   };
 
-  // Auto Detect Object Removal (Corner/Edge-based Background Detection)
+  // Web Worker Ref
+  const workerRef = useRef<Worker | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.Worker) {
+      workerRef.current = new Worker("/workers/background-eraser.worker.js");
+      workerRef.current.onmessage = (e) => {
+        const { type, imageData, targetR, targetG, targetB } = e.data;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        ctx.putImageData(imageData, 0, 0);
+        saveState();
+
+        if (type === "auto-detect-complete") {
+          showToast("success", "Latar belakang terdeteksi dan berhasil dihapus!");
+        } else if (type === "magic-eraser-complete") {
+          if (targetR !== undefined) {
+            setPickedColor(`rgb(${targetR}, ${targetG}, ${targetB})`);
+          }
+          showToast("success", "Area warna berhasil dihapus!");
+        }
+      };
+    }
+
+    return () => {
+      workerRef.current?.terminate();
+    };
+  }, [saveState]);
+
+  // Auto Detect Object Removal (Web Worker Offloaded)
   const handleAutoDetect = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -142,39 +174,49 @@ export default function BackgroundEraserPage() {
     if (!ctx) return;
 
     const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const d = imgData.data;
 
-    // Sample corner colors (Top-Left, Top-Right, Bottom-Left, Bottom-Right)
-    const corners = [
-      [0, 0],
-      [canvas.width - 1, 0],
-      [0, canvas.height - 1],
-      [canvas.width - 1, canvas.height - 1],
-    ];
+    if (workerRef.current) {
+      workerRef.current.postMessage({
+        type: "auto-detect",
+        imageData: imgData,
+        tolerance,
+        width: canvas.width,
+        height: canvas.height,
+      });
+    } else {
+      // Synchronous Fallback
+      const d = imgData.data;
+      const corners = [
+        [0, 0],
+        [canvas.width - 1, 0],
+        [0, canvas.height - 1],
+        [canvas.width - 1, canvas.height - 1],
+      ];
 
-    const bgColors = corners.map(([x, y]) => {
-      const idx = (y * canvas.width + x) * 4;
-      return [d[idx], d[idx + 1], d[idx + 2]];
-    });
-
-    for (let i = 0; i < d.length; i += 4) {
-      const r = d[i], g = d[i + 1], b = d[i + 2];
-      const isBg = bgColors.some(([br, bg, bb]) => {
-        const dist = Math.sqrt((r - br) ** 2 + (g - bg) ** 2 + (b - bb) ** 2);
-        return dist <= tolerance * 2.5;
+      const bgColors = corners.map(([x, y]) => {
+        const idx = (y * canvas.width + x) * 4;
+        return [d[idx], d[idx + 1], d[idx + 2]];
       });
 
-      if (isBg) {
-        d[i + 3] = 0; // Alpha 0
-      }
-    }
+      for (let i = 0; i < d.length; i += 4) {
+        const r = d[i], g = d[i + 1], b = d[i + 2];
+        const isBg = bgColors.some(([br, bg, bb]) => {
+          const dist = Math.sqrt((r - br) ** 2 + (g - bg) ** 2 + (b - bb) ** 2);
+          return dist <= tolerance * 2.5;
+        });
 
-    ctx.putImageData(imgData, 0, 0);
-    saveState();
-    showToast("success", "Latar belakang terdeteksi dan berhasil dihapus!");
+        if (isBg) {
+          d[i + 3] = 0;
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      saveState();
+      showToast("success", "Latar belakang terdeteksi dan berhasil dihapus!");
+    }
   };
 
-  // Magic Color Flood Eraser
+  // Magic Color Flood Eraser (Web Worker Offloaded)
   const applyMagicEraser = (startX: number, startY: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -182,39 +224,53 @@ export default function BackgroundEraserPage() {
     if (!ctx) return;
 
     const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const d = imgData.data;
-    const width = canvas.width;
-    const height = canvas.height;
 
-    const startIdx = (startY * width + startX) * 4;
-    const targetR = d[startIdx];
-    const targetG = d[startIdx + 1];
-    const targetB = d[startIdx + 2];
+    if (workerRef.current) {
+      workerRef.current.postMessage({
+        type: "magic-eraser",
+        imageData: imgData,
+        tolerance,
+        startX,
+        startY,
+        width: canvas.width,
+        height: canvas.height,
+      });
+    } else {
+      // Synchronous Fallback
+      const d = imgData.data;
+      const width = canvas.width;
+      const height = canvas.height;
 
-    setPickedColor(`rgb(${targetR}, ${targetG}, ${targetB})`);
+      const startIdx = (startY * width + startX) * 4;
+      const targetR = d[startIdx];
+      const targetG = d[startIdx + 1];
+      const targetB = d[startIdx + 2];
 
-    const visited = new Uint8Array(width * height);
-    const stack = [[startX, startY]];
+      setPickedColor(`rgb(${targetR}, ${targetG}, ${targetB})`);
 
-    while (stack.length > 0) {
-      const [x, y] = stack.pop()!;
-      const idx = (y * width + x) * 4;
+      const visited = new Uint8Array(width * height);
+      const stack = [[startX, startY]];
 
-      if (x < 0 || x >= width || y < 0 || y >= height || visited[y * width + x]) continue;
-      visited[y * width + x] = 1;
+      while (stack.length > 0) {
+        const [x, y] = stack.pop()!;
+        const idx = (y * width + x) * 4;
 
-      const r = d[idx], g = d[idx + 1], b = d[idx + 2];
-      const dist = Math.sqrt((r - targetR) ** 2 + (g - targetG) ** 2 + (b - targetB) ** 2);
+        if (x < 0 || x >= width || y < 0 || y >= height || visited[y * width + x]) continue;
+        visited[y * width + x] = 1;
 
-      if (dist <= tolerance * 2.5) {
-        d[idx + 3] = 0; // Set transparent
-        stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+        const r = d[idx], g = d[idx + 1], b = d[idx + 2];
+        const dist = Math.sqrt((r - targetR) ** 2 + (g - targetG) ** 2 + (b - targetB) ** 2);
+
+        if (dist <= tolerance * 2.5) {
+          d[idx + 3] = 0;
+          stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+        }
       }
-    }
 
-    ctx.putImageData(imgData, 0, 0);
-    saveState();
-    showToast("success", "Area warna berhasil dihapus!");
+      ctx.putImageData(imgData, 0, 0);
+      saveState();
+      showToast("success", "Area warna berhasil dihapus!");
+    }
   };
 
   // Canvas Mouse Interactions (Drawing / Erasing / Pan)
