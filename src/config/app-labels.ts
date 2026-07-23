@@ -40,6 +40,7 @@ export const APP_LABELS = {
       hrm: "HRM",
       legal: "Dashboard Legal",
       admin: "Admin",
+      alat: "Alat",
     },
     items: {
       dashboard: "Dashboard Utama",
@@ -74,6 +75,23 @@ export const APP_LABELS = {
       reports: "Laporan",
       settings: "Pengaturan",
       accessManagement: "Manajemen Akses",
+      // Tools / Alat items
+      imageTools: "Image",
+      pdfTools: "PDF",
+      wordTools: "Word",
+      excelTools: "Excel",
+      bgEraser: "Background Eraser",
+      imageCrop: "Image Crop",
+      imageFilter: "Image Color Filter",
+      pdfToImage: "PDF To Image",
+      pdfToWord: "PDF To Word",
+      pdfCompress: "PDF Compress",
+      pdfCombine: "PDF Combine",
+      pdfSlice: "PDF Slice",
+      pdfSensor: "PDF Sensor",
+      pdfTtd: "PDF TTD",
+      docGenerator: "Document Template Generator",
+      excelPdf: "Excel PDF Rapi",
     }
   },
   header: {
