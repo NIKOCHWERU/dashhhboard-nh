@@ -49,6 +49,12 @@ model User {
   canManageHRM    Boolean   @default(false)
   canManageRetainer Boolean @default(false)
   canManagePerorangan Boolean @default(false)
+  canAccessArsip       Boolean   @default(false)
+  canAccessDokumentasi Boolean   @default(false)
+  canAccessPekerjaan   Boolean   @default(false)
+  canAccessPengumuman  Boolean   @default(false)
+  canAccessTenagaKerja Boolean   @default(false)
+  canManageLegal       Boolean   @default(false)
   accounts        Account[]
   sessions        Session[]
   agendas         Agenda[]
