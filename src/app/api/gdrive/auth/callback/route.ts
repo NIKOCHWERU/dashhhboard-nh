@@ -6,6 +6,8 @@ export async function GET(req: Request) {
   const baseUrl = process.env.NEXTAUTH_URL || new URL(req.url).origin;
   const redirectUri = `${baseUrl}/api/gdrive/auth/callback`;
 
+  const code = searchParams.get("code");
+
   if (!code) {
     return NextResponse.redirect(`${baseUrl}/narasumber-hukum?gdrive_connected=no_code`);
   }
