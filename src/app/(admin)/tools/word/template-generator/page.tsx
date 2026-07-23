@@ -356,11 +356,9 @@ export default function DocumentTemplateGeneratorPage() {
           return;
         }
 
-        const zipOutput = new JSZip();
-
-        for (let i = 0; i < excelRows.length; i++) {
-          const rowData = excelRows[i];
-
+        if (excelRows.length === 1) {
+          // If only 1 row, generate direct .docx download
+          const rowData = excelRows[0];
           const normalizedData: Record<string, any> = {};
           Object.keys(rowData).forEach((key) => {
             normalizedData[key.trim()] = rowData[key];
@@ -381,22 +379,61 @@ export default function DocumentTemplateGeneratorPage() {
           doc.render(dataForDoc);
 
           const outBlob = doc.getZip().generate({
-            type: "uint8array",
+            type: "blob",
+            mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
           });
 
-          const fileName = dataForDoc["Nama"] || dataForDoc["NAMA"] || dataForDoc["NoSurat"] || `dokumen_${i + 1}`;
-          zipOutput.file(`${fileName}_${i + 1}.docx`, outBlob);
+          const fileName = dataForDoc["Nama"] || dataForDoc["NAMA"] || dataForDoc["NoSurat"] || "dokumen_excel_1";
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(outBlob);
+          link.download = `${fileName}_${Date.now()}.docx`;
+          link.click();
 
-          setProgress(Math.round(((i + 1) / excelRows.length) * 100));
+          showToast("success", "1 Dokumen Word dari Excel berhasil dibuat!");
+        } else {
+          // If > 1 row, collect all generated files into a single consolidated ZIP archive
+          const zipOutput = new JSZip();
+
+          for (let i = 0; i < excelRows.length; i++) {
+            const rowData = excelRows[i];
+
+            const normalizedData: Record<string, any> = {};
+            Object.keys(rowData).forEach((key) => {
+              normalizedData[key.trim()] = rowData[key];
+            });
+
+            const dataForDoc: Record<string, any> = {};
+            placeholders.forEach((p) => {
+              dataForDoc[p] = normalizedData[p] !== undefined ? normalizedData[p] : "";
+            });
+
+            const zip = new PizZip(templateBuffer);
+            const doc = new Docxtemplater(zip, {
+              delimiters: { start: "{{", end: "}}" },
+              paragraphLoop: true,
+              linebreaks: true,
+            });
+
+            doc.render(dataForDoc);
+
+            const outBlob = doc.getZip().generate({
+              type: "uint8array",
+            });
+
+            const fileName = dataForDoc["Nama"] || dataForDoc["NAMA"] || dataForDoc["NoSurat"] || `dokumen_${i + 1}`;
+            zipOutput.file(`${fileName}_${i + 1}.docx`, outBlob);
+
+            setProgress(Math.round(((i + 1) / excelRows.length) * 100));
+          }
+
+          const zipBlob = await zipOutput.generateAsync({ type: "blob" });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(zipBlob);
+          link.download = `kumpulan_${excelRows.length}_dokumen_word_${Date.now()}.zip`;
+          link.click();
+
+          showToast("success", `Berhasil mengumpulkan ${excelRows.length} dokumen Word ke dalam 1 berkas ZIP!`);
         }
-
-        const zipBlob = await zipOutput.generateAsync({ type: "blob" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(zipBlob);
-        link.download = `mass_documents_${excelRows.length}_files_${Date.now()}.zip`;
-        link.click();
-
-        showToast("success", `Berhasil membuat ${excelRows.length} dokumen Word dalam ZIP!`);
       }
     } catch (err: any) {
       console.error(err);
