@@ -12,6 +12,9 @@ import {
   AlertCircle,
   Sliders,
   Check,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import JSZip from "jszip";
@@ -26,7 +29,14 @@ export default function PDFToImagePage() {
   const [numPages, setNumPages] = useState<number>(0);
   const [selectedPages, setSelectedPages] = useState<number[]>([]);
   const [format, setFormat] = useState<"png" | "jpeg" | "webp">("png");
-  const [dpi, setDpi] = useState<number>(150);
+
+  // Grid Zoom Level (Linux File Manager Style: 1 to 5)
+  // Level 1 = 6 cols (kecil), Level 5 = 1 col (besar & sangat jelas)
+  const [gridZoomLevel, setGridZoomLevel] = useState<number>(2);
+
+  // Quality Multiplier Options (1x, 2x HD, 4x Ultra HD, 8x Extreme)
+  const [qualityMultiplier, setQualityMultiplier] = useState<number>(2);
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState<number>(0);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -83,7 +93,9 @@ export default function PDFToImagePage() {
       setIsProcessing(true);
       setProgress(0);
       const zip = new JSZip();
-      const scale = dpi / 72; // Standard PDF 72 DPI
+
+      // Quality Multiplier Scale (1x = 1.33, 2x = 2.66, 4x = 5.33, 8x = 10.66)
+      const scale = qualityMultiplier * 1.333;
 
       for (let i = 0; i < selectedPages.length; i++) {
         const pageNum = selectedPages[i];
@@ -97,9 +109,9 @@ export default function PDFToImagePage() {
 
         if (ctx) {
           await page.render({ canvasContext: ctx, viewport }).promise;
-          const dataUrl = canvas.toDataURL(`image/${format}`, 0.92);
+          const dataUrl = canvas.toDataURL(`image/${format}`, 0.95);
           const base64Data = dataUrl.split(",")[1];
-          zip.file(`page_${pageNum}.${format}`, base64Data, { base64: true });
+          zip.file(`halaman_${pageNum}_${qualityMultiplier}x.${format}`, base64Data, { base64: true });
         }
 
         setProgress(Math.round(((i + 1) / selectedPages.length) * 100));
@@ -108,15 +120,51 @@ export default function PDFToImagePage() {
       const content = await zip.generateAsync({ type: "blob" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(content);
-      link.download = `pdf_images_${Date.now()}.zip`;
+      link.download = `pdf_images_${qualityMultiplier}x_${Date.now()}.zip`;
       link.click();
 
-      showToast("success", "ZIP berisi gambar PDF berhasil diekspor!");
+      showToast("success", `ZIP berisi gambar PDF (${qualityMultiplier}x Kualitas) berhasil diekspor!`);
     } catch (err: any) {
       console.error(err);
       showToast("error", "Terjadi kesalahan saat memproses ekspor.");
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  // Map gridZoomLevel to Tailwind grid columns
+  const getGridColsClass = () => {
+    switch (gridZoomLevel) {
+      case 1:
+        return "grid-cols-2 sm:grid-cols-4 md:grid-cols-6"; // Kecil
+      case 2:
+        return "grid-cols-2 sm:grid-cols-3 md:grid-cols-4"; // Standar
+      case 3:
+        return "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"; // Sedang
+      case 4:
+        return "grid-cols-1 sm:grid-cols-2"; // Besar
+      case 5:
+        return "grid-cols-1"; // Sangat Besar (Linux Manager Zoom Max)
+      default:
+        return "grid-cols-2 sm:grid-cols-3 md:grid-cols-4";
+    }
+  };
+
+  // Map gridZoomLevel to canvas scale for thumbnail clarity
+  const getCanvasScale = () => {
+    switch (gridZoomLevel) {
+      case 1:
+        return 0.2;
+      case 2:
+        return 0.35;
+      case 3:
+        return 0.55;
+      case 4:
+        return 0.8;
+      case 5:
+        return 1.1;
+      default:
+        return 0.35;
     }
   };
 
@@ -199,40 +247,62 @@ export default function PDFToImagePage() {
             </div>
           ) : (
             <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-3xl p-5 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
+              <div className="flex flex-wrap items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800 gap-3">
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-black text-black dark:text-white uppercase">
                     Pilih Halaman ({selectedPages.length}/{numPages})
                   </span>
                 </div>
+
+                {/* Linux Style Grid Zoom Controls & Page Selector */}
                 <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 border border-gray-200 dark:border-gray-800 rounded-xl p-1 bg-gray-50 dark:bg-gray-900">
+                    <button
+                      onClick={() => setGridZoomLevel((l) => Math.max(1, l - 1))}
+                      className="p-1 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-lg cursor-pointer"
+                      title="Perkecil Grid (Lebih Banyak Item)"
+                    >
+                      <ZoomOut className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="text-[10px] font-extrabold px-1.5 text-gray-500">
+                      Grid Level {gridZoomLevel}
+                    </span>
+                    <button
+                      onClick={() => setGridZoomLevel((l) => Math.min(5, l + 1))}
+                      className="p-1 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-lg cursor-pointer"
+                      title="Perbesar Grid (Detail Jelas)"
+                    >
+                      <ZoomIn className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
                   <button
                     onClick={selectAllPages}
-                    className="px-2.5 py-1 bg-brand-500/10 text-brand-500 hover:bg-brand-500/20 text-xs font-bold rounded-lg"
+                    className="px-2.5 py-1 bg-brand-500/10 text-brand-500 hover:bg-brand-500/20 text-xs font-bold rounded-lg cursor-pointer"
                   >
                     Pilih Semua
                   </button>
                   <button
                     onClick={deselectAllPages}
-                    className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-500 text-xs font-bold rounded-lg"
+                    className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-500 text-xs font-bold rounded-lg cursor-pointer"
                   >
                     Kosongkan
                   </button>
                 </div>
               </div>
 
-              {/* Grid of Pages */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[500px] overflow-y-auto p-1">
+              {/* Linux Manager Responsive Zoom Grid (Preserving Natural Aspect Ratio) */}
+              <div className={`grid ${getGridColsClass()} gap-4 max-h-[560px] overflow-y-auto p-1.5 transition-all`}>
                 {Array.from({ length: numPages }, (_, i) => i + 1).map((pageNum) => {
                   const isSelected = selectedPages.includes(pageNum);
                   return (
                     <div
                       key={pageNum}
                       onClick={() => toggleSelectPage(pageNum)}
-                      className={`p-3 border-2 rounded-2xl cursor-pointer text-center space-y-2 transition-all relative flex flex-col items-center justify-center ${
+                      className={`p-3 border-2 rounded-2xl cursor-pointer text-center space-y-2 transition-all relative flex flex-col items-center justify-between ${
                         isSelected
-                          ? "border-brand-500 bg-brand-500/10"
-                          : "border-gray-200 dark:border-gray-800 opacity-60 hover:opacity-100"
+                          ? "border-brand-500 bg-brand-500/10 shadow-lg shadow-brand-500/10"
+                          : "border-gray-200 dark:border-gray-800 opacity-70 hover:opacity-100"
                       }`}
                     >
                       {isSelected && (
@@ -240,10 +310,15 @@ export default function PDFToImagePage() {
                           <Check className="w-3 h-3" />
                         </div>
                       )}
-                      <div className="w-full flex items-center justify-center overflow-hidden bg-white dark:bg-black/40 rounded-xl p-1 border border-gray-100 dark:border-gray-800">
-                        <PdfPageCanvas pdfDoc={pdfDoc} pageNum={pageNum} scale={0.25} />
+
+                      {/* Natural Aspect Ratio Canvas Wrapper */}
+                      <div className="w-full flex items-center justify-center overflow-hidden bg-white dark:bg-black/40 rounded-xl p-1.5 border border-gray-100 dark:border-gray-800/80 shadow-inner min-h-[140px]">
+                        <PdfPageCanvas pdfDoc={pdfDoc} pageNum={pageNum} scale={getCanvasScale()} />
                       </div>
-                      <p className="text-[10px] font-bold text-gray-600 dark:text-gray-400">Halaman {pageNum}</p>
+
+                      <p className="text-[11px] font-extrabold text-black dark:text-white pt-1">
+                        Halaman {pageNum}
+                      </p>
                     </div>
                   );
                 })}
@@ -276,7 +351,7 @@ export default function PDFToImagePage() {
           <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 p-5 rounded-2xl space-y-5 shadow-sm">
             <h3 className="text-xs font-black uppercase tracking-wider text-black dark:text-white flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
               <Sliders className="w-4 h-4 text-brand-500" />
-              Pengaturan Konversi
+              Pengaturan Konversi Gambar
             </h3>
 
             <div>
@@ -304,27 +379,28 @@ export default function PDFToImagePage() {
               </div>
             </div>
 
+            {/* Quality Multiplier Options (1x, 2x, 4x, 8x HD Pixel Scale) */}
             <div>
               <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">
-                Kualitas Resolusi (DPI)
+                Skala Kualitas Piksel (Pixel Multiplier)
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { id: 100, label: "100 DPI (Cepat)" },
-                  { id: 150, label: "150 DPI (Standar)" },
-                  { id: 300, label: "300 DPI (HD)" },
-                  { id: 600, label: "600 DPI (Cetak)" },
-                ].map((d) => (
+                  { id: 1, label: "1x (Ukuran Standard)" },
+                  { id: 2, label: "2x (HD Clear)" },
+                  { id: 4, label: "4x (Ultra HD)" },
+                  { id: 8, label: "8x (Extreme Detail)" },
+                ].map((q) => (
                   <button
-                    key={d.id}
-                    onClick={() => setDpi(d.id)}
-                    className={`py-2 px-2 text-[10px] font-black rounded-xl border transition-all cursor-pointer ${
-                      dpi === d.id
+                    key={q.id}
+                    onClick={() => setQualityMultiplier(q.id)}
+                    className={`py-2 px-2 text-[11px] font-black rounded-xl border transition-all cursor-pointer ${
+                      qualityMultiplier === q.id
                         ? "border-brand-500 text-brand-500 bg-brand-500/10"
                         : "border-gray-200 dark:border-gray-800 text-gray-500"
                     }`}
                   >
-                    {d.label}
+                    {q.label}
                   </button>
                 ))}
               </div>
