@@ -3,12 +3,11 @@ import { storeRefreshToken } from "@/lib/googleDrive";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const code = searchParams.get("code");
-  const origin = new URL(req.url).origin;
-  const redirectUri = `${origin}/api/gdrive/auth/callback`;
+  const baseUrl = process.env.NEXTAUTH_URL || new URL(req.url).origin;
+  const redirectUri = `${baseUrl}/api/gdrive/auth/callback`;
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/narasumber-hukum?gdrive_connected=no_code`);
+    return NextResponse.redirect(`${baseUrl}/narasumber-hukum?gdrive_connected=no_code`);
   }
 
   try {
