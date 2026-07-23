@@ -5,7 +5,7 @@ import { getAccessToken, getStoredRefreshToken } from "@/lib/googleDrive";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user as any)?.role !== "admin") {
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
