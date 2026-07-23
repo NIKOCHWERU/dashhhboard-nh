@@ -106,29 +106,31 @@ export default function BackgroundEraserPage() {
     img.crossOrigin = "anonymous";
     img.src = URL.createObjectURL(file);
     img.onload = () => {
-      const canvas = canvasRef.current;
-      const origCanvas = originalCanvasRef.current;
-      if (!canvas || !origCanvas) return;
-
-      canvas.width = img.width;
-      canvas.height = img.height;
-      origCanvas.width = img.width;
-      origCanvas.height = img.height;
-
-      const ctx = canvas.getContext("2d");
-      const origCtx = origCanvas.getContext("2d");
-      if (!ctx || !origCtx) return;
-
-      ctx.drawImage(img, 0, 0);
-      origCtx.drawImage(img, 0, 0);
-
-      const initialData = ctx.getImageData(0, 0, img.width, img.height);
-      setHistory([initialData]);
-      setHistoryIndex(0);
       setImageLoaded(true);
-      setZoom(1);
-      setPan({ x: 0, y: 0 });
-      showToast("success", "Gambar berhasil dimuat.");
+      setTimeout(() => {
+        const canvas = canvasRef.current;
+        const origCanvas = originalCanvasRef.current;
+        if (!canvas || !origCanvas) return;
+
+        canvas.width = img.width;
+        canvas.height = img.height;
+        origCanvas.width = img.width;
+        origCanvas.height = img.height;
+
+        const ctx = canvas.getContext("2d");
+        const origCtx = origCanvas.getContext("2d");
+        if (!ctx || !origCtx) return;
+
+        ctx.drawImage(img, 0, 0);
+        origCtx.drawImage(img, 0, 0);
+
+        const initialData = ctx.getImageData(0, 0, img.width, img.height);
+        setHistory([initialData]);
+        setHistoryIndex(0);
+        setZoom(1);
+        setPan({ x: 0, y: 0 });
+        showToast("success", "Gambar berhasil dimuat.");
+      }, 50);
     };
   };
 

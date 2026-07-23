@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import JSZip from "jszip";
+import { PdfPageCanvas } from "@/components/tools/PdfPageCanvas";
 
 // Set worker src to cdnjs for browser execution
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
@@ -221,28 +222,28 @@ export default function PDFToImagePage() {
               </div>
 
               {/* Grid of Pages */}
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[500px] overflow-y-auto p-1">
                 {Array.from({ length: numPages }, (_, i) => i + 1).map((pageNum) => {
                   const isSelected = selectedPages.includes(pageNum);
                   return (
                     <div
                       key={pageNum}
                       onClick={() => toggleSelectPage(pageNum)}
-                      className={`p-4 border-2 rounded-2xl cursor-pointer text-center space-y-2 transition-all relative ${
+                      className={`p-3 border-2 rounded-2xl cursor-pointer text-center space-y-2 transition-all relative flex flex-col items-center justify-center ${
                         isSelected
                           ? "border-brand-500 bg-brand-500/10"
                           : "border-gray-200 dark:border-gray-800 opacity-60 hover:opacity-100"
                       }`}
                     >
                       {isSelected && (
-                        <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-brand-500 text-white flex items-center justify-center">
-                          <Check className="w-2.5 h-2.5" />
+                        <div className="absolute top-2 right-2 z-10 w-5 h-5 rounded-full bg-brand-500 text-white flex items-center justify-center shadow-md">
+                          <Check className="w-3 h-3" />
                         </div>
                       )}
-                      <div className="w-10 h-12 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md mx-auto flex items-center justify-center font-black text-xs text-gray-500">
-                        {pageNum}
+                      <div className="w-full flex items-center justify-center overflow-hidden bg-white dark:bg-black/40 rounded-xl p-1 border border-gray-100 dark:border-gray-800">
+                        <PdfPageCanvas pdfDoc={pdfDoc} pageNum={pageNum} scale={0.25} />
                       </div>
-                      <p className="text-[10px] font-bold text-gray-600 dark:text-gray-400">Hal {pageNum}</p>
+                      <p className="text-[10px] font-bold text-gray-600 dark:text-gray-400">Halaman {pageNum}</p>
                     </div>
                   );
                 })}
