@@ -53,7 +53,9 @@ export default function ImageCropPage() {
       setCropWidth(img.width);
       setCropHeight(img.height);
       setImageLoaded(true);
-      renderCanvas(img, rotation, flipH, flipV);
+      setTimeout(() => {
+        renderCanvas(img, rotation, flipH, flipV, img.width, img.height);
+      }, 50);
       showToast("success", "Gambar berhasil dimuat.");
     };
   };
@@ -62,7 +64,9 @@ export default function ImageCropPage() {
     img: HTMLImageElement,
     rot: number,
     hFlip: boolean,
-    vFlip: boolean
+    vFlip: boolean,
+    targetW: number,
+    targetH: number
   ) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -83,30 +87,74 @@ export default function ImageCropPage() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
 
+    // 1. Draw base image with rotation and flip
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate((rot * Math.PI) / 180);
     ctx.scale(hFlip ? -1 : 1, vFlip ? -1 : 1);
-
     ctx.drawImage(img, -w / 2, -h / 2);
     ctx.restore();
+
+    // 2. Draw Live Crop Mask & Rectangle overlay
+    const cWidth = Math.min(canvas.width, targetW);
+    const cHeight = Math.min(canvas.height, targetH);
+    const startX = (canvas.width - cWidth) / 2;
+    const startY = (canvas.height - cHeight) / 2;
+
+    // Dark semi-transparent overlay outside crop box
+    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+    // Top
+    ctx.fillRect(0, 0, canvas.width, startY);
+    // Bottom
+    ctx.fillRect(0, startY + cHeight, canvas.width, canvas.height - (startY + cHeight));
+    // Left
+    ctx.fillRect(0, startY, startX, cHeight);
+    // Right
+    ctx.fillRect(startX + cWidth, startY, canvas.width - (startX + cWidth), cHeight);
+
+    // Live Crop Box Border (Bright Brand Line)
+    ctx.strokeStyle = "#3B82F6";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(startX, startY, cWidth, cHeight);
+
+    // Live Grid lines inside Crop Box
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    // Vertical grid lines
+    ctx.moveTo(startX + cWidth / 3, startY);
+    ctx.lineTo(startX + cWidth / 3, startY + cHeight);
+    ctx.moveTo(startX + (cWidth * 2) / 3, startY);
+    ctx.lineTo(startX + (cWidth * 2) / 3, startY + cHeight);
+    // Horizontal grid lines
+    ctx.moveTo(startX, startY + cHeight / 3);
+    ctx.lineTo(startX + cWidth, startY + cHeight / 3);
+    ctx.moveTo(startX, startY + (cHeight * 2) / 3);
+    ctx.lineTo(startX + cWidth, startY + (cHeight * 2) / 3);
+    ctx.stroke();
   };
+
+  useEffect(() => {
+    if (imgRef.current && imageLoaded) {
+      renderCanvas(imgRef.current, rotation, flipH, flipV, cropWidth, cropHeight);
+    }
+  }, [cropWidth, cropHeight, rotation, flipH, flipV, imageLoaded]);
 
   const handleRotate = () => {
     const nextRot = (rotation + 90) % 360;
     setRotation(nextRot);
-    if (imgRef.current) renderCanvas(imgRef.current, nextRot, flipH, flipV);
+    if (imgRef.current) renderCanvas(imgRef.current, nextRot, flipH, flipV, cropWidth, cropHeight);
   };
 
   const handleFlipH = () => {
     const nextH = !flipH;
     setFlipH(nextH);
-    if (imgRef.current) renderCanvas(imgRef.current, rotation, nextH, flipV);
+    if (imgRef.current) renderCanvas(imgRef.current, rotation, nextH, flipV, cropWidth, cropHeight);
   };
 
   const handleFlipV = () => {
     const nextV = !flipV;
     setFlipV(nextV);
-    if (imgRef.current) renderCanvas(imgRef.current, rotation, flipH, nextV);
+    if (imgRef.current) renderCanvas(imgRef.current, rotation, flipH, nextV, cropWidth, cropHeight);
   };
 
   const handleAspectChange = (ratioStr: string) => {
@@ -114,46 +162,80 @@ export default function ImageCropPage() {
     if (!imgRef.current) return;
     const origW = imgRef.current.width;
 
+    let newW = origW;
+    let newH = imgRef.current.height;
+
     if (ratioStr === "1:1") {
-      setCropWidth(origW);
-      setCropHeight(origW);
+      newW = origW;
+      newH = origW;
     } else if (ratioStr === "4:3") {
-      setCropWidth(origW);
-      setCropHeight(Math.round((origW * 3) / 4));
+      newW = origW;
+      newH = Math.round((origW * 3) / 4);
     } else if (ratioStr === "16:9") {
-      setCropWidth(origW);
-      setCropHeight(Math.round((origW * 9) / 16));
+      newW = origW;
+      newH = Math.round((origW * 9) / 16);
     } else if (ratioStr === "A4") {
-      setCropWidth(1240);
-      setCropHeight(1754);
+      newW = 1240;
+      newH = 1754;
     } else if (ratioStr === "Letter") {
-      setCropWidth(1275);
-      setCropHeight(1650);
+      newW = 1275;
+      newH = 1650;
     } else if (ratioStr === "Instagram") {
-      setCropWidth(1080);
-      setCropHeight(1080);
+      newW = 1080;
+      newH = 1080;
     } else if (ratioStr === "Youtube") {
-      setCropWidth(1280);
-      setCropHeight(720);
+      newW = 1280;
+      newH = 720;
     }
+
+    setCropWidth(newW);
+    setCropHeight(newH);
+    if (imgRef.current) renderCanvas(imgRef.current, rotation, flipH, flipV, newW, newH);
   };
 
   const handleExport = () => {
-    const canvas = canvasRef.current;
-    if (!canvas || !imageLoaded) return;
+    if (!imgRef.current || !imageLoaded) return;
+    const img = imgRef.current;
 
+    // Build un-masked export canvas
+    const tempCanvas = document.createElement("canvas");
+    let w = img.width;
+    let h = img.height;
+
+    if (rotation === 90 || rotation === 270) {
+      tempCanvas.width = h;
+      tempCanvas.height = w;
+    } else {
+      tempCanvas.width = w;
+      tempCanvas.height = h;
+    }
+
+    const tempCtx = tempCanvas.getContext("2d");
+    if (!tempCtx) return;
+
+    tempCtx.translate(tempCanvas.width / 2, tempCanvas.height / 2);
+    tempCtx.rotate((rotation * Math.PI) / 180);
+    tempCtx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+    tempCtx.drawImage(img, -w / 2, -h / 2);
+
+    // Export Cropped Box Area
     const exportCanvas = document.createElement("canvas");
     exportCanvas.width = cropWidth;
     exportCanvas.height = cropHeight;
     const expCtx = exportCanvas.getContext("2d");
     if (!expCtx) return;
 
+    const cWidth = Math.min(tempCanvas.width, cropWidth);
+    const cHeight = Math.min(tempCanvas.height, cropHeight);
+    const startX = (tempCanvas.width - cWidth) / 2;
+    const startY = (tempCanvas.height - cHeight) / 2;
+
     expCtx.drawImage(
-      canvas,
-      0,
-      0,
-      canvas.width,
-      canvas.height,
+      tempCanvas,
+      startX,
+      startY,
+      cWidth,
+      cHeight,
       0,
       0,
       cropWidth,
@@ -205,10 +287,10 @@ export default function ImageCropPage() {
           <div>
             <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
               <Crop className="w-5 h-5 text-brand-500" />
-              Image Crop & Resizer
+              Image Crop & Resizer (Live Preview Box)
             </h1>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Potong, putar, balik, dan ubah ukuran gambar sesuai aspek rasio sosial media / dokumen standar.
+              Potong, putar, balik, dan ubah ukuran gambar dengan pratinjau garis kotak pemotong secara live.
             </p>
           </div>
 
@@ -295,7 +377,7 @@ export default function ImageCropPage() {
 
             <div>
               <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">
-                Preset Aspek Rasio
+                Preset Aspek Rasio (Live Adjust)
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {[
@@ -326,7 +408,7 @@ export default function ImageCropPage() {
             {/* Custom Pixel Crop Inputs */}
             <div className="pt-2 border-t border-gray-100 dark:border-gray-800 space-y-3">
               <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                Ukuran Output Pixel (Manual)
+                Ukuran Output Pixel Live (Manual)
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <div>
