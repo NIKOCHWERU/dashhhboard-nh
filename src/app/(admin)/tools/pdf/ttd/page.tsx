@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ChevronRight,
@@ -11,12 +11,18 @@ import {
   CheckCircle2,
   AlertCircle,
   Sliders,
-  RotateCw,
+  Eye,
 } from "lucide-react";
 import { PDFDocument } from "pdf-lib";
+import * as pdfjsLib from "pdfjs-dist";
+import { PdfPageCanvas } from "@/components/tools/PdfPageCanvas";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 export default function PDFTTDPage() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfDoc, setPdfDoc] = useState<any>(null);
+  const [totalPages, setTotalPages] = useState<number>(0);
   const [signatureFile, setSignatureFile] = useState<File | null>(null);
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
 
@@ -24,7 +30,7 @@ export default function PDFTTDPage() {
   const [targetPageMode, setTargetPageMode] = useState<"last" | "all" | "first">("last");
   const [sigWidth, setSigWidth] = useState<number>(150);
   const [sigHeight, setSigHeight] = useState<number>(75);
-  const [posX, setPosX] = useState<number>(350);
+  const [posX, setPosX] = useState<number>(100);
   const [posY, setPosY] = useState<number>(100);
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -35,11 +41,21 @@ export default function PDFTTDPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handlePdfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePdfChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
     setPdfFile(f);
-    showToast("success", "Berkas PDF berhasil dimuat.");
+
+    try {
+      const buffer = await f.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+      setPdfDoc(pdf);
+      setTotalPages(pdf.numPages);
+      showToast("success", `Dokumen PDF berhasil dimuat (${pdf.numPages} Halaman).`);
+    } catch (err: any) {
+      console.error(err);
+      showToast("error", "Gagal membaca berkas PDF.");
+    }
   };
 
   const handleSignatureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,18 +82,18 @@ export default function PDFTTDPage() {
       const pdfBytes = await pdfFile.arrayBuffer();
       const sigBytes = await signatureFile.arrayBuffer();
 
-      const pdfDoc = await PDFDocument.load(pdfBytes);
-      const sigImage = await pdfDoc.embedPng(sigBytes);
+      const loadedPdf = await PDFDocument.load(pdfBytes);
+      const sigImage = await loadedPdf.embedPng(sigBytes);
 
-      const totalPages = pdfDoc.getPageCount();
+      const totalCount = loadedPdf.getPageCount();
       let targetIndices: number[] = [];
 
-      if (targetPageMode === "last") targetIndices = [totalPages - 1];
+      if (targetPageMode === "last") targetIndices = [totalCount - 1];
       else if (targetPageMode === "first") targetIndices = [0];
-      else targetIndices = Array.from({ length: totalPages }, (_, i) => i);
+      else targetIndices = Array.from({ length: totalCount }, (_, i) => i);
 
       for (const idx of targetIndices) {
-        const page = pdfDoc.getPage(idx);
+        const page = loadedPdf.getPage(idx);
         page.drawImage(sigImage, {
           x: posX,
           y: posY,
@@ -86,7 +102,7 @@ export default function PDFTTDPage() {
         });
       }
 
-      const finalPdfBytes = await pdfDoc.save();
+      const finalPdfBytes = await loadedPdf.save();
       const blob = new Blob([new Uint8Array(finalPdfBytes)], { type: "application/pdf" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
@@ -140,10 +156,10 @@ export default function PDFTTDPage() {
           <div>
             <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
               <FileCheck className="w-5 h-5 text-brand-500" />
-              PDF TTD & Digital Stempel
+              PDF TTD & Digital Stempel (Live Preview)
             </h1>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Sematkan tanda tangan digital / stempel PNG transparan dengan presisi koordinat tanpa merusak resolusi HD.
+              Sematkan tanda tangan digital / stempel PNG transparan dengan pratinjau langsung di atas halaman PDF.
             </p>
           </div>
 
@@ -160,18 +176,19 @@ export default function PDFTTDPage() {
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Editor Area (8 Cols) */}
         <div className="lg:col-span-8 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Upload PDF */}
-            <div className="p-6 border-2 border-dashed border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.02] rounded-3xl text-center space-y-3">
-              <div className="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-500 flex items-center justify-center mx-auto">
-                <Upload className="w-6 h-6" />
+            <div className="p-5 border-2 border-dashed border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.02] rounded-3xl text-center space-y-2">
+              <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-500 flex items-center justify-center mx-auto">
+                <Upload className="w-5 h-5" />
               </div>
               <h3 className="text-xs font-black uppercase text-black dark:text-white">1. Dokumen PDF</h3>
               {pdfFile ? (
                 <p className="text-xs font-extrabold text-brand-500 truncate">{pdfFile.name}</p>
               ) : (
-                <label className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold inline-block cursor-pointer">
+                <label className="px-3.5 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold inline-block cursor-pointer">
                   Pilih PDF
                   <input type="file" accept=".pdf" className="hidden" onChange={handlePdfChange} />
                 </label>
@@ -179,15 +196,15 @@ export default function PDFTTDPage() {
             </div>
 
             {/* Upload Signature PNG */}
-            <div className="p-6 border-2 border-dashed border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.02] rounded-3xl text-center space-y-3">
-              <div className="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-500 flex items-center justify-center mx-auto">
-                <FileCheck className="w-6 h-6" />
+            <div className="p-5 border-2 border-dashed border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.02] rounded-3xl text-center space-y-2">
+              <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-500 flex items-center justify-center mx-auto">
+                <FileCheck className="w-5 h-5" />
               </div>
               <h3 className="text-xs font-black uppercase text-black dark:text-white">2. Gambar TTD (PNG)</h3>
               {signatureFile ? (
                 <p className="text-xs font-extrabold text-brand-500 truncate">{signatureFile.name}</p>
               ) : (
-                <label className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold inline-block cursor-pointer">
+                <label className="px-3.5 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold inline-block cursor-pointer">
                   Pilih PNG TTD
                   <input type="file" accept="image/png" className="hidden" onChange={handleSignatureChange} />
                 </label>
@@ -195,11 +212,46 @@ export default function PDFTTDPage() {
             </div>
           </div>
 
-          {signatureDataUrl && (
+          {/* Interactive Live PDF Canvas Preview */}
+          {pdfDoc && (
             <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 p-5 rounded-3xl space-y-3">
-              <h3 className="text-xs font-black uppercase text-black dark:text-white">Pratinjau Tanda Tangan</h3>
-              <div className="p-4 bg-gray-50 dark:bg-black/30 rounded-2xl flex items-center justify-center border border-dashed border-gray-200 dark:border-gray-800">
-                <img src={signatureDataUrl} alt="Signature" className="max-h-24 object-contain" />
+              <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
+                <h3 className="text-xs font-black uppercase text-black dark:text-white flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-brand-500" />
+                  Pratinjau Langsung (Live Preview Target Halaman)
+                </h3>
+                <span className="text-[10px] font-bold text-gray-400">
+                  Target: {targetPageMode === "last" ? "Halaman Terakhir" : targetPageMode === "first" ? "Halaman Pertama" : "Semua Halaman"}
+                </span>
+              </div>
+
+              <div className="relative border border-gray-200 dark:border-gray-800/80 rounded-2xl overflow-hidden bg-gray-100 dark:bg-black/50 flex items-center justify-center p-4 min-h-[400px]">
+                <div className="relative shadow-2xl rounded-lg overflow-hidden bg-white">
+                  <PdfPageCanvas
+                    pdfDoc={pdfDoc}
+                    pageNum={targetPageMode === "first" ? 1 : totalPages}
+                    scale={0.8}
+                  />
+
+                  {/* Overlaid Signature Image Live */}
+                  {signatureDataUrl && (
+                    <div
+                      className="absolute border-2 border-dashed border-brand-500 bg-brand-500/10 rounded pointer-events-none transition-all flex items-center justify-center"
+                      style={{
+                        left: `${posX * 0.7}px`,
+                        bottom: `${posY * 0.7}px`,
+                        width: `${sigWidth * 0.7}px`,
+                        height: `${sigHeight * 0.7}px`,
+                      }}
+                    >
+                      <img
+                        src={signatureDataUrl}
+                        alt="Signature Overlay"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -251,7 +303,7 @@ export default function PDFTTDPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <span className="text-[10px] font-bold text-gray-500">Lebar TTD</span>
+                <span className="text-[10px] font-bold text-gray-500">Lebar TTD (px)</span>
                 <input
                   type="number"
                   value={sigWidth}
@@ -260,7 +312,7 @@ export default function PDFTTDPage() {
                 />
               </div>
               <div>
-                <span className="text-[10px] font-bold text-gray-500">Tinggi TTD</span>
+                <span className="text-[10px] font-bold text-gray-500">Tinggi TTD (px)</span>
                 <input
                   type="number"
                   value={sigHeight}
