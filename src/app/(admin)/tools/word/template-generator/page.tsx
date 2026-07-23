@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ChevronRight,
@@ -15,17 +15,47 @@ import {
   FileText,
   X,
   Play,
-  RotateCcw,
+  Search,
+  User,
+  Plus,
+  Trash2,
+  Edit,
+  FolderOpen,
 } from "lucide-react";
 import Docxtemplater from "docxtemplater";
 import PizZip from "pizzip";
 import * as XLSX from "xlsx";
 import JSZip from "jszip";
 
+interface WordTemplateItem {
+  id: string;
+  title: string;
+  description?: string;
+  category: string;
+  fileUrl: string;
+  fileName: string;
+  placeholders: string; // JSON string
+  uploaderName: string;
+  createdAt: string;
+}
+
 export default function DocumentTemplateGeneratorPage() {
+  // Public Library & Search Filter
+  const [templatesList, setTemplatesList] = useState<WordTemplateItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("Semua");
+  const [isLoadingList, setIsLoadingList] = useState(false);
+
+  // Active Template State
+  const [templateTitle, setTemplateTitle] = useState("");
+  const [templateDescription, setTemplateDescription] = useState("");
+  const [templateCategory, setTemplateCategory] = useState("Surat Resmi");
+
   const [templateFile, setTemplateFile] = useState<File | null>(null);
   const [templateBuffer, setTemplateBuffer] = useState<ArrayBuffer | null>(null);
   const [placeholders, setPlaceholders] = useState<string[]>([]);
+  const [activeUploader, setActiveUploader] = useState<string>("Anda");
+
   const [inputMode, setInputMode] = useState<"form" | "excel">("form");
 
   // Form Mode State
@@ -34,6 +64,9 @@ export default function DocumentTemplateGeneratorPage() {
   // Excel Mode State
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [excelRows, setExcelRows] = useState<Record<string, any>[]>([]);
+
+  // Admin Edit Modal
+  const [editingTemplate, setEditingTemplate] = useState<WordTemplateItem | null>(null);
 
   // Execution & Progress State
   const [isProcessing, setIsProcessing] = useState(false);
@@ -45,8 +78,32 @@ export default function DocumentTemplateGeneratorPage() {
     setTimeout(() => setToast(null), 3500);
   };
 
-  // Scan placeholders from DOCX Template Buffer
-  const scanPlaceholders = (buffer: ArrayBuffer) => {
+  // Fetch Public Templates Library
+  const fetchTemplates = async () => {
+    try {
+      setIsLoadingList(true);
+      const res = await fetch(
+        `/api/word-templates?search=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(
+          selectedCategory
+        )}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setTemplatesList(data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoadingList(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTemplates();
+  }, [searchQuery, selectedCategory]);
+
+  // Scan placeholders from DOCX Buffer
+  const scanPlaceholders = (buffer: ArrayBuffer): string[] => {
     try {
       const zip = new PizZip(buffer);
       const doc = new Docxtemplater(zip, {
@@ -55,7 +112,6 @@ export default function DocumentTemplateGeneratorPage() {
         linebreaks: true,
       });
 
-      // Extract raw text and match {{placeholder}} regex
       const text = doc.getFullText();
       const matches = text.match(/\{\{([^}]+)\}\}/g) || [];
       const cleaned = Array.from(
@@ -64,21 +120,17 @@ export default function DocumentTemplateGeneratorPage() {
 
       setPlaceholders(cleaned);
 
-      // Pre-fill form state
       const initialForm: Record<string, string> = {};
       cleaned.forEach((p) => {
         initialForm[p] = "";
       });
       setFormData(initialForm);
 
-      if (cleaned.length > 0) {
-        showToast("success", `Berhasil menemukan ${cleaned.length} placeholder.`);
-      } else {
-        showToast("error", "Tidak ditemukan placeholder {{...}} pada templat.");
-      }
+      return cleaned;
     } catch (err: any) {
       console.error(err);
       showToast("error", "Gagal membaca berkas templat DOCX.");
+      return [];
     }
   };
 
@@ -86,10 +138,136 @@ export default function DocumentTemplateGeneratorPage() {
     const f = e.target.files?.[0];
     if (!f) return;
     setTemplateFile(f);
+    if (!templateTitle) setTemplateTitle(f.name.replace(".docx", ""));
 
     const buffer = await f.arrayBuffer();
     setTemplateBuffer(buffer);
-    scanPlaceholders(buffer);
+    const cleaned = scanPlaceholders(buffer);
+
+    if (cleaned.length > 0) {
+      showToast("success", `Berhasil menemukan ${cleaned.length} placeholder variabel.`);
+    } else {
+      showToast("error", "Tidak ditemukan placeholder {{...}} pada templat.");
+    }
+  };
+
+  // Save Template to Public Library DB
+  const handleSaveToLibrary = async () => {
+    if (!templateFile || !templateBuffer || !templateTitle) {
+      showToast("error", "Silakan isi nama templat dan pilih berkas DOCX.");
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      // Convert buffer to base64
+      const bytes = new Uint8Array(templateBuffer);
+      let binary = "";
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const base64Data = btoa(binary);
+      const dataUrl = `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${base64Data}`;
+
+      const res = await fetch("/api/word-templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: templateTitle,
+          description: templateDescription,
+          category: templateCategory,
+          fileUrl: dataUrl,
+          fileName: templateFile.name,
+          placeholders,
+        }),
+      });
+
+      if (res.ok) {
+        showToast("success", "Templat berhasil disimpan ke Daftar Templat publik!");
+        fetchTemplates();
+      } else {
+        showToast("error", "Gagal menyimpan templat ke server.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      showToast("error", "Terjadi kesalahan saat mengunggah templat.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Select Template from Public Library
+  const handleSelectLibraryTemplate = async (item: WordTemplateItem) => {
+    try {
+      setIsProcessing(true);
+      setTemplateTitle(item.title);
+      setActiveUploader(item.uploaderName);
+
+      // Convert Data URL back to ArrayBuffer
+      const base64Str = item.fileUrl.split(",")[1];
+      const binaryStr = atob(base64Str);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+      const buffer = bytes.buffer;
+
+      setTemplateBuffer(buffer);
+      setTemplateFile(new File([buffer], item.fileName));
+      scanPlaceholders(buffer);
+
+      showToast("success", `Templat "${item.title}" dimuat dari pustaka.`);
+    } catch (err) {
+      console.error(err);
+      showToast("error", "Gagal memuat berkas templat.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Admin Delete Template
+  const handleDeleteTemplate = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Apakah Anda yakin ingin menghapus templat ini dari daftar publik?")) return;
+
+    try {
+      const res = await fetch(`/api/word-templates?id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        showToast("success", "Templat berhasil dihapus.");
+        fetchTemplates();
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("error", "Gagal menghapus templat.");
+    }
+  };
+
+  // Admin Update Template Modal Submit
+  const handleUpdateTemplateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTemplate) return;
+
+    try {
+      const res = await fetch("/api/word-templates", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingTemplate.id,
+          title: editingTemplate.title,
+          description: editingTemplate.description,
+          category: editingTemplate.category,
+        }),
+      });
+
+      if (res.ok) {
+        showToast("success", "Detail templat berhasil diperbarui!");
+        setEditingTemplate(null);
+        fetchTemplates();
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("error", "Gagal memperbarui templat.");
+    }
   };
 
   const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,7 +297,7 @@ export default function DocumentTemplateGeneratorPage() {
   // Generate Word Document (Form or Mass Excel)
   const handleGenerate = async () => {
     if (!templateBuffer) {
-      showToast("error", "Silakan unggah templat DOCX terlebih dahulu.");
+      showToast("error", "Silakan unggah atau pilih templat DOCX terlebih dahulu.");
       return;
     }
 
@@ -128,7 +306,6 @@ export default function DocumentTemplateGeneratorPage() {
       setProgress(0);
 
       if (inputMode === "form") {
-        // Single Document Generation
         const zip = new PizZip(templateBuffer);
         const doc = new Docxtemplater(zip, {
           delimiters: { start: "{{", end: "}}" },
@@ -145,12 +322,11 @@ export default function DocumentTemplateGeneratorPage() {
 
         const link = document.createElement("a");
         link.href = URL.createObjectURL(out);
-        link.download = `dokumen_generated_${Date.now()}.docx`;
+        link.download = `${templateTitle || "dokumen_generated"}_${Date.now()}.docx`;
         link.click();
 
         showToast("success", "Dokumen Word berhasil dibuat!");
       } else {
-        // Mass Generation from Excel Rows -> Export as ZIP
         if (excelRows.length === 0) {
           showToast("error", "Silakan unggah berkas Excel (.xlsx / .csv) yang berisi baris data.");
           return;
@@ -161,13 +337,11 @@ export default function DocumentTemplateGeneratorPage() {
         for (let i = 0; i < excelRows.length; i++) {
           const rowData = excelRows[i];
 
-          // Normalize row keys to match placeholders case-insensitively
           const normalizedData: Record<string, any> = {};
           Object.keys(rowData).forEach((key) => {
             normalizedData[key.trim()] = rowData[key];
           });
 
-          // Match placeholders
           const dataForDoc: Record<string, any> = {};
           placeholders.forEach((p) => {
             dataForDoc[p] = normalizedData[p] !== undefined ? normalizedData[p] : "";
@@ -228,6 +402,67 @@ export default function DocumentTemplateGeneratorPage() {
         </div>
       )}
 
+      {/* Admin Edit Modal */}
+      {editingTemplate && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-in zoom-in-95">
+            <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-800">
+              <h3 className="text-sm font-black uppercase text-black dark:text-white">Edit Detail Templat (Admin)</h3>
+              <button onClick={() => setEditingTemplate(null)} className="p-1 text-gray-400 hover:text-black">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateTemplateSubmit} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nama / Judul Templat</label>
+                <input
+                  type="text"
+                  value={editingTemplate.title}
+                  onChange={(e) => setEditingTemplate({ ...editingTemplate, title: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-xl font-semibold outline-none text-black dark:text-white"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Kategori</label>
+                <select
+                  value={editingTemplate.category}
+                  onChange={(e) => setEditingTemplate({ ...editingTemplate, category: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-xl font-semibold outline-none text-black dark:text-white"
+                >
+                  <option value="Surat Resmi">Surat Resmi</option>
+                  <option value="Kontrak & Perjanjian">Kontrak & Perjanjian</option>
+                  <option value="Laporan Berkala">Laporan Berkala</option>
+                  <option value="Sertifikat">Sertifikat</option>
+                  <option value="Umum">Umum</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Deskripsi Singkat</label>
+                <textarea
+                  value={editingTemplate.description || ""}
+                  onChange={(e) => setEditingTemplate({ ...editingTemplate, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-xl font-semibold outline-none text-black dark:text-white"
+                />
+              </div>
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingTemplate(null)}
+                  className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-600 rounded-xl font-bold"
+                >
+                  Batal
+                </button>
+                <button type="submit" className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold">
+                  Simpan Perubahan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Header & Breadcrumb */}
       <div className="space-y-2 pb-4 border-b border-gray-200 dark:border-gray-800">
         <nav className="flex items-center gap-1.5 text-xs font-semibold text-gray-400">
@@ -246,10 +481,10 @@ export default function DocumentTemplateGeneratorPage() {
           <div>
             <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
               <FileCode className="w-5 h-5 text-brand-500" />
-              Document Template Generator (Mail Merge)
+              Document Template Generator & Public Library
             </h1>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Upload templat DOCX bertanda {"{{Placeholder}}"}, scan variabel otomatis, dan buat ratusan dokumen Word instan.
+              Unggah templat DOCX, simpan ke Pustaka Publik, scan variabel otomatis, dan buat ratusan dokumen Word instan.
             </p>
           </div>
 
@@ -268,48 +503,46 @@ export default function DocumentTemplateGeneratorPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Work Area (8 Cols) */}
         <div className="lg:col-span-8 space-y-4">
-          {/* Step 1: Upload Template */}
-          {!templateFile ? (
-            <div className="p-12 border-2 border-dashed border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.02] rounded-3xl text-center space-y-4">
-              <div className="w-16 h-16 rounded-2xl bg-brand-50 dark:bg-brand-500/10 text-brand-500 flex items-center justify-center mx-auto shadow-sm">
-                <Upload className="w-8 h-8" />
-              </div>
-              <div className="space-y-1 max-w-md mx-auto">
-                <h3 className="text-sm font-black text-black dark:text-white uppercase tracking-wider">
-                  1. Upload Templat DOCX (Master Template)
-                </h3>
-                <p className="text-xs text-gray-400">
-                  Gunakan format tag {"{{Nama}}"}, {"{{Alamat}}"}, {"{{NoSurat}}"} di dalam file Word Anda.
-                </p>
-              </div>
-              <label className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-black uppercase tracking-wider inline-flex items-center gap-2 cursor-pointer shadow-md shadow-brand-500/20 transition-all">
-                <Upload className="w-4 h-4" />
-                Pilih Templat DOCX
-                <input type="file" accept=".docx" className="hidden" onChange={handleTemplateUpload} />
-              </label>
-            </div>
-          ) : (
+          {/* Active Template Status Card */}
+          {templateFile ? (
             <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-3xl p-5 space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-brand-500" />
+                  <div className="w-10 h-10 rounded-2xl bg-brand-500/10 text-brand-500 flex items-center justify-center font-bold">
+                    <FileText className="w-5 h-5" />
+                  </div>
                   <div>
-                    <p className="text-xs font-black text-black dark:text-white">{templateFile.name}</p>
-                    <p className="text-[10px] text-gray-400">
-                      Terdeteksi {placeholders.length} placeholder variabel
-                    </p>
+                    <h3 className="text-xs font-black text-black dark:text-white">{templateTitle || templateFile.name}</h3>
+                    <div className="flex items-center gap-2 text-[10px] text-gray-400 mt-0.5">
+                      <span className="px-2 py-0.5 rounded-md bg-brand-500/10 text-brand-500 font-bold">
+                        {templateCategory}
+                      </span>
+                      <span>• Pengunggah: <strong className="text-black dark:text-white">{activeUploader}</strong></span>
+                      <span>• {placeholders.length} Variable</span>
+                    </div>
                   </div>
                 </div>
-                <button
-                  onClick={() => {
-                    setTemplateFile(null);
-                    setTemplateBuffer(null);
-                    setPlaceholders([]);
-                  }}
-                  className="px-3 py-1 bg-red-500/10 text-red-500 rounded-lg text-xs font-bold hover:bg-red-500/20"
-                >
-                  Ganti Templat
-                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleSaveToLibrary}
+                    disabled={isProcessing}
+                    className="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Simpan ke Pustaka
+                  </button>
+                  <button
+                    onClick={() => {
+                      setTemplateFile(null);
+                      setTemplateBuffer(null);
+                      setPlaceholders([]);
+                    }}
+                    className="p-1.5 text-gray-400 hover:text-red-500"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               {/* Mode Selection */}
@@ -336,7 +569,7 @@ export default function DocumentTemplateGeneratorPage() {
                 </button>
               </div>
 
-              {/* Mode A: Form Input Manual (Auto Scanned Placeholders) */}
+              {/* Mode A: Form Input Manual */}
               {inputMode === "form" && (
                 <div className="space-y-4 pt-1">
                   <h4 className="text-xs font-black uppercase tracking-wider text-gray-500">
@@ -406,6 +639,56 @@ export default function DocumentTemplateGeneratorPage() {
                 </div>
               )}
             </div>
+          ) : (
+            /* Upload New Template Card */
+            <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-3xl p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                <h3 className="text-xs font-black uppercase tracking-wider text-black dark:text-white">
+                  Unggah Templat DOCX Baru
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                    Nama / Judul Templat
+                  </label>
+                  <input
+                    type="text"
+                    value={templateTitle}
+                    onChange={(e) => setTemplateTitle(e.target.value)}
+                    placeholder="Contoh: Surat Perjanjian Kerja Sama"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-xl font-semibold outline-none focus:border-brand-500 text-black dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                    Kategori Dokumen
+                  </label>
+                  <select
+                    value={templateCategory}
+                    onChange={(e) => setTemplateCategory(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-xl font-semibold outline-none focus:border-brand-500 text-black dark:text-white"
+                  >
+                    <option value="Surat Resmi">Surat Resmi</option>
+                    <option value="Kontrak & Perjanjian">Kontrak & Perjanjian</option>
+                    <option value="Laporan Berkala">Laporan Berkala</option>
+                    <option value="Sertifikat">Sertifikat</option>
+                    <option value="Umum">Umum</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="p-8 border-2 border-dashed border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-black/20 rounded-2xl text-center space-y-3">
+                <Upload className="w-8 h-8 text-brand-500 mx-auto" />
+                <p className="text-xs text-gray-400">Pilih berkas master templat Word (.docx)</p>
+                <label className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-black uppercase tracking-wider inline-flex items-center gap-2 cursor-pointer shadow-md shadow-brand-500/20 transition-all">
+                  <Upload className="w-4 h-4" />
+                  Pilih Berkas DOCX
+                  <input type="file" accept=".docx" className="hidden" onChange={handleTemplateUpload} />
+                </label>
+              </div>
+            </div>
           )}
 
           {/* Progress Bar */}
@@ -428,18 +711,16 @@ export default function DocumentTemplateGeneratorPage() {
           )}
         </div>
 
-        {/* Setting Panel Right (4 Cols) */}
+        {/* Setting & Public Library Panel Right (4 Cols) */}
         <div className="lg:col-span-4 space-y-4">
-          <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 p-5 rounded-2xl space-y-4 shadow-sm text-xs">
-            <h3 className="font-black uppercase tracking-wider text-black dark:text-white pb-2 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
-              <Sliders className="w-4 h-4 text-brand-500" />
-              Placeholder Terdeteksi ({placeholders.length})
-            </h3>
-
-            {placeholders.length === 0 ? (
-              <p className="text-gray-400 italic">Belum ada placeholder terdeteksi. Silakan upload templat DOCX.</p>
-            ) : (
-              <div className="space-y-1.5 max-h-60 overflow-y-auto">
+          {/* Scanned Placeholders Summary */}
+          {placeholders.length > 0 && (
+            <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 p-5 rounded-2xl space-y-3 shadow-sm text-xs">
+              <h3 className="font-black uppercase tracking-wider text-black dark:text-white pb-2 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-brand-500" />
+                Placeholder Terdeteksi ({placeholders.length})
+              </h3>
+              <div className="space-y-1.5 max-h-48 overflow-y-auto">
                 {placeholders.map((p) => (
                   <div
                     key={p}
@@ -447,6 +728,101 @@ export default function DocumentTemplateGeneratorPage() {
                   >
                     <span>{"{{" + p + "}}"}</span>
                     <span className="text-[9px] uppercase text-gray-400">{p.toUpperCase()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Public Templates Library & Filter Search */}
+          <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 p-5 rounded-2xl space-y-4 shadow-sm text-xs">
+            <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-800">
+              <h3 className="font-black uppercase tracking-wider text-black dark:text-white flex items-center gap-2">
+                <FolderOpen className="w-4 h-4 text-brand-500" />
+                Daftar Templat Publik
+              </h3>
+              <span className="text-[10px] font-bold text-gray-400">{templatesList.length} Templat</span>
+            </div>
+
+            {/* Filter & Search Bar */}
+            <div className="space-y-2">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Cari templat / pengunggah..."
+                  className="w-full pl-9 pr-3 py-1.5 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-xl text-xs font-semibold outline-none text-black dark:text-white"
+                />
+              </div>
+
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full px-3 py-1.5 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-xl text-xs font-semibold outline-none text-black dark:text-white"
+              >
+                <option value="Semua">Semua Kategori</option>
+                <option value="Surat Resmi">Surat Resmi</option>
+                <option value="Kontrak & Perjanjian">Kontrak & Perjanjian</option>
+                <option value="Laporan Berkala">Laporan Berkala</option>
+                <option value="Sertifikat">Sertifikat</option>
+                <option value="Umum">Umum</option>
+              </select>
+            </div>
+
+            {/* Templates List */}
+            {isLoadingList ? (
+              <div className="p-4 text-center text-gray-400">
+                <Loader2 className="w-4 h-4 animate-spin mx-auto mb-1" />
+                Memuat daftar...
+              </div>
+            ) : templatesList.length === 0 ? (
+              <div className="p-6 text-center text-gray-400 italic border border-dashed border-gray-100 dark:border-gray-800 rounded-xl">
+                Belum ada templat tersimpan.
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                {templatesList.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => handleSelectLibraryTemplate(item)}
+                    className="p-3 bg-gray-50 dark:bg-black/30 border border-gray-200 dark:border-gray-800 hover:border-brand-500 rounded-xl cursor-pointer transition-all space-y-1.5 group"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <h4 className="font-extrabold text-black dark:text-white group-hover:text-brand-500 transition-colors line-clamp-1">
+                        {item.title}
+                      </h4>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingTemplate(item);
+                          }}
+                          className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 rounded"
+                          title="Edit Template (Admin)"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => handleDeleteTemplate(item.id, e)}
+                          className="p-1 hover:bg-red-500/20 text-red-500 rounded"
+                          title="Hapus Template (Admin)"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10px] text-gray-400">
+                      <span className="px-2 py-0.5 bg-brand-500/10 text-brand-500 font-bold rounded-md">
+                        {item.category}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <User className="w-3 h-3 text-gray-400" />
+                        {item.uploaderName}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
