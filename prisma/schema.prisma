@@ -470,7 +470,7 @@ model WordTemplate {
   title        String
   description  String?  @db.Text
   category     String   @default("Umum")
-  fileUrl      String   @db.Text
+  fileUrl      String   @db.LongText
   fileName     String
   placeholders String   @db.Text // JSON array string e.g. ["Nama", "Alamat"]
   uploaderName String   @default("Pengguna")
