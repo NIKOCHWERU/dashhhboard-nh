@@ -199,6 +199,7 @@ const Calendar: React.FC = () => {
   const [hoveredEvent, setHoveredEvent] = useState<any | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
+  const [formStep, setFormStep] = useState<1 | 2>(1);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -1751,359 +1752,373 @@ const Calendar: React.FC = () => {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-200">
-                {/* Title */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-bold text-black dark:text-white mb-3">Judul</label>
-                  <input
-                    type="text"
-                    disabled={!canManage}
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Meeting PT. A"
-                    className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
-                  />
-                </div>
-
-                {/* Kategori */}
-                <div>
-                  <label className="block text-sm font-bold text-black dark:text-white mb-3">Kategori</label>
-                  <select
-                    disabled={!canManage}
-                    value={kategori}
-                    onChange={(e) => setKategori(e.target.value)}
-                    className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3.5 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-semibold text-sm"
-                  >
-                    <option value="Retainer">Retainer</option>
-                    <option value="Non Retainer">Non Retainer</option>
-                    <option value="Internal">Internal</option>
-                    <option value="Lainnya">Lainnya (Input Manual)</option>
-                  </select>
-                  {kategori === "Lainnya" && (
-                    <input
-                      type="text"
-                      disabled={!canManage}
-                      value={kategoriLainnya}
-                      onChange={(e) => setKategoriLainnya(e.target.value)}
-                      placeholder="Masukkan Kategori Lainnya..."
-                      className="w-full mt-3 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
-                    />
-                  )}
-                </div>
-
-                {/* Lokasi */}
-                <div>
-                  <label className="block text-sm font-bold text-black dark:text-white mb-3">Lokasi</label>
-                  <input
-                    type="text"
-                    list="locations"
-                    disabled={!canManage}
-                    value={lokasi}
-                    onChange={(e) => setLokasi(e.target.value)}
-                    placeholder="Pilih atau ketik lokasi..."
-                    className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
-                  />
-                  <datalist id="locations">
-                    <option value="Kantor Pusat Narasumber Hukum" />
-                    <option value="Pengadilan Negeri Jakarta Pusat" />
-                    <option value="Ruang Rapat Utama" />
-                    <option value="Ruang Rapat Direksi" />
-                    <option value="Online via Zoom" />
-                  </datalist>
-                </div>
-
-                {/* Start Date & Time */}
-                <div className="space-y-3">
-                  <label className="block text-sm font-bold text-black dark:text-white">Waktu Mulai</label>
-                  <div className="flex gap-3">
-                    <input
-                      type="date"
-                      disabled={!canManage}
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="flex-1 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
-                    />
-                    <input
-                      type="time"
-                      disabled={!canManage}
-                      value={startTime}
-                      onChange={(e) => setStartTime(e.target.value)}
-                      className="w-32 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-semibold text-sm"
-                    />
+              <div className="space-y-6 animate-in fade-in duration-200">
+                {/* Step Indicator Navigation */}
+                <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setFormStep(1)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer ${
+                        formStep === 1
+                          ? "bg-brand-500 text-white shadow-md shadow-brand-500/20"
+                          : "bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-black dark:hover:text-white"
+                      }`}
+                    >
+                      <span>1</span> Langkah 1: Info Utama & Waktu
+                    </button>
+                    <span className="text-gray-300 dark:text-gray-700">→</span>
+                    <button
+                      type="button"
+                      onClick={() => setFormStep(2)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer ${
+                        formStep === 2
+                          ? "bg-brand-500 text-white shadow-md shadow-brand-500/20"
+                          : "bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-black dark:hover:text-white"
+                      }`}
+                    >
+                      <span>2</span> Langkah 2: Peserta & Dokumen
+                    </button>
                   </div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">Step {formStep} dari 2</span>
                 </div>
 
-                {/* End Date & Time */}
-                <div className="space-y-3">
-                  <label className="block text-sm font-bold text-black dark:text-white">Waktu Selesai</label>
-                  <div className="flex gap-3">
-                    <input
-                      type="date"
-                      disabled={!canManage}
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="flex-1 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
-                    />
-                    <input
-                      type="time"
-                      disabled={!canManage}
-                      value={endTime}
-                      onChange={(e) => setEndTime(e.target.value)}
-                      className="w-32 rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-semibold text-sm"
-                    />
-                  </div>
-                </div>
-
-                {/* Tambah Pengingat */}
-                <div className="md:col-span-2 border border-gray-100 dark:border-gray-800 p-4 rounded-xl space-y-4">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-bold text-black dark:text-white">Tambah Pengingat</label>
-                    <input
-                      type="checkbox"
-                      disabled={!canManage}
-                      checked={reminderEnabled}
-                      onChange={(e) => setReminderEnabled(e.target.checked)}
-                      className="w-4 h-4 text-brand-500 rounded border-gray-300 focus:ring-brand-500 cursor-pointer"
-                    />
-                  </div>
-                  {reminderEnabled && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in slide-in-from-top-1 duration-200">
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-2">Waktu Pengingat</label>
-                        <input
-                          type="time"
-                          disabled={!canManage}
-                          value={pengingatWaktu}
-                          onChange={(e) => setPengingatWaktu(e.target.value)}
-                          className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-3 py-2 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white font-semibold text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-2">Hari Pengingat</label>
-                        <select
-                          disabled={!canManage}
-                          value={pengingatHari}
-                          onChange={(e) => setPengingatHari(e.target.value)}
-                          className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-3 py-2.5 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white font-semibold text-sm"
-                        >
-                          <option value="0">Hari H</option>
-                          <option value="1">1 Hari Sebelumnya</option>
-                          <option value="2">2 Hari Sebelumnya</option>
-                          <option value="3">3 Hari Sebelumnya</option>
-                          <option value="7">1 Minggu Sebelumnya</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-2">Pengulangan</label>
-                        <select
-                          disabled={!canManage}
-                          value={pengingatPengulangan}
-                          onChange={(e) => setPengingatPengulangan(e.target.value)}
-                          className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-3 py-2.5 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white font-semibold text-sm"
-                        >
-                          <option value="none">Tidak Ada Pengulangan</option>
-                          <option value="tanggal7">Per Tanggal 7</option>
-                          <option value="weekly">1 Minggu Sekali</option>
-                          <option value="monthly">1 Bulan Sekali</option>
-                          <option value="yearly">1 Tahun Sekali</option>
-                        </select>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Peserta (Multi-select) */}
-                <div ref={pesertaDropdownRef} className="md:col-span-2 relative z-50">
-                  <label className="block text-sm font-bold text-black dark:text-white mb-2">Peserta</label>
-                  <button
-                    type="button"
-                    disabled={!canManage}
-                    onClick={() => setIsPesertaDropdownOpen(!isPesertaDropdownOpen)}
-                    className="w-full text-left flex justify-between items-center rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white"
-                  >
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                      {selectedPeserta.length > 0
-                        ? `${selectedPeserta.length} Peserta Terpilih`
-                        : "Pilih Peserta..."}
-                    </span>
-                    <span className="text-gray-400">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                      </svg>
-                    </span>
-                  </button>
-                  
-                  {isPesertaDropdownOpen && (
-                    <div className="absolute left-0 mt-1 w-full bg-white dark:bg-gray-800 border border-stroke dark:border-strokedark shadow-2xl z-999 p-3 max-h-[250px] overflow-y-auto rounded-none animate-in fade-in zoom-in-95 duration-200">
-                      <input
-                        type="text"
-                        placeholder="Cari karyawan..."
-                        value={pesertaSearchQuery}
-                        onChange={(e) => setPesertaSearchQuery(e.target.value)}
-                        className="w-full mb-3 px-3 py-1.5 text-xs rounded border border-stroke dark:border-form-strokedark bg-transparent text-black dark:text-white outline-none focus:border-brand-500"
-                      />
-                      <div className="space-y-1">
-                        {karyawanList
-                          .filter((k) =>
-                            k.name.toLowerCase().includes(pesertaSearchQuery.toLowerCase()) ||
-                            (k.position && k.position.toLowerCase().includes(pesertaSearchQuery.toLowerCase()))
-                          )
-                          .map((k) => {
-                            const isChecked = selectedPeserta.includes(k.name);
-                            return (
-                              <label
-                                key={k.id}
-                                className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer rounded transition-colors text-xs font-semibold"
-                              >
-                                <input
-                                  type="checkbox"
-                                  disabled={!canManage}
-                                  checked={isChecked}
-                                  onChange={() => {
-                                    if (isChecked) {
-                                      setSelectedPeserta(selectedPeserta.filter((name) => name !== k.name));
-                                    } else {
-                                      setSelectedPeserta([...selectedPeserta, k.name]);
-                                    }
-                                  }}
-                                  className="w-3.5 h-3.5 text-brand-500 rounded border-gray-300 focus:ring-brand-500"
-                                />
-                                <div className="flex flex-col">
-                                  <span className="text-black dark:text-white">{k.name}</span>
-                                  <span className="text-[9px] text-gray-400 font-medium uppercase">{k.position}</span>
-                                </div>
-                              </label>
-                            );
-                          })}
-                      </div>
-                    </div>
-                  )}
-                  {selectedPeserta.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {selectedPeserta.map((name) => (
-                        <span
-                          key={name}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[10px] font-black uppercase tracking-wide rounded border border-brand-500/20"
-                        >
-                          {name}
-                          {canManage && (
-                            <button
-                              type="button"
-                              onClick={() => setSelectedPeserta(selectedPeserta.filter((n) => n !== name))}
-                              className="text-gray-400 hover:text-brand-500 ml-1 font-bold text-xs"
-                            >
-                              &times;
-                            </button>
-                          )}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Upload File & Link File */}
-                <div className="md:col-span-2 border-t border-gray-100 dark:border-gray-800 pt-4 mt-2 space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-bold text-black dark:text-white mb-3">Unggah File (Opsional)</label>
-                      <div className="relative">
-                        <input
-                          type="file"
-                          disabled={!canManage || uploadingFile}
-                          onChange={handleFileUpload}
-                          className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-3 file:border-0 file:text-xs file:font-bold file:bg-brand-500/10 file:text-brand-600 hover:file:bg-brand-500/20 cursor-pointer"
-                        />
-                        {uploadingFile && (
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                            <span className="w-3.5 h-3.5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></span>
-                            <span className="text-[10px] text-brand-500 font-bold">Mengunggah...</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-black dark:text-white mb-3">Link File / Tautan</label>
+                {/* LANGKAH 1: Info Utama, Tanggal & Jam (24 Jam) */}
+                {formStep === 1 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-left-2 duration-200">
+                    {/* Title */}
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-2">Judul Agenda *</label>
                       <input
                         type="text"
                         disabled={!canManage}
-                        value={fileLink}
-                        onChange={(e) => setFileLink(e.target.value)}
-                        placeholder="https://drive.google.com/..."
-                        className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="Contoh: Rapat Koordinasi Tim Legal PT. A"
+                        className="w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-black/30 px-4 py-3 text-black dark:text-white outline-none transition focus:border-brand-500 font-semibold text-sm"
                       />
                     </div>
-                  </div>
 
-                  {/* Document Preview Area (inside edit form) */}
-                  {fileLink && (() => {
-                    const isPDF = fileLink.toLowerCase().includes('.pdf');
-                    const isImage = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(fileLink);
-                    const fileName = fileLink.split('/').pop()?.split('?')[0] || 'Dokumen';
+                    {/* Kategori */}
+                    <div>
+                      <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-2">Kategori</label>
+                      <select
+                        disabled={!canManage}
+                        value={kategori}
+                        onChange={(e) => setKategori(e.target.value)}
+                        className="w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-black/30 px-4 py-3 text-black dark:text-white outline-none transition focus:border-brand-500 font-semibold text-sm"
+                      >
+                        <option value="Retainer">Retainer</option>
+                        <option value="Non Retainer">Non Retainer</option>
+                        <option value="Internal">Internal</option>
+                        <option value="Lainnya">Lainnya (Input Manual)</option>
+                      </select>
+                      {kategori === "Lainnya" && (
+                        <input
+                          type="text"
+                          disabled={!canManage}
+                          value={kategoriLainnya}
+                          onChange={(e) => setKategoriLainnya(e.target.value)}
+                          placeholder="Masukkan Kategori Lainnya..."
+                          className="w-full mt-2 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-black/30 px-4 py-2.5 text-black dark:text-white outline-none focus:border-brand-500 font-semibold text-sm"
+                        />
+                      )}
+                    </div>
 
-                    return (
-                      <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-gray-50/50 dark:bg-white/[0.02]">
-                        <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-white/[0.03]">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            {isPDF ? (
-                              <div className="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center flex-shrink-0">
-                                <svg className="w-4 h-4 text-brand-500" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8.5 17.5h-1v-5h1v5zm3.5 0h-1V15h-1v-2.5h2V17.5zm3.5 0h-1v-2h-1v-1h1v-1.5h1V17.5z"/>
-                                </svg>
-                              </div>
-                            ) : isImage ? (
-                              <div className="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center flex-shrink-0">
-                                <svg className="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                              </div>
-                            ) : (
-                              <div className="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center flex-shrink-0">
-                                <svg className="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                                </svg>
-                              </div>
-                            )}
-                            <div className="min-w-0">
-                              <p className="text-xs font-bold text-black dark:text-white truncate">{decodeURIComponent(fileName)}</p>
-                              <p className="text-[10px] text-gray-400 font-medium">{isPDF ? 'PDF Document' : isImage ? 'Image File' : 'External Link'}</p>
-                            </div>
-                          </div>
-                          <a
-                            href={fileLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-brand-500 text-white text-[10px] font-black uppercase tracking-wider rounded-lg hover:bg-brand-600 transition-colors"
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                            Lihat
-                          </a>
-                        </div>
+                    {/* Lokasi */}
+                    <div>
+                      <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-2">Lokasi</label>
+                      <input
+                        type="text"
+                        list="locations"
+                        disabled={!canManage}
+                        value={lokasi}
+                        onChange={(e) => setLokasi(e.target.value)}
+                        placeholder="Pilih atau ketik lokasi..."
+                        className="w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-black/30 px-4 py-3 text-black dark:text-white outline-none transition focus:border-brand-500 font-semibold text-sm"
+                      />
+                      <datalist id="locations">
+                        <option value="Kantor Pusat Narasumber Hukum" />
+                        <option value="Pengadilan Negeri Jakarta Pusat" />
+                        <option value="Ruang Rapat Utama" />
+                        <option value="Ruang Rapat Direksi" />
+                        <option value="Online via Zoom" />
+                      </datalist>
+                    </div>
 
-                        {/* Inline Preview */}
-                        {isPDF && (
-                          <div className="w-full text-center" style={{ height: '340px' }}>
-                            <iframe
-                              src={fileLink}
-                              className="w-full h-full border-0"
-                              title="Preview Dokumen"
-                            />
-                          </div>
-                        )}
-                        {isImage && (
-                          <div className="p-3 flex items-center justify-center bg-gray-100/50 dark:bg-black/20" style={{ maxHeight: '300px', overflow: 'hidden' }}>
-                            <img
-                              src={fileLink}
-                              alt="Preview"
-                              className="max-w-full max-h-[280px] object-contain rounded-lg shadow"
-                            />
-                          </div>
-                        )}
+                    {/* Waktu Mulai (Picker 24 Jam) */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white">Waktu Mulai (Format 24 Jam)</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="date"
+                          disabled={!canManage}
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          className="flex-1 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-black/30 px-4 py-2.5 text-black dark:text-white outline-none focus:border-brand-500 font-semibold text-sm"
+                        />
+                        <input
+                          type="time"
+                          step="300"
+                          disabled={!canManage}
+                          value={startTime}
+                          onChange={(e) => setStartTime(e.target.value)}
+                          className="w-36 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-black/30 px-3 py-2.5 text-black dark:text-white outline-none focus:border-brand-500 font-black text-sm text-center"
+                        />
                       </div>
-                    );
-                  })()}
-                </div>
+                      {/* Presets 24 Jam Cepat */}
+                      <div className="flex gap-1 pt-1 flex-wrap">
+                        {["08:00", "09:00", "10:00", "13:00", "14:00", "16:00"].map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setStartTime(t)}
+                            className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                              startTime === t ? "bg-brand-500 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-black dark:hover:text-white"
+                            }`}
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Waktu Selesai (Picker 24 Jam) */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white">Waktu Selesai (Format 24 Jam)</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="date"
+                          disabled={!canManage}
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                          className="flex-1 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-black/30 px-4 py-2.5 text-black dark:text-white outline-none focus:border-brand-500 font-semibold text-sm"
+                        />
+                        <input
+                          type="time"
+                          step="300"
+                          disabled={!canManage}
+                          value={endTime}
+                          onChange={(e) => setEndTime(e.target.value)}
+                          className="w-36 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-black/30 px-3 py-2.5 text-black dark:text-white outline-none focus:border-brand-500 font-black text-sm text-center"
+                        />
+                      </div>
+                      {/* Presets 24 Jam Cepat */}
+                      <div className="flex gap-1 pt-1 flex-wrap">
+                        {["10:00", "12:00", "15:00", "17:00", "18:00"].map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setEndTime(t)}
+                            className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                              endTime === t ? "bg-brand-500 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-black dark:hover:text-white"
+                            }`}
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-2 pt-2 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setFormStep(2)}
+                        className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-md cursor-pointer"
+                      >
+                        Lanjut ke Langkah 2 →
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* LANGKAH 2: Peserta, Pengingat & Dokumen */}
+                {formStep === 2 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-right-2 duration-200">
+                    {/* Peserta (Multi-select) */}
+                    <div ref={pesertaDropdownRef} className="md:col-span-2 relative z-50">
+                      <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-2">Peserta / Anggota Tim</label>
+                      <button
+                        type="button"
+                        disabled={!canManage}
+                        onClick={() => setIsPesertaDropdownOpen(!isPesertaDropdownOpen)}
+                        className="w-full text-left flex justify-between items-center rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-black/30 px-4 py-3 text-black dark:text-white outline-none transition focus:border-brand-500"
+                      >
+                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                          {selectedPeserta.length > 0
+                            ? `${selectedPeserta.length} Peserta Terpilih`
+                            : "Pilih Peserta..."}
+                        </span>
+                        <span className="text-gray-400">▼</span>
+                      </button>
+                      
+                      {isPesertaDropdownOpen && (
+                        <div className="absolute left-0 mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl z-999 p-3 max-h-[220px] overflow-y-auto rounded-2xl animate-in fade-in zoom-in-95 duration-200">
+                          <input
+                            type="text"
+                            placeholder="Cari nama karyawan..."
+                            value={pesertaSearchQuery}
+                            onChange={(e) => setPesertaSearchQuery(e.target.value)}
+                            className="w-full mb-2 px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-black text-black dark:text-white outline-none focus:border-brand-500 font-semibold"
+                          />
+                          <div className="space-y-1">
+                            {karyawanList
+                              .filter((k) =>
+                                k.name.toLowerCase().includes(pesertaSearchQuery.toLowerCase()) ||
+                                (k.position && k.position.toLowerCase().includes(pesertaSearchQuery.toLowerCase()))
+                              )
+                              .map((k) => {
+                                const isChecked = selectedPeserta.includes(k.name);
+                                return (
+                                  <label
+                                    key={k.id}
+                                    className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer rounded-xl transition-colors text-xs font-semibold"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      disabled={!canManage}
+                                      checked={isChecked}
+                                      onChange={() => {
+                                        if (isChecked) {
+                                          setSelectedPeserta(selectedPeserta.filter((name) => name !== k.name));
+                                        } else {
+                                          setSelectedPeserta([...selectedPeserta, k.name]);
+                                        }
+                                      }}
+                                      className="w-4 h-4 text-brand-500 rounded border-gray-300 focus:ring-brand-500 cursor-pointer"
+                                    />
+                                    <div className="flex flex-col">
+                                      <span className="text-black dark:text-white font-bold">{k.name}</span>
+                                      <span className="text-[9px] text-gray-400 font-medium uppercase">{k.position}</span>
+                                    </div>
+                                  </label>
+                                );
+                              })}
+                          </div>
+                        </div>
+                      )}
+                      {selectedPeserta.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {selectedPeserta.map((name) => (
+                            <span
+                              key={name}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[10px] font-black uppercase tracking-wide rounded-lg border border-brand-500/20"
+                            >
+                              {name}
+                              {canManage && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedPeserta(selectedPeserta.filter((n) => n !== name))}
+                                  className="text-gray-400 hover:text-brand-500 ml-1 font-bold text-xs"
+                                >
+                                  &times;
+                                </button>
+                              )}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Pengingat (Notifikasi) */}
+                    <div className="md:col-span-2 border border-gray-200 dark:border-gray-800 p-4 rounded-2xl space-y-3 bg-gray-50/30 dark:bg-black/20">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-black uppercase tracking-wider text-black dark:text-white">Aktifkan Pengingat Notifikasi</label>
+                        <input
+                          type="checkbox"
+                          disabled={!canManage}
+                          checked={reminderEnabled}
+                          onChange={(e) => setReminderEnabled(e.target.checked)}
+                          className="w-4 h-4 text-brand-500 rounded border-gray-300 focus:ring-brand-500 cursor-pointer"
+                        />
+                      </div>
+                      {reminderEnabled && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 animate-in slide-in-from-top-1 duration-200 pt-1">
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">Waktu (24-Jam)</label>
+                            <input
+                              type="time"
+                              disabled={!canManage}
+                              value={pengingatWaktu}
+                              onChange={(e) => setPengingatWaktu(e.target.value)}
+                              className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-black px-3 py-2 text-black dark:text-white font-bold text-xs text-center"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">Hari Pengingat</label>
+                            <select
+                              disabled={!canManage}
+                              value={pengingatHari}
+                              onChange={(e) => setPengingatHari(e.target.value)}
+                              className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-black px-3 py-2 text-black dark:text-white font-semibold text-xs"
+                            >
+                              <option value="0">Hari H</option>
+                              <option value="1">1 Hari Sebelumnya</option>
+                              <option value="2">2 Hari Sebelumnya</option>
+                              <option value="3">3 Hari Sebelumnya</option>
+                              <option value="7">1 Minggu Sebelumnya</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">Pengulangan</label>
+                            <select
+                              disabled={!canManage}
+                              value={pengingatPengulangan}
+                              onChange={(e) => setPengingatPengulangan(e.target.value)}
+                              className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-black px-3 py-2 text-black dark:text-white font-semibold text-xs"
+                            >
+                              <option value="none">Tidak Ada</option>
+                              <option value="weekly">1 Minggu Sekali</option>
+                              <option value="monthly">1 Bulan Sekali</option>
+                              <option value="yearly">1 Tahun Sekali</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Upload File & Link File */}
+                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                      <div>
+                        <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-2">Unggah Dokumen (Opsional)</label>
+                        <div className="relative">
+                          <input
+                            type="file"
+                            disabled={!canManage || uploadingFile}
+                            onChange={handleFileUpload}
+                            className="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:border-0 file:text-xs file:font-bold file:bg-brand-500/10 file:text-brand-600 hover:file:bg-brand-500/20 cursor-pointer"
+                          />
+                          {uploadingFile && (
+                            <span className="text-[10px] text-brand-500 font-bold block mt-1">Mengunggah...</span>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-2">Link Tautan Berkas</label>
+                        <input
+                          type="text"
+                          disabled={!canManage}
+                          value={fileLink}
+                          onChange={(e) => setFileLink(e.target.value)}
+                          placeholder="https://..."
+                          className="w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-black/30 px-4 py-2.5 text-black dark:text-white outline-none focus:border-brand-500 font-semibold text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-2 pt-2 flex justify-between">
+                      <button
+                        type="button"
+                        onClick={() => setFormStep(1)}
+                        className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-xl text-xs font-bold cursor-pointer"
+                      >
+                        ← Kembali ke Langkah 1
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
                 {/* Scale */}
                 <div>
