@@ -47,8 +47,10 @@ export default function ImageCropPage() {
 
     const img = new Image();
     img.crossOrigin = "anonymous";
-    img.src = URL.createObjectURL(file);
+    const objectUrl = URL.createObjectURL(file);
+    img.src = objectUrl;
     img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
       imgRef.current = img;
       setCropWidth(img.width);
       setCropHeight(img.height);

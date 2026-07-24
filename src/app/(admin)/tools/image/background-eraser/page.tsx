@@ -104,8 +104,10 @@ export default function BackgroundEraserPage() {
 
     const img = new Image();
     img.crossOrigin = "anonymous";
-    img.src = URL.createObjectURL(file);
+    const objectUrl = URL.createObjectURL(file);
+    img.src = objectUrl;
     img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
       setImageLoaded(true);
       setTimeout(() => {
         const canvas = canvasRef.current;

@@ -41,8 +41,10 @@ export default function ImageColorFilterPage() {
 
     const img = new Image();
     img.crossOrigin = "anonymous";
-    img.src = URL.createObjectURL(file);
+    const objectUrl = URL.createObjectURL(file);
+    img.src = objectUrl;
     img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
       imgRef.current = img;
       setImageLoaded(true);
       applyFilter(img, filterColor, opacity, intensity, blendMode, showOriginal);
