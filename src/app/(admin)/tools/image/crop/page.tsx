@@ -5,16 +5,14 @@ import Link from "next/link";
 import {
   ChevronRight,
   Upload,
-  RotateCcw,
   Download,
-  Crop,
+  Crop as CropIcon,
   RotateCw,
   FlipHorizontal,
   FlipVertical,
+  Sliders,
   CheckCircle2,
   AlertCircle,
-  Sliders,
-  Image as ImageIcon,
 } from "lucide-react";
 
 export default function ImageCropPage() {
@@ -75,8 +73,8 @@ export default function ImageCropPage() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let w = img.width;
-    let h = img.height;
+    const w = img.width;
+    const h = img.height;
 
     if (rot === 90 || rot === 270) {
       canvas.width = h;
@@ -201,8 +199,8 @@ export default function ImageCropPage() {
 
     // Build un-masked export canvas
     const tempCanvas = document.createElement("canvas");
-    let w = img.width;
-    let h = img.height;
+    const w = img.width;
+    const h = img.height;
 
     if (rotation === 90 || rotation === 270) {
       tempCanvas.width = h;
