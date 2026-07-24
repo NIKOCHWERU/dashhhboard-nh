@@ -75,6 +75,8 @@ export async function storeRefreshToken(token: string): Promise<void> {
   }
 }
 
+let cachedAccessToken: { token: string; expiresAt: number } | null = null;
+
 export async function getAccessToken(): Promise<string> {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -84,6 +86,12 @@ export async function getAccessToken(): Promise<string> {
     throw new Error(
       "Missing Google credentials (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, or GOOGLE_DRIVE_REFRESH_TOKEN) in .env"
     );
+  }
+
+  // Return cached token if valid (buffer 5 minutes)
+  const now = Date.now();
+  if (cachedAccessToken && cachedAccessToken.expiresAt > now + 5 * 60 * 1000) {
+    return cachedAccessToken.token;
   }
 
   try {
@@ -104,6 +112,12 @@ export async function getAccessToken(): Promise<string> {
     }
 
     const data = await res.json();
+    const expiresIn = data.expires_in || 3600;
+    cachedAccessToken = {
+      token: data.access_token,
+      expiresAt: now + expiresIn * 1000,
+    };
+
     return data.access_token;
   } catch (error) {
     console.error("Failed to get Google access token:", error);
