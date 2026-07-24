@@ -82,12 +82,23 @@ export const authOptions: NextAuthOptions = {
 
         if (!response.ok) throw tokens;
 
+        const newRefreshToken = tokens.refresh_token ?? (token.refreshToken as string);
+
+        // Synchronize updated refresh token to database / file storage for company GDrive
+        if (newRefreshToken) {
+          try {
+            const { storeRefreshToken } = await import("./googleDrive");
+            await storeRefreshToken(newRefreshToken);
+          } catch (e) {
+            console.error("Failed to sync refreshed token:", e);
+          }
+        }
+
         return {
           ...token,
           accessToken: tokens.access_token,
           expiresAt: Math.floor(Date.now() / 1000 + tokens.expires_in),
-          // Fall back to old refresh token if Google doesn't return a new one
-          refreshToken: tokens.refresh_token ?? token.refreshToken,
+          refreshToken: newRefreshToken,
         };
       } catch (error) {
         console.error("Error refreshing access token", error);
