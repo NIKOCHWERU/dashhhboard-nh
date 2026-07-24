@@ -2117,84 +2117,85 @@ const Calendar: React.FC = () => {
                     </div>
                   </div>
                 )}
-              </div>
-            )}
 
-                {/* Scale */}
-                <div>
-                  <label className="block text-sm font-bold text-black dark:text-white mb-3">Skala Prioritas</label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { key: "Q1", label: "Q1 — Mendesak",   activeClass: "border-brand-500 bg-brand-500 text-white shadow-md" },
-                      { key: "Q2", label: "Q2 — Penting",    activeClass: "border-[#B88A16] bg-[#B88A16] text-white shadow-md" },
-                      { key: "Q3", label: "Q3 — Rendah",     activeClass: "border-brand-500 bg-brand-500 text-white shadow-md" }
-                    ].map((q) => (
-                      <button
-                        key={q.key}
-                        type="button"
-                        disabled={!canManage}
-                        onClick={() => setScale(q.key)}
-                        className={`py-3 rounded-none border-2 transition-all font-bold text-xs ${
-                          scale === q.key
-                            ? q.activeClass
-                            : "border-stroke bg-transparent text-gray-400 hover:border-brand-500/50 dark:border-form-strokedark"
-                        }`}
-                      >
-                        {q.label}
-                      </button>
-                    ))}
+                {/* Scale & Priority inside Step 1 or 2 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-100 dark:border-gray-800 pt-4">
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-2">Skala Prioritas</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { key: "Q1", label: "Q1 — Mendesak",   activeClass: "border-brand-500 bg-brand-500 text-white shadow-md" },
+                        { key: "Q2", label: "Q2 — Penting",    activeClass: "border-[#B88A16] bg-[#B88A16] text-white shadow-md" },
+                        { key: "Q3", label: "Q3 — Rendah",     activeClass: "border-brand-500 bg-brand-500 text-white shadow-md" }
+                      ].map((q) => (
+                        <button
+                          key={q.key}
+                          type="button"
+                          disabled={!canManage}
+                          onClick={() => setScale(q.key)}
+                          className={`py-2 rounded-xl border transition-all font-black text-[10px] ${
+                            scale === q.key
+                              ? q.activeClass
+                              : "border-gray-200 dark:border-gray-800 bg-transparent text-gray-400 hover:border-brand-500/50"
+                          }`}
+                        >
+                          {q.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-2">Status Agenda</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { key: "Aktif", label: "Aktif", color: "border-brand-500 bg-brand-500" },
+                        { key: "Selesai", label: "Selesai", color: "border-brand-500 bg-brand-500" },
+                        { key: "Ditunda", label: "Ditunda", color: "border-brand-500 bg-brand-500" },
+                        { key: "Dibatalkan", label: "Dibatalkan", color: "border-brand-500 bg-brand-500" }
+                      ].map((s) => (
+                        <button
+                          key={s.key}
+                          type="button"
+                          disabled={!canManage}
+                          onClick={() => setStatus(s.key)}
+                          className={`py-2 rounded-xl border transition-all font-black text-[10px] ${
+                            status === s.key
+                              ? `${s.color} text-white shadow-md`
+                              : "border-gray-200 dark:border-gray-800 bg-transparent text-gray-400 hover:border-brand-500/50"
+                          }`}
+                        >
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                {/* Status */}
-                <div>
-                  <label className="block text-sm font-bold text-black dark:text-white mb-3">Status</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { key: "Aktif", label: "Aktif", color: "border-brand-500 bg-brand-500" },
-                      { key: "Selesai", label: "Selesai", color: "border-brand-500 bg-brand-500" },
-                      { key: "Ditunda", label: "Ditunda", color: "border-brand-500 bg-brand-500" },
-                      { key: "Dibatalkan", label: "Dibatalkan", color: "border-brand-500 bg-brand-500" }
-                    ].map((s) => (
-                      <button
-                        key={s.key}
-                        type="button"
-                        disabled={!canManage}
-                        onClick={() => setStatus(s.key)}
-                        className={`py-2.5 rounded-none border-2 transition-all font-bold text-xs ${
-                          status === s.key
-                            ? `${s.color} text-white shadow-md`
-                            : "border-stroke bg-transparent text-gray-400 hover:border-brand-500/50 dark:border-form-strokedark"
-                        }`}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
+                {/* Description & Notes */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1.5">Keterangan Agenda</label>
+                    <textarea
+                      rows={2}
+                      disabled={!canManage}
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Keterangan singkat..."
+                      className="w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-black/30 px-4 py-2.5 text-black dark:text-white outline-none focus:border-brand-500 font-semibold text-xs"
+                    ></textarea>
                   </div>
-                </div>
-
-                {/* Description */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-bold text-black dark:text-white mb-3">Keterangan</label>
-                  <textarea
-                    rows={3}
-                    disabled={!canManage}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
-                  ></textarea>
-                </div>
-
-                {/* Notes */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-bold text-black dark:text-white mb-3">Catatan</label>
-                  <textarea
-                    rows={2}
-                    disabled={!canManage}
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    className="w-full rounded-none border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-brand-500 active:border-brand-500 dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-brand-500 font-medium text-sm"
-                  ></textarea>
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1.5">Catatan Tambahan</label>
+                    <textarea
+                      rows={2}
+                      disabled={!canManage}
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Catatan..."
+                      className="w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-black/30 px-4 py-2.5 text-black dark:text-white outline-none focus:border-brand-500 font-semibold text-xs"
+                    ></textarea>
+                  </div>
                 </div>
               </div>
             )}
