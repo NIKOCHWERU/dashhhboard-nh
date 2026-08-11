@@ -327,10 +327,10 @@ export default function DokumentasiPage() {
 
           <div>
             <div className="border-l-4 border-brand-500 pl-3 mb-4">
-              <h2 className="text-sm font-black text-black dark:text-white uppercase tracking-widest">Klien Perorangan</h2>
+              <h2 className="text-sm font-black text-black dark:text-white uppercase tracking-widest">Klien Non-Retainer</h2>
             </div>
             {perorangan.length === 0 ? (
-              <p className="text-xs text-gray-400 italic">Belum ada klien perorangan terdaftar.</p>
+              <p className="text-xs text-gray-400 italic">Belum ada klien non-retainer terdaftar.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {perorangan.map((client) => (

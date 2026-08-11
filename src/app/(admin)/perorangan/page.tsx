@@ -108,8 +108,8 @@ export default function PeroranganPage() {
     <div className="p-4 md:p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-4">
         <div>
-          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">Kasus Non-Retainer / Perorangan</h1>
-          <p className="text-xs text-gray-500">Daftar klien individu dan perkara hukum (Pekerjaan Khusus / Pekerjaan Umum) yang sedang ditangani.</p>
+          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">Kasus Non-Retainer</h1>
+          <p className="text-xs text-gray-500">Daftar klien dan perkara hukum (Pekerjaan Khusus / Pekerjaan Umum) yang sedang ditangani.</p>
         </div>
         <button onClick={() => setIsModalOpen(true)} className="bg-brand-500 text-white px-5 py-2.5 rounded-lg font-bold text-xs flex items-center gap-2 hover:bg-brand-600 shadow-sm transition-all uppercase tracking-wider w-full sm:w-auto justify-center">
           <PlusIcon /> Tambah Kasus Baru
@@ -257,7 +257,7 @@ export default function PeroranganPage() {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Nama Klien / Perorangan</label>
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Nama Klien / Perusahaan</label>
             <input required className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark rounded-none px-4 py-3 text-sm focus:border-brand-500 outline-none font-bold" value={formData.clientName} onChange={(e) => setFormData({...formData, clientName: e.target.value})} placeholder="Contoh: Bp. Ahmad Santoso" />
           </div>
           <div>
@@ -306,8 +306,8 @@ export default function PeroranganPage() {
       <FeatureModal
         isOpen={isViewOpen}
         onClose={() => setIsViewOpen(false)}
-        title="Detail Kasus Perorangan"
-        subtitle="Rincian data kasus klien individu secara lengkap"
+        title="Detail Kasus Non-Retainer"
+        subtitle="Rincian data kasus klien secara lengkap"
         icon={<BoxIconLine />}
       >
         {viewItem && (
