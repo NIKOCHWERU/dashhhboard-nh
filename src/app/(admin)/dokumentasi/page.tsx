@@ -733,6 +733,7 @@ export default function DokumentasiPage() {
                 </a>
               )}
             </div>
+          </div>
         </div>
       )}
     </div>
