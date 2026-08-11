@@ -2,12 +2,26 @@
 import React, { useState, useEffect } from "react";
 import { FeatureModal } from "@/components/common/FeatureModal";
 import { useUpload } from "@/context/UploadContext";
+import { 
+  FolderIcon, 
+  ImageIcon, 
+  VideoIcon, 
+  PlusIcon, 
+  SearchIcon, 
+  ArrowLeftIcon, 
+  ExternalLinkIcon,
+  TrashIcon,
+  EyeIcon,
+  SparklesIcon,
+  BoxIconLine
+} from "@/icons";
 
 interface ClientData {
   id: string;
   clientName: string;
   projectName?: string;
   caseType?: string;
+  categories?: string;
   googleFolderId: string | null;
 }
 
@@ -23,26 +37,31 @@ interface GDriveFile {
   description?: string;
 }
 
+type MainTab = "RETAINER" | "NON_RETAINER";
+
 export default function DokumentasiPage() {
   const [retainers, setRetainers] = useState<ClientData[]>([]);
-  const [perorangan, setPerorangan] = useState<ClientData[]>([]);
+  const [nonRetainers, setNonRetainers] = useState<ClientData[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Main Category Tab & Search
+  const [mainTab, setMainTab] = useState<MainTab>("RETAINER");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Gallery view state
   const [selectedClient, setSelectedClient] = useState<ClientData | null>(null);
-  const [activeTab, setActiveTab] = useState<"Foto" | "Video">("Foto");
+  const [mediaTypeTab, setMediaTypeTab] = useState<"Foto" | "Video">("Foto");
   const [items, setItems] = useState<GDriveFile[]>([]);
   const [loadingMedia, setLoadingMedia] = useState(false);
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
   const [activeFolderName, setActiveFolderName] = useState<string>("");
   const [folderHistory, setFolderHistory] = useState<{ id: string; name: string }[]>([]);
 
-  // Folder creation modal state
+  // Modal states
   const [folderModalOpen, setFolderModalOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [folderSubmitting, setFolderSubmitting] = useState(false);
 
-  // Upload modal state
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [mediaDescription, setMediaDescription] = useState("");
@@ -50,14 +69,12 @@ export default function DokumentasiPage() {
 
   const { uploadFiles, activeUploadsCount } = useUpload();
 
-  // Poll folder contents while there are active background uploads to auto-refresh
+  // Auto refresh folder items when uploads complete
   useEffect(() => {
     if (activeUploadsCount === 0 || !activeFolderId) return;
-
     const interval = setInterval(() => {
       browseFolder(activeFolderId, activeFolderName, false);
-    }, 5000); // refresh every 5 seconds
-
+    }, 5000);
     return () => clearInterval(interval);
   }, [activeUploadsCount, activeFolderId]);
 
@@ -68,14 +85,14 @@ export default function DokumentasiPage() {
   const fetchClients = async () => {
     try {
       setLoading(true);
-      const [resRet, resPer] = await Promise.all([
+      const [resRet, resNon] = await Promise.all([
         fetch("/api/retainer"),
         fetch("/api/perorangan"),
       ]);
       const retData = await resRet.json();
-      const perData = await resPer.json();
+      const nonData = await resNon.json();
       setRetainers(Array.isArray(retData) ? retData : []);
-      setPerorangan(Array.isArray(perData) ? perData : []);
+      setNonRetainers(Array.isArray(nonData) ? nonData : []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -83,7 +100,6 @@ export default function DokumentasiPage() {
     }
   };
 
-  // Browse specific folder path with self-healing support
   const browseFolder = async (folderId: string | null, folderName: string, pushHistory = true) => {
     try {
       setLoadingMedia(true);
@@ -95,7 +111,6 @@ export default function DokumentasiPage() {
         setFolderHistory((prev) => [...prev, { id: folderId, name: folderName }]);
       }
 
-      // Fetch folder contents
       const res = await fetch(`/api/gdrive?folderId=${folderId}`);
       if (!res.ok) throw new Error("Failed to load folder");
       const files: GDriveFile[] = await res.json();
@@ -108,17 +123,15 @@ export default function DokumentasiPage() {
     }
   };
 
-  // Initialize client root Dokumentasi -> Foto or Video
   const loadClientRoot = async (client: ClientData, tab: "Foto" | "Video") => {
     try {
       setLoadingMedia(true);
-      setActiveTab(tab);
+      setMediaTypeTab(tab);
       setItems([]);
       setFolderHistory([]);
 
       if (!client.googleFolderId) return;
 
-      // 1. Fetch main client folder contents to find "Dokumentasi" folder
       let resMain = await fetch(`/api/gdrive?folderId=${client.googleFolderId}`);
       
       // Self-healing: Recreate if deleted/missing
@@ -133,7 +146,6 @@ export default function DokumentasiPage() {
         const jsonRecreate = await resRecreate.json();
         client.googleFolderId = jsonRecreate.googleFolderId;
         
-        // Refetch main
         resMain = await fetch(`/api/gdrive?folderId=${client.googleFolderId}`);
         if (!resMain.ok) throw new Error("Auto-recreated folder but failed to load");
       }
@@ -142,7 +154,6 @@ export default function DokumentasiPage() {
       let dokumentasiFolder = mainContents.find((f) => f.name === "Dokumentasi");
 
       if (!dokumentasiFolder) {
-        // Automatically create Dokumentasi folder!
         const resCreate = await fetch("/api/gdrive", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -153,14 +164,12 @@ export default function DokumentasiPage() {
         dokumentasiFolder = { id: newFolder.id, name: "Dokumentasi", mimeType: "application/vnd.google-apps.folder" };
       }
 
-      // 2. Fetch "Dokumentasi" folder contents to find "Foto" or "Video" folder
       const resDok = await fetch(`/api/gdrive?folderId=${dokumentasiFolder.id}`);
       if (!resDok.ok) throw new Error("Failed to load Dokumentasi folder");
       const dokContents: GDriveFile[] = await resDok.json();
       let targetFolder = dokContents.find((f) => f.name === tab);
 
       if (!targetFolder) {
-        // Automatically create Foto/Video folder!
         const resCreateSub = await fetch("/api/gdrive", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -171,7 +180,6 @@ export default function DokumentasiPage() {
         targetFolder = { id: newSubFolder.id, name: tab, mimeType: "application/vnd.google-apps.folder" };
       }
 
-      // 3. Set breadcrumbs history and browse files
       setFolderHistory([
         { id: dokumentasiFolder.id, name: "Dokumentasi" },
         { id: targetFolder.id, name: tab }
@@ -187,7 +195,7 @@ export default function DokumentasiPage() {
 
   const handleClientSelect = (client: ClientData) => {
     if (!client.googleFolderId) {
-      alert("Klien ini belum memiliki folder Google Drive.");
+      alert("Klien ini belum memiliki folder Google Drive terhubung.");
       return;
     }
     setSelectedClient(client);
@@ -196,21 +204,19 @@ export default function DokumentasiPage() {
 
   const handleBack = () => {
     if (folderHistory.length <= 2) {
-      // Go back to main client grid
       setSelectedClient(null);
       setActiveFolderId(null);
       setFolderHistory([]);
       setItems([]);
     } else {
       const newHistory = [...folderHistory];
-      newHistory.pop(); // Remove current folder
+      newHistory.pop();
       const parentFolder = newHistory[newHistory.length - 1];
       setFolderHistory(newHistory);
       browseFolder(parentFolder.id, parentFolder.name, false);
     }
   };
 
-  // Create subfolder inside documentation
   const handleCreateFolder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFolderName.trim() || !activeFolderId) return;
@@ -238,7 +244,6 @@ export default function DokumentasiPage() {
     }
   };
 
-  // Upload files with description via background queue
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedFiles.length === 0 || !activeFolderId || !selectedClient) return;
@@ -249,10 +254,7 @@ export default function DokumentasiPage() {
       setSelectedFiles([]);
       setMediaDescription("");
       
-      // Notify user that it is starting
-      alert(`Berhasil menambahkan ${selectedFiles.length} berkas ke antrean unggahan latar belakang! Anda dapat memantau progresnya di menu header.`);
-      
-      // Instantly do a quick browse to refresh if any fast uploads finish
+      alert(`Berhasil menambahkan ${selectedFiles.length} berkas ke antrean unggahan latar belakang.`);
       await browseFolder(activeFolderId, activeFolderName, false);
     } catch (error) {
       alert("Gagal memproses unggahan.");
@@ -260,7 +262,7 @@ export default function DokumentasiPage() {
   };
 
   const handleFileDelete = async (fileId: string) => {
-    if (!confirm("Hapus dokumentasi ini?")) return;
+    if (!confirm("Hapus dokumentasi ini dari Google Drive?")) return;
     try {
       setLoadingMedia(true);
       const res = await fetch(`/api/gdrive/delete?fileId=${fileId}`, {
@@ -269,126 +271,193 @@ export default function DokumentasiPage() {
       if (!res.ok) throw new Error("Delete failed");
       await browseFolder(activeFolderId, activeFolderName, false);
     } catch (error) {
-      alert("Gagal menghapus.");
+      alert("Gagal menghapus media.");
     } finally {
       setLoadingMedia(false);
     }
   };
 
+  // Filter clients based on search query
+  const currentClientList = mainTab === "RETAINER" ? retainers : nonRetainers;
+  const filteredClients = currentClientList.filter((c) => {
+    const q = searchQuery.toLowerCase();
+    const nameMatch = c.clientName.toLowerCase().includes(q);
+    const subMatch = (c.projectName || c.caseType || "").toLowerCase().includes(q);
+    return nameMatch || subMatch;
+  });
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-stroke dark:border-strokedark">
+    <div className="p-4 md:p-6 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-4">
         <div>
-          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">Dokumentasi Pekerjaan</h1>
-          <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
-            Unggah dan kelola foto & video dokumentasi kegiatan pekerjaan klien ke Google Drive dengan sistem folder interaktif.
+          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">
+            Galeri Dokumentasi Pekerjaan
+          </h1>
+          <p className="text-xs text-gray-500">
+            Arsip visual foto & video kegiatan klien langsung terintegrasi dengan Google Drive.
           </p>
         </div>
+        {selectedClient && (
+          <button
+            onClick={() => setSelectedClient(null)}
+            className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-xs font-bold text-gray-700 dark:text-gray-200 hover:border-brand-500 transition-all flex items-center gap-2 self-start md:self-auto"
+          >
+            ← Kembali ke Pilih Klien
+          </button>
+        )}
       </div>
 
-      {loading ? (
-        <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-none h-8 w-8 border-b-2 border-brand-500"></div>
-        </div>
-      ) : !selectedClient ? (
-        // Grid View of Clients
-        <div className="space-y-8">
-          <div>
-            <div className="border-l-4 border-brand-500 pl-3 mb-4">
-              <h2 className="text-sm font-black text-black dark:text-white uppercase tracking-widest">Klien Retainer (PT)</h2>
+      {!selectedClient ? (
+        /* ─── CLIENT CATEGORY GALLERY SELECTION ─────────────────────────────────────── */
+        <div className="space-y-6">
+          {/* Top Tabs Switcher & Search Bar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white dark:bg-white/[0.02] p-4 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm">
+            {/* Category Tabs */}
+            <div className="flex bg-gray-100 dark:bg-gray-800/80 p-1.5 rounded-xl border border-gray-200 dark:border-gray-700/50">
+              <button
+                onClick={() => setMainTab("RETAINER")}
+                className={`px-5 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                  mainTab === "RETAINER"
+                    ? "bg-brand-500 text-white shadow-md"
+                    : "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white"
+                }`}
+              >
+                Retainer ({retainers.length})
+              </button>
+              <button
+                onClick={() => setMainTab("NON_RETAINER")}
+                className={`px-5 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                  mainTab === "NON_RETAINER"
+                    ? "bg-brand-500 text-white shadow-md"
+                    : "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white"
+                }`}
+              >
+                Non-Retainer ({nonRetainers.length})
+              </button>
             </div>
-            {retainers.length === 0 ? (
-              <p className="text-xs text-gray-400 italic">Belum ada klien retainer terdaftar.</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {retainers.map((client) => (
-                  <div
-                    key={client.id}
-                    onClick={() => handleClientSelect(client)}
-                    className="p-5 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 rounded-none cursor-pointer hover:border-brand-500 hover:shadow-lg transition-all group flex flex-col justify-between h-36"
-                  >
-                    <div>
-                      <svg className="w-8 h-8 text-brand-500 mb-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-wide group-hover:text-brand-500 transition-colors line-clamp-1">
-                        {client.clientName}
-                      </h3>
-                      <p className="text-[10px] text-gray-400 line-clamp-1 mt-1">Pekerjaan: {client.projectName || "-"}</p>
-                    </div>
-                    <div className="text-[10px] font-bold text-brand-500 flex items-center gap-1 mt-2">
-                      Lihat Dokumentasi →
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+
+            {/* Search Box */}
+            <div className="relative flex-1 max-w-md">
+              <input
+                type="text"
+                placeholder="Cari nama klien / pekerjaan..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl bg-transparent text-gray-700 dark:text-white outline-none focus:border-brand-500 text-xs font-semibold"
+              />
+              <svg className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
           </div>
 
-          <div>
-            <div className="border-l-4 border-brand-500 pl-3 mb-4">
-              <h2 className="text-sm font-black text-black dark:text-white uppercase tracking-widest">Klien Non-Retainer</h2>
+          {/* Client Cards Grid */}
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-44 bg-gray-100 dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 animate-pulse rounded-2xl"></div>
+              ))}
             </div>
-            {perorangan.length === 0 ? (
-              <p className="text-xs text-gray-400 italic">Belum ada klien non-retainer terdaftar.</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {perorangan.map((client) => (
+          ) : filteredClients.length === 0 ? (
+            <div className="text-center py-20 text-xs text-gray-400 italic bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 rounded-2xl">
+              Belum ada data klien terdaftar pada kategori ini.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {filteredClients.map((client) => {
+                const subTitle = client.projectName || client.caseType || "—";
+                return (
                   <div
                     key={client.id}
                     onClick={() => handleClientSelect(client)}
-                    className="p-5 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 rounded-none cursor-pointer hover:border-brand-500 hover:shadow-lg transition-all group flex flex-col justify-between h-36"
+                    className="group bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 hover:border-brand-500/80 p-5 rounded-2xl transition-all cursor-pointer shadow-sm hover:shadow-xl flex flex-col justify-between"
                   >
                     <div>
-                      <svg className="w-8 h-8 text-brand-500 mb-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-wide group-hover:text-brand-500 transition-colors line-clamp-1">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center font-black text-sm border border-brand-500/20">
+                          📁
+                        </div>
+                        <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                          GDrive
+                        </span>
+                      </div>
+                      <h3 className="font-black text-sm text-black dark:text-white uppercase tracking-wide group-hover:text-brand-500 transition-colors line-clamp-1">
                         {client.clientName}
                       </h3>
-                      <p className="text-[10px] text-gray-400 line-clamp-1 mt-1">Kasus: {client.caseType || "-"}</p>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1 line-clamp-1">
+                        {subTitle}
+                      </p>
                     </div>
-                    <div className="text-[10px] font-bold text-brand-500 flex items-center gap-1 mt-2">
-                      Lihat Dokumentasi →
+
+                    <div className="mt-5 pt-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-[10px] font-bold text-brand-500 uppercase tracking-wider">
+                      <span>Buka Galeri Foto / Video</span>
+                      <span className="group-hover:translate-x-1 transition-transform">→</span>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       ) : (
-        // Gallery View for selected client
+        /* ─── CLIENT GALLERY MEDIA VIEW ─────────────────────────────────────────────── */
         <div className="space-y-6">
-          {/* NAVIGATION BAR AND BREADCRUMBS */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border border-stroke dark:border-strokedark p-4 bg-white dark:bg-gray-900 rounded-none shadow-sm">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleBack}
-                className="p-2 border border-stroke dark:border-strokedark rounded-none hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-              </button>
-              <div>
-                <span className="text-[9px] font-bold text-brand-500 uppercase tracking-widest">Media Gallery Manager</span>
-                <h2 className="text-sm font-black text-black dark:text-white uppercase tracking-wider">{selectedClient.clientName}</h2>
+          {/* Client Header Info & Breadcrumb Bar */}
+          <div className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 p-5 rounded-2xl shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleBack}
+                  className="p-2 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors"
+                  title="Kembali"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                </button>
+                <div>
+                  <span className="text-[9px] font-black text-brand-500 uppercase tracking-widest">
+                    {mainTab === "RETAINER" ? "KLIEN RETAINER" : "KLIEN NON-RETAINER"}
+                  </span>
+                  <h2 className="text-lg font-black text-black dark:text-white uppercase tracking-wide">
+                    {selectedClient.clientName}
+                  </h2>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setFolderModalOpen(true)}
+                  className="px-4 py-2 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-white hover:border-brand-500 rounded-xl text-xs font-black uppercase tracking-wider transition-colors cursor-pointer"
+                >
+                  + Subfolder
+                </button>
+                <button
+                  onClick={() => setUploadModalOpen(true)}
+                  className="px-4 py-2 bg-brand-500 text-white hover:bg-brand-600 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm cursor-pointer"
+                >
+                  + Unggah {mediaTypeTab}
+                </button>
               </div>
             </div>
 
-            {/* Path Breadcrumbs */}
-            <div className="flex flex-wrap items-center gap-1 text-[11px] font-black text-gray-400 uppercase tracking-wider">
-              <span className="cursor-pointer hover:text-brand-500" onClick={() => loadClientRoot(selectedClient, activeTab)}>HOME</span>
+            {/* Folder Path Breadcrumb */}
+            <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider pt-2 border-t border-gray-100 dark:border-gray-800">
+              <span className="cursor-pointer hover:text-brand-500" onClick={() => loadClientRoot(selectedClient, mediaTypeTab)}>
+                {selectedClient.clientName}
+              </span>
               {folderHistory.map((hist, i) => {
-                if (i === 0) return null; // Skip root Dokumentasi name
+                if (i === 0) return null;
+                const isLast = i === folderHistory.length - 1;
                 return (
                   <React.Fragment key={hist.id}>
                     <span>/</span>
                     <span
-                      className={`cursor-pointer hover:text-brand-500 ${i === folderHistory.length - 1 ? "text-brand-500" : ""}`}
+                      className={`cursor-pointer hover:text-brand-500 ${isLast ? "text-brand-500 font-black" : ""}`}
                       onClick={() => {
-                        if (i === folderHistory.length - 1) return;
+                        if (isLast) return;
                         const newHist = folderHistory.slice(0, i + 1);
                         setFolderHistory(newHist);
                         browseFolder(hist.id, hist.name, false);
@@ -402,51 +471,43 @@ export default function DokumentasiPage() {
             </div>
           </div>
 
-          {/* ACTIONS AND TAB SELECTOR ROW */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-gray-900 border border-stroke dark:border-strokedark p-4 rounded-none shadow-sm">
-            {/* Tab switchers - Only active if we are at root Foto/Video */}
-            <div className="flex bg-gray-100 dark:bg-gray-800 p-1 border border-stroke dark:border-strokedark rounded-none">
-              <button
-                onClick={() => loadClientRoot(selectedClient, "Foto")}
-                className={`px-4 py-1.5 text-xs font-black uppercase tracking-wider transition-colors rounded-none ${activeTab === "Foto" ? "bg-brand-500 text-white shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white"}`}
-              >
-                Koleksi Foto
-              </button>
-              <button
-                onClick={() => loadClientRoot(selectedClient, "Video")}
-                className={`px-4 py-1.5 text-xs font-black uppercase tracking-wider transition-colors rounded-none ${activeTab === "Video" ? "bg-brand-500 text-white shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white"}`}
-              >
-                Koleksi Video
-              </button>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => setFolderModalOpen(true)}
-                className="px-4 py-2 border border-stroke rounded-none bg-white text-gray-700 hover:border-brand-500 dark:bg-gray-900 dark:border-strokedark dark:text-white transition-colors cursor-pointer text-xs font-black uppercase tracking-wider"
-              >
-                + Buat Subfolder
-              </button>
-              <button
-                onClick={() => setUploadModalOpen(true)}
-                className="px-4 py-2 bg-brand-500 text-white rounded-none hover:bg-brand-600 outline-none transition-colors cursor-pointer text-xs font-black uppercase tracking-wider"
-              >
-                + Unggah {activeTab}
-              </button>
-            </div>
+          {/* Media Type Tabs (Foto vs Video) */}
+          <div className="flex border-b border-gray-200 dark:border-gray-800 gap-2">
+            <button
+              onClick={() => loadClientRoot(selectedClient, "Foto")}
+              className={`px-5 py-2.5 text-xs font-black uppercase tracking-widest border-b-2 cursor-pointer transition-colors ${
+                mediaTypeTab === "Foto"
+                  ? "border-brand-500 text-brand-500"
+                  : "border-transparent text-gray-500 hover:text-black dark:hover:text-white"
+              }`}
+            >
+              📷 Koleksi Foto
+            </button>
+            <button
+              onClick={() => loadClientRoot(selectedClient, "Video")}
+              className={`px-5 py-2.5 text-xs font-black uppercase tracking-widest border-b-2 cursor-pointer transition-colors ${
+                mediaTypeTab === "Video"
+                  ? "border-brand-500 text-brand-500"
+                  : "border-transparent text-gray-500 hover:text-black dark:hover:text-white"
+              }`}
+            >
+              🎥 Koleksi Video
+            </button>
           </div>
 
-          {/* MEDIA LISTING */}
+          {/* Gallery Media Grid */}
           {loadingMedia ? (
-            <div className="flex justify-center items-center py-20 bg-white dark:bg-gray-900 border border-stroke dark:border-strokedark">
-              <div className="animate-spin rounded-none h-8 w-8 border-b-2 border-brand-500"></div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-48 bg-gray-100 dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 animate-pulse rounded-2xl"></div>
+              ))}
             </div>
           ) : items.length === 0 ? (
-            <div className="border border-stroke dark:border-strokedark p-16 text-center text-xs text-gray-400 italic bg-white dark:bg-gray-900 rounded-none shadow-sm">
-              Folder ini kosong. Silakan buat folder baru atau unggah media.
+            <div className="text-center py-20 text-xs text-gray-400 italic bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 rounded-2xl">
+              Folder ini belum memiliki media. Klik "+ Unggah {mediaTypeTab}" untuk menambahkan.
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {items.map((file) => {
                 const isFolder = file.mimeType === "application/vnd.google-apps.folder";
 
@@ -455,95 +516,80 @@ export default function DokumentasiPage() {
                     <div
                       key={file.id}
                       onClick={() => browseFolder(file.id, file.name)}
-                      className="p-5 border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 rounded-none cursor-pointer hover:border-brand-500 hover:shadow-lg transition-all group flex items-center gap-4"
+                      className="p-4 border border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.02] hover:border-brand-500 rounded-2xl cursor-pointer transition-all flex flex-col justify-between h-40 group shadow-sm hover:shadow-md"
                     >
-                      <svg className="w-10 h-10 text-amber-500 fill-amber-500 flex-shrink-0" viewBox="0 0 24 24">
-                        <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
-                      </svg>
-                      <div className="overflow-hidden">
-                        <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-wide group-hover:text-brand-500 transition-colors line-clamp-1">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold text-lg">
+                        📁
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-black dark:text-white uppercase tracking-wide truncate group-hover:text-brand-500 transition-colors">
                           {file.name}
-                        </h3>
-                        <p className="text-[9px] text-gray-400 font-bold uppercase mt-0.5">Subfolder</p>
+                        </h4>
+                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Subfolder</span>
                       </div>
                     </div>
                   );
                 }
 
+                const hasThumb = !!file.thumbnailLink;
+                const thumbUrl = hasThumb ? file.thumbnailLink!.replace(/=s\d+$/, "=s600") : null;
+
                 return (
                   <div
                     key={file.id}
-                    className="border border-stroke dark:border-strokedark bg-white dark:bg-gray-900 rounded-none overflow-hidden group hover:shadow-lg transition-all flex flex-col justify-between"
+                    className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all flex flex-col justify-between group"
                   >
-                    {/* PREVIEW CONTAINER */}
+                    {/* Thumbnail Preview Area */}
                     <div
                       onClick={() => setPreviewItem(file)}
-                      className="relative h-44 w-full bg-gray-50 dark:bg-gray-800/50 flex items-center justify-center border-b border-stroke dark:border-strokedark cursor-pointer overflow-hidden group/preview"
+                      className="relative h-40 w-full bg-gray-100 dark:bg-gray-850 cursor-pointer overflow-hidden flex items-center justify-center"
                     >
-                      {file.thumbnailLink ? (
-                        <div className="w-full h-full relative">
-                          <img
-                            src={file.thumbnailLink.replace(/=s\d+$/, "=s600")}
-                            alt={file.name}
-                            className="w-full h-full object-cover transition-transform group-hover/preview:scale-110 duration-300"
-                          />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/preview:opacity-100 flex items-center justify-center transition-opacity duration-200">
-                            <span className="text-[10px] font-black text-white uppercase tracking-widest bg-black/60 px-3 py-1.5 border border-white/25">
-                              Buka Preview
-                            </span>
-                          </div>
-                        </div>
-                      ) : activeTab === "Foto" ? (
-                        <div className="flex flex-col items-center gap-2">
-                          <svg className="w-10 h-10 text-gray-400 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Image File</span>
-                        </div>
+                      {thumbUrl ? (
+                        <img
+                          src={thumbUrl}
+                          alt={file.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
                       ) : (
-                        <div className="flex flex-col items-center gap-2">
-                          <svg className="w-10 h-10 text-gray-400 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Video File</span>
+                        <div className="flex flex-col items-center gap-1.5 text-gray-400">
+                          <span className="text-2xl">{mediaTypeTab === "Foto" ? "🖼️" : "🎬"}</span>
+                          <span className="text-[9px] font-bold uppercase">{file.mimeType.split("/")[1] || "Media"}</span>
                         </div>
                       )}
+
+                      {/* Hover Overlay */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <span className="px-3 py-1 bg-white/90 text-black text-[10px] font-black uppercase tracking-wider rounded-lg shadow">
+                          Preview
+                        </span>
+                      </div>
                     </div>
 
-                    {/* INFO PANEL */}
-                    <div className="p-4 flex-grow flex flex-col justify-between">
+                    {/* File Title & Actions */}
+                    <div className="p-3 flex flex-col justify-between flex-1">
                       <div>
-                        <h4 className="text-xs font-black text-black dark:text-white truncate" title={file.name}>
+                        <h4 className="text-xs font-bold text-black dark:text-white truncate" title={file.name}>
                           {file.name}
                         </h4>
                         {file.description && (
-                          <p className="text-[10px] text-gray-500 mt-1 line-clamp-2 leading-tight">
-                            {file.description}
-                          </p>
+                          <p className="text-[9px] text-gray-400 line-clamp-1 mt-0.5">{file.description}</p>
                         )}
-                        <p className="text-[9px] text-gray-400 font-bold uppercase mt-2">
-                          {file.createdTime ? new Date(file.createdTime).toLocaleDateString("id-ID", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          }) : "-"}
-                        </p>
                       </div>
 
-                      <div className="flex justify-between items-center gap-2 mt-4 pt-3 border-t border-stroke dark:border-strokedark">
+                      <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-gray-100 dark:border-gray-800">
                         {file.webViewLink && (
                           <a
                             href={file.webViewLink}
                             target="_blank"
                             rel="noreferrer"
-                            className="px-3 py-1.5 bg-brand-50 text-brand-700 hover:bg-brand-100 text-[10px] font-black rounded-none uppercase transition-colors"
+                            className="text-[9px] font-black text-brand-500 hover:underline uppercase tracking-wider"
                           >
-                            Buka Media
+                            Drive ↗
                           </a>
                         )}
                         <button
                           onClick={() => handleFileDelete(file.id)}
-                          className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 text-[10px] font-black rounded-none uppercase transition-colors"
+                          className="text-[9px] font-black text-red-500 hover:underline uppercase tracking-wider cursor-pointer"
                         >
                           Hapus
                         </button>
@@ -557,160 +603,141 @@ export default function DokumentasiPage() {
         </div>
       )}
 
-      {/* CREATE SUBFOLDER MODAL */}
+      {/* ─── CREATE SUBFOLDER MODAL ────────────────────────────────────────── */}
       <FeatureModal
         isOpen={folderModalOpen}
         onClose={() => setFolderModalOpen(false)}
-        title="Buat Subfolder Dokumentasi"
+        title="Buat Subfolder Baru"
+        subtitle="Kelola kelompok dokumentasi secara rapi"
+        icon={<BoxIconLine />}
       >
-        <form onSubmit={handleCreateFolder} className="space-y-4 pt-2">
+        <form onSubmit={handleCreateFolder} className="space-y-4">
           <div>
             <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Nama Subfolder</label>
             <input
               type="text"
               required
-              placeholder="Contoh: Liputan Hari Ke-1"
-              className="w-full px-4 py-2 border border-stroke rounded-none bg-white text-gray-700 outline-none focus:border-brand-500 dark:bg-gray-900 dark:border-strokedark dark:text-white transition-colors cursor-pointer text-xs font-semibold"
+              placeholder="Contoh: Dokumen Kunjungan Lapangan"
+              className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark px-4 py-3 text-sm focus:border-brand-500 outline-none font-bold"
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
             />
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setFolderModalOpen(false)}
-              className="px-4 py-2 border border-stroke rounded-none text-xs font-black uppercase text-gray-600 hover:bg-gray-50 dark:border-strokedark dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              disabled={folderSubmitting}
-              className="px-4 py-2 bg-brand-500 text-white rounded-none hover:bg-brand-600 text-xs font-black uppercase transition-colors disabled:opacity-50"
-            >
-              {folderSubmitting ? "Memproses..." : "Buat Folder"}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={folderSubmitting}
+            className="w-full bg-brand-500 text-white py-3.5 font-black uppercase tracking-widest text-xs hover:bg-brand-600 transition-all disabled:opacity-50"
+          >
+            {folderSubmitting ? "Membuat Subfolder..." : "Simpan Subfolder"}
+          </button>
         </form>
       </FeatureModal>
 
-      {/* UPLOAD FILE WITH DESCRIPTION MODAL */}
+      {/* ─── UPLOAD MEDIA MODAL ───────────────────────────────────────────── */}
       <FeatureModal
         isOpen={uploadModalOpen}
         onClose={() => setUploadModalOpen(false)}
-        title={`Unggah ${activeTab} ke Google Drive`}
+        title={`Unggah ${mediaTypeTab}`}
+        subtitle={`Upload berkas ${mediaTypeTab.toLowerCase()} ke Google Drive`}
+        icon={<BoxIconLine />}
       >
-        <form onSubmit={handleFileUpload} className="space-y-4 pt-2">
+        <form onSubmit={handleFileUpload} className="space-y-4">
           <div>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Pilih Berkas {activeTab} (Mendukung hingga 1000 Berkas)</label>
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">
+              Pilih Berkas {mediaTypeTab}
+            </label>
             <input
               type="file"
               required
               multiple
-              accept={activeTab === "Foto" ? "image/*" : "video/*"}
-              className="w-full text-xs text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-none file:border file:border-stroke dark:file:border-strokedark file:text-xs file:font-black file:uppercase file:bg-white dark:file:bg-gray-900 dark:file:text-white hover:file:bg-gray-50 file:cursor-pointer"
+              accept={mediaTypeTab === "Foto" ? "image/*" : "video/*"}
+              className="w-full text-xs text-gray-500 dark:text-gray-400 file:mr-4 file:py-2.5 file:px-4 file:border-0 file:text-xs file:font-black file:uppercase file:bg-brand-500 file:text-white hover:file:bg-brand-600 file:cursor-pointer"
               onChange={(e) => {
                 const files = e.target.files ? Array.from(e.target.files) : [];
                 setSelectedFiles(files);
               }}
             />
-            <p className="text-[9px] text-gray-400 font-semibold mt-1 uppercase tracking-wider">
-              Maksimum ukuran tiap berkas: 2GB. Mendukung multi-select unggahan sekaligus.
-            </p>
           </div>
 
           <div>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Keterangan / Keterangan Berkas</label>
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Keterangan Media</label>
             <textarea
-              placeholder="Masukkan keterangan foto atau video dokumentasi ini..."
-              className="w-full px-4 py-2 border border-stroke rounded-none bg-white text-gray-700 outline-none focus:border-brand-500 dark:bg-gray-900 dark:border-strokedark dark:text-white transition-colors cursor-pointer text-xs font-semibold h-24 resize-none"
+              placeholder="Keterangan singkat berkas..."
+              className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark px-4 py-3 text-sm focus:border-brand-500 outline-none font-medium h-20 resize-none"
               value={mediaDescription}
               onChange={(e) => setMediaDescription(e.target.value)}
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setUploadModalOpen(false)}
-              className="px-4 py-2 border border-stroke rounded-none text-xs font-black uppercase text-gray-600 hover:bg-gray-50 dark:border-strokedark dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              disabled={selectedFiles.length === 0}
-              className="px-4 py-2 bg-brand-500 text-white rounded-none hover:bg-brand-600 text-xs font-black uppercase transition-colors"
-            >
-              Mulai Unggah ({selectedFiles.length} Berkas)
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={selectedFiles.length === 0}
+            className="w-full bg-brand-500 text-white py-3.5 font-black uppercase tracking-widest text-xs hover:bg-brand-600 transition-all disabled:opacity-50"
+          >
+            Mulai Unggah ({selectedFiles.length} Berkas)
+          </button>
         </form>
       </FeatureModal>
 
-      {/* FULLSCREEN PREVIEW LIGHTBOX MODAL */}
+      {/* ─── MEDIA PREVIEW LIGHTBOX MODAL ─────────────────────────────────── */}
       {previewItem && (
         <div
-          className="fixed inset-0 z-99999 flex items-center justify-center bg-black/95 p-4 transition-all animate-in fade-in"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in"
           onClick={() => setPreviewItem(null)}
         >
-          <button
-            className="absolute top-6 right-6 text-white text-4xl font-light hover:text-gray-300 transition-colors cursor-pointer"
-            onClick={() => setPreviewItem(null)}
-          >
-            &times;
-          </button>
-          
           <div
-            className="max-w-4xl max-h-[85vh] w-full flex flex-col bg-gray-900 border border-white/10 p-6 rounded-none relative"
+            className="relative max-w-4xl w-full bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex-1 flex items-center justify-center overflow-hidden max-h-[60vh] bg-black/40 border border-white/5">
+            {/* Lightbox Header */}
+            <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+              <h3 className="text-sm font-black text-black dark:text-white uppercase truncate max-w-md">
+                {previewItem.name}
+              </h3>
+              <button
+                onClick={() => setPreviewItem(null)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Lightbox Media Body */}
+            <div className="p-6 flex-1 flex items-center justify-center bg-black/40 overflow-hidden">
               {previewItem.thumbnailLink ? (
                 <img
                   src={previewItem.thumbnailLink.replace(/=s\d+$/, "=s1200")}
                   alt={previewItem.name}
-                  className="max-w-full max-h-[58vh] object-contain"
+                  className="max-h-[60vh] max-w-full object-contain rounded-xl shadow-lg"
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center p-12 text-white text-center">
-                  <svg className="w-16 h-16 text-gray-500 mb-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
-                  </svg>
-                  <span className="text-sm font-black uppercase tracking-widest text-gray-400">Berkas Tanpa Preview Gambar</span>
+                <div className="py-20 text-center text-gray-400 font-bold uppercase text-xs">
+                  Pratinjau tidak tersedia
                 </div>
               )}
             </div>
-            
-            <div className="mt-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-t border-white/10 pt-4">
-              <div className="overflow-hidden">
-                <h4 className="text-sm font-black text-white uppercase tracking-wider truncate">{previewItem.name}</h4>
-                {previewItem.description && (
-                  <p className="text-xs text-gray-400 mt-1 line-clamp-2">{previewItem.description}</p>
-                )}
-              </div>
-              <div className="flex gap-3 flex-shrink-0">
-                {previewItem.webViewLink && (
-                  <a
-                    href={previewItem.webViewLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-black text-xs uppercase tracking-wider rounded-none transition-all flex items-center gap-2"
-                  >
-                    Buka Asli (Drive)
-                  </a>
-                )}
-                <button
-                  onClick={() => setPreviewItem(null)}
-                  className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 font-black text-xs uppercase tracking-wider rounded-none transition-all"
+
+            {/* Lightbox Footer Actions */}
+            <div className="p-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+              <p className="text-xs text-gray-500 font-medium truncate max-w-md">
+                {previewItem.description || "Tanpa deskripsi tambahan"}
+              </p>
+              {previewItem.webViewLink && (
+                <a
+                  href={previewItem.webViewLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-4 py-2 bg-brand-500 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-brand-600 transition-colors"
                 >
-                  Tutup
-                </button>
-              </div>
+                  Buka Berkas Asli di Google Drive ↗
+                </a>
+              )}
             </div>
           </div>
         </div>
       )}
     </div>
   );
+}
+;
 }
