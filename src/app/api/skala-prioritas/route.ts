@@ -24,6 +24,7 @@ export async function POST(req: Request) {
         level: parseInt(body.level),
         deadline: body.deadline ? new Date(body.deadline) : null,
         status: body.status,
+        picEmail: body.picEmail || null,
       },
     });
     return NextResponse.json(data);

@@ -191,6 +191,7 @@ model SkalaPrioritas {
   level     Int      @default(1) // 1 (High) - 5 (Low)
   deadline  DateTime?
   status    String   @default("Pending")
+  picEmail  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
