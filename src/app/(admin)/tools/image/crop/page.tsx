@@ -286,7 +286,7 @@ export default function ImageCropPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
           <div>
             <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
-              <Crop className="w-5 h-5 text-brand-500" />
+              <CropIcon className="w-5 h-5 text-brand-500" />
               Image Crop & Resizer (Live Preview Box)
             </h1>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
