@@ -2,19 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { FeatureModal } from "@/components/common/FeatureModal";
 import { useUpload } from "@/context/UploadContext";
-import { 
-  FolderIcon, 
-  ImageIcon, 
-  VideoIcon, 
-  PlusIcon, 
-  SearchIcon, 
-  ArrowLeftIcon, 
-  ExternalLinkIcon,
-  TrashIcon,
-  EyeIcon,
-  SparklesIcon,
-  BoxIconLine
-} from "@/icons";
+import { BoxIconLine } from "@/icons";
 
 interface ClientData {
   id: string;
