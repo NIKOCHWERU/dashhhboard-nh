@@ -190,7 +190,50 @@ const AppSidebar: React.FC = () => {
       });
     }
 
-    // 7. Admin Control Group
+    // 7. ALAT Group (Tools)
+    groups.push({
+      title: "ALAT",
+      items: [
+        {
+          name: "Image",
+          icon: <DokumentasiIcon />,
+          subItems: [
+            { name: "Background Eraser", path: "/tools/image/background-eraser" },
+            { name: "Image Crop", path: "/tools/image/crop" },
+            { name: "Image Color Filter", path: "/tools/image/color-filter" },
+          ],
+        },
+        {
+          name: "PDF",
+          icon: <DokumenIcon />,
+          subItems: [
+            { name: "PDF To Image", path: "/tools/pdf/to-image" },
+            { name: "PDF To Word", path: "/tools/pdf/to-word" },
+            { name: "PDF Compress", path: "/tools/pdf/compress" },
+            { name: "PDF Combine", path: "/tools/pdf/combine" },
+            { name: "PDF Slice", path: "/tools/pdf/slice" },
+            { name: "PDF Sensor", path: "/tools/pdf/sensor" },
+            { name: "PDF TTD", path: "/tools/pdf/ttd" },
+          ],
+        },
+        {
+          name: "Word",
+          icon: <CatatanIcon />,
+          subItems: [
+            { name: "Document Template Generator", path: "/tools/word/template-generator" },
+          ],
+        },
+        {
+          name: "Excel",
+          icon: <GridIcon />,
+          subItems: [
+            { name: "Excel PDF Rapi", path: "/tools/excel/pdf-rapi" },
+          ],
+        },
+      ],
+    });
+
+    // 8. Admin Control Group
     if (isAdminUser) {
       groups.push({
         title: APP_LABELS.sidebar.groups.admin,
