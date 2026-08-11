@@ -504,7 +504,7 @@ export default function DokumentasiPage() {
             </div>
           ) : items.length === 0 ? (
             <div className="text-center py-20 text-xs text-gray-400 italic bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 rounded-2xl">
-              Folder ini belum memiliki media. Klik "+ Unggah {mediaTypeTab}" untuk menambahkan.
+              Folder ini belum memiliki media. Klik &quot;+ Unggah {mediaTypeTab}&quot; untuk menambahkan.
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
