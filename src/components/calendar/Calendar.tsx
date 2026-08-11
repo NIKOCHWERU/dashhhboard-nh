@@ -1488,16 +1488,16 @@ const Calendar: React.FC = () => {
           </div>
         </div>
       </div>
-      <Modal isOpen={isOpen} onClose={closeModal}>
-        <div className="bg-white dark:bg-boxdark rounded-none overflow-hidden shadow-2xl border border-stroke dark:border-strokedark max-w-3xl w-full mx-auto animate-in zoom-in duration-300">
+      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-2xl mx-auto">
+        <div className="bg-white dark:bg-boxdark rounded-2xl overflow-hidden shadow-2xl border border-stroke dark:border-strokedark w-full flex flex-col max-h-[85vh] animate-in zoom-in duration-300">
           {/* Header Modern */}
-          <div className="px-8 py-6 bg-white dark:bg-boxdark border-b border-stroke dark:border-strokedark flex justify-between items-center">
+          <div className="px-6 py-4 sm:px-8 sm:py-5 bg-white dark:bg-boxdark border-b border-stroke dark:border-strokedark flex justify-between items-center flex-shrink-0">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-none bg-brand-500/10 flex items-center justify-center text-brand-500">
+              <div className="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-brand-500">
                 <CalenderIcon />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-black dark:text-white">
+                <h3 className="text-lg font-bold text-black dark:text-white">
                   {viewMode === "view" ? "Detail Agenda" : (selectedEventId ? "Edit Agenda" : "Buat Agenda Baru")}
                 </h3>
                 <p className="text-xs text-gray-500 font-medium">
@@ -1513,7 +1513,7 @@ const Calendar: React.FC = () => {
             </button>
           </div>
 
-          <div className="p-8 max-h-[70vh] overflow-y-auto no-scrollbar">
+          <div className="p-6 sm:p-8 overflow-y-auto flex-1 no-scrollbar">
             {viewMode === "view" ? (
               <div className="space-y-6 animate-in fade-in duration-200">
                 {/* Header Info: Judul */}
