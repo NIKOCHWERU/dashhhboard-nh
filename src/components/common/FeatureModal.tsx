@@ -37,19 +37,19 @@ export const FeatureModal: React.FC<ModalProps> = ({
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-[12px] animate-in fade-in duration-300">
       <div 
-        className={`bg-white dark:bg-boxdark w-full ${width} rounded-2xl shadow-2xl border border-gray-250 dark:border-white/[0.08] overflow-hidden animate-in zoom-in duration-300`}
+        className={`bg-white dark:bg-boxdark w-full ${width} max-h-[90vh] flex flex-col rounded-2xl shadow-2xl border border-gray-250 dark:border-white/[0.08] overflow-hidden animate-in zoom-in duration-300`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header Modern style from Jadwal */}
-        <div className="px-8 py-6 bg-white dark:bg-boxdark border-b border-stroke dark:border-strokedark flex justify-between items-center">
+        {/* Header Modern style */}
+        <div className="px-6 py-4 sm:px-8 sm:py-5 bg-white dark:bg-boxdark border-b border-stroke dark:border-strokedark flex justify-between items-center flex-shrink-0">
           <div className="flex items-center gap-4">
             {icon && (
-              <div className="w-12 h-12 rounded-xl bg-brand-500/10 flex items-center justify-center text-brand-500">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-brand-500/10 flex items-center justify-center text-brand-500">
                 {icon}
               </div>
             )}
             <div>
-              <h3 className="text-xl font-bold text-black dark:text-white uppercase tracking-tight">{title}</h3>
+              <h3 className="text-lg sm:text-xl font-bold text-black dark:text-white uppercase tracking-tight">{title}</h3>
               <p className="text-xs text-gray-500 font-medium">{subtitle}</p>
             </div>
           </div>
@@ -62,7 +62,8 @@ export const FeatureModal: React.FC<ModalProps> = ({
           </button>
         </div>
 
-        <div className="p-8 max-h-[80vh] overflow-y-auto no-scrollbar">
+        {/* Modal Scrollable Body */}
+        <div className="p-6 sm:p-8 overflow-y-auto flex-1 no-scrollbar">
           {children}
         </div>
       </div>

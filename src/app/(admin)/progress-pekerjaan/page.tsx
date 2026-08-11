@@ -1042,12 +1042,12 @@ export default function ProgressPekerjaanPage() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-xs text-gray-700 dark:text-gray-300">
                 {filteredData.map((item, index) => {
-                  const rowBgClass = index % 2 === 0 ? "bg-white dark:bg-[#0c0d14]" : "bg-gray-50 dark:bg-[#0f1118]";
+                  const rowBgClass = index % 2 === 0 ? "bg-white dark:bg-[#0c0d14]" : "bg-gray-50/70 dark:bg-[#0f1118]";
                   
                   return (
                     <tr
                       key={item.id}
-                      className={`group ${rowBgClass} hover:bg-brand-500/[0.02] transition-colors`}
+                      className={`group ${rowBgClass} hover:bg-brand-500/[0.04] transition-colors`}
                     >
                       {/* Dynamic Columns cells */}
                       {columns.map((col) => {

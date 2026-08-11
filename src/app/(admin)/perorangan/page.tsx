@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { FeatureModal } from "@/components/common/FeatureModal";
 import { PlusIcon, UserCircleIcon, BoxIconLine } from "@/icons";
+import PicSelect from "@/components/common/PicSelect";
 
 interface Perorangan {
   id: string;
@@ -9,24 +10,46 @@ interface Perorangan {
   caseType: string;
   status: string;
   startDate: string;
+  picEmail?: string | null;
 }
+
+interface User {
+  id: string;
+  name: string | null;
+  email: string | null;
+}
+
+type CategoryTab = "ALL" | "PK" | "PU";
 
 export default function PeroranganPage() {
   const [data, setData] = useState<Perorangan[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [viewItem, setViewItem] = useState<Perorangan | null>(null);
   const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState({ clientName: "", caseType: "", startDate: "", status: "In Progress" });
+  
+  const [activeCategoryTab, setActiveCategoryTab] = useState<CategoryTab>("ALL");
+  const [formData, setFormData] = useState({ clientName: "", caseType: "PK", startDate: "", status: "In Progress", picEmail: "" });
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [sortBy, setSortBy] = useState<"name-asc" | "name-desc" | "date-newest" | "date-oldest">("name-asc");
 
   const fetchData = async () => {
-    const res = await fetch("/api/perorangan");
-    if (res.ok) setData(await res.json());
-    setLoading(false);
+    try {
+      setLoading(true);
+      const [resData, resUsers] = await Promise.all([
+        fetch("/api/perorangan"),
+        fetch("/api/users"),
+      ]);
+      if (resData.ok) setData(await resData.json());
+      if (resUsers.ok) setUsers(await resUsers.json());
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchData(); }, []);
@@ -37,8 +60,13 @@ export default function PeroranganPage() {
       item.caseType.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === "All" || item.status === statusFilter;
+    
+    const matchesCategory = 
+      activeCategoryTab === "ALL" || 
+      (activeCategoryTab === "PK" && item.caseType.toUpperCase().includes("PK")) ||
+      (activeCategoryTab === "PU" && item.caseType.toUpperCase().includes("PU"));
       
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesCategory;
   });
 
   const sortedData = [...filteredData].sort((a, b) => {
@@ -59,10 +87,14 @@ export default function PeroranganPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch("/api/perorangan", { method: "POST", body: JSON.stringify(formData) });
+    const res = await fetch("/api/perorangan", { 
+      method: "POST", 
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData) 
+    });
     if (res.ok) {
       setIsModalOpen(false);
-      setFormData({ clientName: "", caseType: "", startDate: "", status: "In Progress" });
+      setFormData({ clientName: "", caseType: "PK", startDate: "", status: "In Progress", picEmail: "" });
       fetchData();
     }
   };
@@ -76,11 +108,47 @@ export default function PeroranganPage() {
     <div className="p-4 md:p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-4">
         <div>
-          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">Kasus Perorangan</h1>
-          <p className="text-xs text-gray-500">Daftar klien individu dan perkara hukum yang sedang ditangani secara profesional.</p>
+          <h1 className="text-xl font-black text-black dark:text-white uppercase tracking-wider">Kasus Non-Retainer / Perorangan</h1>
+          <p className="text-xs text-gray-500">Daftar klien individu dan perkara hukum (Pekerjaan Khusus / Pekerjaan Umum) yang sedang ditangani.</p>
         </div>
         <button onClick={() => setIsModalOpen(true)} className="bg-brand-500 text-white px-5 py-2.5 rounded-lg font-bold text-xs flex items-center gap-2 hover:bg-brand-600 shadow-sm transition-all uppercase tracking-wider w-full sm:w-auto justify-center">
           <PlusIcon /> Tambah Kasus Baru
+        </button>
+      </div>
+
+      {/* TABS KATEGORI PEKERJAAN (PK & PU) */}
+      <div className="flex border-b border-gray-200 dark:border-gray-800 gap-2">
+        <button
+          onClick={() => setActiveCategoryTab("ALL")}
+          className={`px-4 py-2.5 text-xs font-black uppercase tracking-widest border-b-2 cursor-pointer transition-colors ${
+            activeCategoryTab === "ALL"
+              ? "border-brand-500 text-brand-500 font-bold"
+              : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"
+          }`}
+        >
+          Semua Pekerjaan
+        </button>
+        <button
+          onClick={() => setActiveCategoryTab("PK")}
+          className={`px-4 py-2.5 text-xs font-black uppercase tracking-widest border-b-2 cursor-pointer transition-colors flex items-center gap-1.5 ${
+            activeCategoryTab === "PK"
+              ? "border-brand-500 text-brand-500 font-bold"
+              : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"
+          }`}
+        >
+          <span className="px-1.5 py-0.5 bg-brand-500/10 text-brand-500 text-[9px] rounded font-black">PK</span>
+          Pekerjaan Khusus (PK)
+        </button>
+        <button
+          onClick={() => setActiveCategoryTab("PU")}
+          className={`px-4 py-2.5 text-xs font-black uppercase tracking-widest border-b-2 cursor-pointer transition-colors flex items-center gap-1.5 ${
+            activeCategoryTab === "PU"
+              ? "border-brand-500 text-brand-500 font-bold"
+              : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"
+          }`}
+        >
+          <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-500 text-[9px] rounded font-black">PU</span>
+          Pekerjaan Umum (PU)
         </button>
       </div>
 
@@ -148,7 +216,9 @@ export default function PeroranganPage() {
             <div key={item.id} className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 p-5 rounded-2xl hover:border-brand-500 hover:shadow-xl transition-all flex flex-col justify-between">
               <div>
                 <div className="flex justify-between items-start mb-4">
-                  <div className="w-8 h-8 bg-brand-500/10 text-brand-500 rounded-xl flex items-center justify-center font-black text-xs border border-brand-500/20">P</div>
+                  <span className="px-2.5 py-0.5 bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[9px] font-black uppercase tracking-widest rounded-full border border-brand-500/20">
+                    {item.caseType}
+                  </span>
                   <span className={`text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full tracking-widest border ${
                     item.status === "In Progress"
                       ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
@@ -158,7 +228,10 @@ export default function PeroranganPage() {
                   }`}>{item.status}</span>
                 </div>
                 <h3 className="font-black text-sm text-black dark:text-white uppercase tracking-wide">{item.clientName}</h3>
-                <p className="text-[10px] text-gray-455 dark:text-gray-400 font-bold uppercase tracking-widest mt-1">Perkara: {item.caseType}</p>
+                <p className="text-[10px] text-gray-455 dark:text-gray-400 font-bold uppercase tracking-widest mt-1">Perkara / Kategori: {item.caseType}</p>
+                {item.picEmail && (
+                  <p className="text-[10px] text-brand-500 font-semibold mt-2">👤 PIC: {item.picEmail}</p>
+                )}
               </div>
               
               <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800/80 flex justify-between items-center text-[10px] text-gray-450 dark:text-gray-400 font-semibold">
@@ -169,7 +242,7 @@ export default function PeroranganPage() {
           ))
         ) : (
           <div className="col-span-full text-center py-20 text-gray-400 italic bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-gray-800 rounded-2xl text-xs">
-            Belum ada kasus perorangan yang terdaftar.
+            Belum ada kasus non-retainer yang terdaftar pada kategori ini.
           </div>
         )}
       </div>
@@ -178,18 +251,25 @@ export default function PeroranganPage() {
       <FeatureModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        title="Tambah Kasus Perorangan"
-        subtitle="Daftarkan klien individu dan rincian perkara baru"
+        title="Tambah Kasus Non-Retainer"
+        subtitle="Daftarkan klien individu/perorangan dan rincian perkara baru"
         icon={<UserCircleIcon />}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Nama Klien</label>
-            <input required className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark rounded-none px-4 py-3 text-sm focus:border-brand-500 outline-none font-bold" value={formData.clientName} onChange={(e) => setFormData({...formData, clientName: e.target.value})} />
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Nama Klien / Perorangan</label>
+            <input required className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark rounded-none px-4 py-3 text-sm focus:border-brand-500 outline-none font-bold" value={formData.clientName} onChange={(e) => setFormData({...formData, clientName: e.target.value})} placeholder="Contoh: Bp. Ahmad Santoso" />
           </div>
           <div>
-            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Jenis Perkara (Misal: Perdata, Pidana)</label>
-            <input required className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark rounded-none px-4 py-3 text-sm focus:border-brand-500 outline-none font-bold" value={formData.caseType} onChange={(e) => setFormData({...formData, caseType: e.target.value})} />
+            <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Kategori Pekerjaan (PK / PU)</label>
+            <select 
+              className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark rounded-none px-4 py-3 text-sm focus:border-brand-500 outline-none font-bold uppercase" 
+              value={formData.caseType} 
+              onChange={(e) => setFormData({...formData, caseType: e.target.value})}
+            >
+              <option value="PK (Pekerjaan Khusus)">PK — PEKERJAAN KHUSUS</option>
+              <option value="PU (Pekerjaan Umum)">PU — PEKERJAAN UMUM</option>
+            </select>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -197,7 +277,7 @@ export default function PeroranganPage() {
               <input type="date" required className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark rounded-none px-4 py-3 text-sm focus:border-brand-500 outline-none" value={formData.startDate} onChange={(e) => setFormData({...formData, startDate: e.target.value})} />
             </div>
             <div>
-              <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Status</label>
+              <label className="block text-xs font-black uppercase text-gray-500 mb-1.5">Status Pekerjaan</label>
               <select className="w-full bg-gray-50 dark:bg-gray-800 border border-stroke dark:border-strokedark rounded-none px-4 py-3 text-sm focus:border-brand-500 outline-none font-bold" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})}>
                 <option value="In Progress">IN PROGRESS</option>
                 <option value="Finished">FINISHED</option>
@@ -205,7 +285,20 @@ export default function PeroranganPage() {
               </select>
             </div>
           </div>
-          <button className="w-full bg-brand-500 text-white py-3.5 rounded-none font-black uppercase tracking-widest text-xs hover:bg-brand-600 transition-all">Simpan Kasus</button>
+
+          {/* PIC SELECT DROPDOWN */}
+          <div>
+            <PicSelect
+              label="Person in Charge (PIC)"
+              users={users}
+              selectedValues={formData.picEmail ? formData.picEmail.split(",").map(e => e.trim()) : []}
+              onChange={(selected) => setFormData({ ...formData, picEmail: selected.join(",") })}
+              valueKey="email"
+              placeholder="Pilih PIC Karyawan..."
+            />
+          </div>
+
+          <button className="w-full bg-brand-500 text-white py-3.5 rounded-none font-black uppercase tracking-widest text-xs hover:bg-brand-600 transition-all">Simpan Kasus Non-Retainer</button>
         </form>
       </FeatureModal>
 
@@ -248,6 +341,13 @@ export default function PeroranganPage() {
                 <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Jenis Perkara / Masalah Hukum</span>
                 <span className="text-sm font-bold text-brand-500 uppercase">{viewItem.caseType}</span>
               </div>
+
+              {viewItem.picEmail && (
+                <div className="bg-gray-50 dark:bg-gray-800/40 p-4 border border-stroke dark:border-strokedark rounded-none">
+                  <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">PIC Karyawan Penanggung Jawab</span>
+                  <span className="text-xs font-bold text-black dark:text-white">👤 {viewItem.picEmail}</span>
+                </div>
+              )}
             </div>
 
             <button
