@@ -42,7 +42,7 @@ export default function SkalaPrioritasPage() {
       if (resUsers.ok) setUsers(await resUsers.json());
     } catch (e) {
       console.error(e);
-    } fontally {
+    } finally {
       setLoading(false);
     }
   };
